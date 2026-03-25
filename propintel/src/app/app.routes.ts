@@ -27,5 +27,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/ficha/ficha-inmueble.component').then(m => m.FichaInmuebleComponent),
   },
+  {
+    path: 'tasacion',
+    loadComponent: () =>
+      import('./features/tasacion/tasacion.component').then(m => m.TasacionComponent),
+  },
   { path: '**', redirectTo: 'dashboard' },
 ];

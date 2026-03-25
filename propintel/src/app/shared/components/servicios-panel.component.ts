@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 
 interface Servicio {
   icon: string;
@@ -8,6 +9,8 @@ interface Servicio {
   precio: string;
   tag?: string;
   tagColor?: string;
+  route?: string;
+  href?: string;
 }
 
 @Component({
@@ -23,7 +26,7 @@ interface Servicio {
         </div>
       </div>
       <div class="services-grid">
-        <div class="service-card" *ngFor="let s of servicios">
+        <div class="service-card" *ngFor="let s of servicios" (click)="onServicioClick(s)">
           <span class="service-tag" *ngIf="s.tag"
             [style.color]="s.tagColor"
             [style.background]="s.tagColor + '1a'">{{ s.tag }}</span>
@@ -31,7 +34,9 @@ interface Servicio {
           <div class="service-name">{{ s.nombre }}</div>
           <div class="service-desc">{{ s.desc }}</div>
           <div class="service-price">{{ s.precio }}</div>
-          <button class="btn-service">Solicitar →</button>
+          <button class="btn-service">
+            {{ (s.route || s.href) ? 'Abrir →' : 'Solicitar →' }}
+          </button>
         </div>
       </div>
     </div>
@@ -67,12 +72,63 @@ interface Servicio {
   `]
 })
 export class ServiciosPanelComponent {
+  private router = inject(Router);
+
   servicios: Servicio[] = [
-    { icon:'🏠', nombre:'Tasación profesional', desc:'Informe oficial con comparables notariales reales en radio de 500m. Sin precios de oferta inflados.', precio:'desde 150€ · Entrega 48h', tag:'Popular', tagColor:'#4fd1a5' },
-    { icon:'🛡️', nombre:'Seguro de hogar', desc:'Prima calculada sobre el valor notarial real. Sin sobreprecio por valoraciones del portal.', precio:'desde 18€/mes' },
-    { icon:'⚖️', nombre:'Asesoría de negociación', desc:'Te decimos exactamente cuánto negociar con el vendedor según el gap histórico del distrito.', precio:'desde 99€ · Sesión 1h' },
-    { icon:'📊', nombre:'Informe de inversión', desc:'ROI real: precio notarial vs alquiler de mercado. Rentabilidad bruta y neta estimada.', precio:'desde 200€ · Completo', tag:'Nuevo', tagColor:'#a78bfa' },
-    { icon:'🔔', nombre:'Alertas de oportunidad', desc:'Notificación cuando aparezca un piso con asking cerca del precio notarial de su zona.', precio:'Gratis en plan básico' },
-    { icon:'📋', nombre:'Due diligence', desc:'Historial completo de transacciones del inmueble, cargas registrales y nota simple.', precio:'desde 75€ · Inmediato' },
+    {
+      icon: '🏠', nombre: 'Tasación Automática (AVM)',
+      desc: 'Estimación de valor basada en comparables reales del vecindario, datos notariales y Catastro.',
+      precio: 'Gratis · Resultado inmediato',
+      tag: 'Nuevo', tagColor: '#4fd1a5',
+      route: '/tasacion',
+    },
+    {
+      icon: '📐', nombre: 'Datos del Catastro',
+      desc: 'Superficie real, año de construcción, valor catastral y valor de referencia AEAT por RC.',
+      precio: 'Gratis · API oficial',
+      tag: 'Oficial', tagColor: '#6ec1e4',
+      route: '/tasacion',
+    },
+    {
+      icon: '📊', nombre: 'Estadísticas INE / BdE',
+      desc: 'Índice de Precios de Vivienda (IPV), hipotecas constituidas y tipos de interés hipotecarios.',
+      precio: 'Gratis · Datos oficiales',
+      tag: 'INE', tagColor: '#a78bfa',
+    },
+    {
+      icon: '⚖️', nombre: 'Asesoría de negociación',
+      desc: 'Te decimos exactamente cuánto negociar con el vendedor según el gap histórico del distrito.',
+      precio: 'desde 99€ · Sesión 1h',
+    },
+    {
+      icon: '🔔', nombre: 'Alertas de oportunidad',
+      desc: 'Notificación cuando aparezca un piso con asking cerca del precio notarial de su zona.',
+      precio: 'Gratis en plan básico',
+      route: '/alertas',
+    },
+    {
+      icon: '📋', nombre: 'Due diligence',
+      desc: 'Historial completo de transacciones del inmueble, cargas registrales y nota simple.',
+      precio: 'desde 75€ · Inmediato',
+    },
+    {
+      icon: '🛡️', nombre: 'Seguro de hogar',
+      desc: 'Prima calculada sobre el valor notarial real. Sin sobreprecio por valoraciones del portal.',
+      precio: 'desde 18€/mes',
+    },
+    {
+      icon: '💰', nombre: 'Informe de inversión',
+      desc: 'ROI real: precio notarial vs alquiler de mercado. Rentabilidad bruta y neta estimada.',
+      precio: 'desde 200€ · Completo',
+      tag: 'Pro', tagColor: '#e8c547',
+    },
   ];
+
+  onServicioClick(s: Servicio): void {
+    if (s.route) {
+      this.router.navigate([s.route]);
+    } else if (s.href) {
+      window.open(s.href, '_blank');
+    }
+  }
 }

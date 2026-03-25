@@ -12,6 +12,7 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
     public DbSet<GapAnalisis>   GapsAnalisis     => Set<GapAnalisis>();
     public DbSet<Alerta>        Alertas          => Set<Alerta>();
     public DbSet<DisparoAlerta> DisparosAlertas  => Set<DisparoAlerta>();
+    public DbSet<CodigoPostal>  CodigosPostales  => Set<CodigoPostal>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -61,6 +62,20 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
             e.Property(p => p.TipoInmueble).HasColumnName("tipo_inmueble");
             e.Property(p => p.Activo).HasColumnName("activo");
             e.Property(p => p.FechaScraping).HasColumnName("fecha_scraping");
+            e.Property(p => p.Cp).HasColumnName("cp");
+            e.Property(p => p.Lat).HasColumnName("lat");
+            e.Property(p => p.Lon).HasColumnName("lon");
+        });
+
+        mb.Entity<CodigoPostal>(e =>
+        {
+            e.HasKey(p => p.Cp);
+            e.Property(p => p.Cp).HasColumnName("cp");
+            e.Property(p => p.Nombre).HasColumnName("nombre");
+            e.Property(p => p.Provincia).HasColumnName("provincia");
+            e.Property(p => p.Lat).HasColumnName("lat");
+            e.Property(p => p.Lon).HasColumnName("lon");
+            e.Property(p => p.MunicipioIne).HasColumnName("municipio_ine");
         });
 
         mb.Entity<GapAnalisis>(e =>

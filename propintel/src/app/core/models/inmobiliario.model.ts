@@ -142,3 +142,97 @@ export interface CatastroResult {
   error: string | null;
   inmuebles: CatastroInmueble[];
 }
+
+// ── Precio por código postal (mapa CP) ───────────────────────────────────
+
+export interface PrecioCP {
+  cp: string;
+  lat: number | null;
+  lon: number | null;
+  precioM2: number;
+  numAnuncios: number;
+  gapPct: number | null;
+  nombre: string | null;
+}
+
+// ── Ficha completa del Catastro ──────────────────────────────────────────
+
+export interface CatastroFicha {
+  rc: string;
+  direccion: string | null;
+  codigoPostal: string | null;
+  municipio: string | null;
+  provincia: string | null;
+  uso: string | null;
+  tipoInmueble: string | null;
+  superficieTotal: number | null;
+  superficieConstruida: number | null;
+  annoConstruccion: number | null;
+  valorCatastral: string | null;
+  numPlantasSobre: number | null;
+  numPlantasBajo: number | null;
+  planta: string | null;
+  puerta: string | null;
+  urlFicha: string;
+}
+
+// ── Valor de referencia AEAT ─────────────────────────────────────────────
+
+export interface ValorReferencia {
+  rc: string;
+  valorReferencia: number | null;
+  anno: number;
+  mensaje: string | null;
+}
+
+// ── AVM: Estimación automática de valor ──────────────────────────────────
+
+export interface Comparable {
+  id: number;
+  precioM2: number;
+  superficieM2: number | null;
+  habitaciones: number | null;
+  distrito: string | null;
+  fuente: string;
+  url: string;
+  distanciaM: number;
+}
+
+export interface EstimacionAvm {
+  precioEstimado: number;
+  rangoMin: number;
+  rangoMax: number;
+  comparablesUsados: number;
+  metodologia: string;
+  valorCatastral: number | null;
+  precioNotarial: number | null;
+  comparables: Comparable[];
+}
+
+export interface EstimacionRequest {
+  rc?: string;
+  lat?: number;
+  lon?: number;
+  superficie?: number;
+  habitaciones?: number;
+  ciudad: string;
+}
+
+// ── Estadísticas INE / BdE ───────────────────────────────────────────────
+
+export interface IneDataPoint {
+  periodo: string;
+  valor: number | null;
+}
+
+export interface IneIpv {
+  serie: string;
+  descripcion: string;
+  datos: IneDataPoint[];
+}
+
+export interface BdeTipoInteres {
+  fecha: string;
+  tipoHipotecario: number | null;
+  euribor: number | null;
+}

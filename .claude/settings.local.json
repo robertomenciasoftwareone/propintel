@@ -44,7 +44,28 @@
       "Bash(python3 -c \":*)",
       "Bash(curl -s -H \"X-Api-Key: dev-propintel-key-2026\" \"http://localhost:5050/api/municipios\")",
       "Bash(.venv/Scripts/python.exe scripts/seed_municipios.py)",
-      "Bash(curl -s -H 'X-Api-Key: dev-propintel-key-2026' http://localhost:5050/api/ciudades/madrid/transacciones)"
+      "Bash(curl -s -H 'X-Api-Key: dev-propintel-key-2026' http://localhost:5050/api/ciudades/madrid/transacciones)",
+      "Bash(PGPASSWORD=local123 psql -h localhost -U propintel_user -d propintel -c \":*)",
+      "Bash(where psql:*)",
+      "Bash(where pg_isready)",
+      "Bash(PGPASSWORD=local123 \"/c/Program Files/PostgreSQL/17/bin/psql\" -h localhost -U propintel_user -d propintel -c \":*)",
+      "Bash(\"/c/Program Files/PostgreSQL/17/bin/psql.exe\" --version)",
+      "Bash(cmd /c '\"\"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\"\" --version')",
+      "Bash(powershell -Command \"& ''C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe'' --version\")",
+      "Bash(dotnet ef:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet run:*)",
+      "Bash(pip show:*)",
+      "Bash(pip list:*)",
+      "Bash(DATABASE_URL=\"postgresql://propintel_user:local123@localhost/propintel\" python scripts/seed_codigos_postales.py --download)",
+      "Bash(npm --version)",
+      "Bash(npx ng:*)",
+      "Bash(docker ps:*)",
+      "Bash(tasklist /FI \"PID eq 45344\" /FO CSV)",
+      "Bash(powershell -Command \"Stop-Process -Id 45344 -Force -ErrorAction SilentlyContinue; Start-Sleep 1; echo ''killed''\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"X-Api-Key: dev-propintel-key-2026\" http://localhost:5050/api/catastro/wms-info)",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" -H \"X-Api-Key: dev-propintel-key-2026\" \"http://localhost:5050/api/catastro/wms-info\")",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" -H \"X-Api-Key: dev-propintel-key-2026\" -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"ciudad\"\"\"\":\"\"\"\"asturias\"\"\"\",\"\"\"\"superficie\"\"\"\":320,\"\"\"\"habitaciones\"\"\"\":4}' \"http://localhost:5050/api/tasacion/estimar\")"
     ]
   }
 }

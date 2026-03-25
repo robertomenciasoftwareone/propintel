@@ -52,6 +52,20 @@ public class Anuncio
     public string? TipoInmueble { get; set; }
     public bool Activo { get; set; } = true;
     public DateTime FechaScraping { get; set; } = DateTime.UtcNow;
+    public string? Cp { get; set; }
+    public double? Lat { get; set; }
+    public double? Lon { get; set; }
+}
+
+[Table("codigos_postales")]
+public class CodigoPostal
+{
+    [Key] public string Cp { get; set; } = "";
+    public string? Nombre { get; set; }
+    public string? Provincia { get; set; }
+    public double? Lat { get; set; }
+    public double? Lon { get; set; }
+    public string? MunicipioIne { get; set; }
 }
 
 [Table("gap_analisis")]
@@ -285,4 +299,88 @@ public record CatastroInmuebleDto(
     string? Planta,
     string? Puerta,
     string UrlCatastro
+);
+
+public record CatastroFichaDto(
+    string Rc,
+    string? Direccion,
+    string? CodigoPostal,
+    string? Municipio,
+    string? Provincia,
+    string? Uso,
+    string? TipoInmueble,
+    double? SuperficieTotal,
+    double? SuperficieConstruida,
+    int? AnnoConstruccion,
+    string? ValorCatastral,
+    int? NumPlantasSobre,
+    int? NumPlantasBajo,
+    string? Planta,
+    string? Puerta,
+    string UrlFicha
+);
+
+public record ValorReferenciaDto(
+    string Rc,
+    decimal? ValorReferencia,
+    int Anno,
+    string? Mensaje
+);
+
+public record PrecioCpDto(
+    string Cp,
+    double? Lat,
+    double? Lon,
+    double PrecioM2,
+    int NumAnuncios,
+    double? GapPct,
+    string? Nombre
+);
+
+public record EstimacionAvmDto(
+    double PrecioEstimado,
+    double RangoMin,
+    double RangoMax,
+    int ComparablesUsados,
+    string Metodologia,
+    double? ValorCatastral,
+    double? PrecioNotarial,
+    List<ComparableDto> Comparables
+);
+
+public record ComparableDto(
+    int Id,
+    double PrecioM2,
+    double? SuperficieM2,
+    int? Habitaciones,
+    string? Distrito,
+    string Fuente,
+    string Url,
+    double DistanciaM
+);
+
+public record EstimacionRequestDto(
+    string? Rc,
+    double? Lat,
+    double? Lon,
+    double? Superficie,
+    int? Habitaciones,
+    string Ciudad
+);
+
+public record IneIpvDto(
+    string Serie,
+    string Descripcion,
+    List<IneDataPointDto> Datos
+);
+
+public record IneDataPointDto(
+    string Periodo,
+    double? Valor
+);
+
+public record BdeTipoInteresDto(
+    string Fecha,
+    double? TipoHipotecario,
+    double? Euribor
 );
