@@ -1,0 +1,47 @@
+name: Deploy Angular → Azure Static Web Apps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'propintel/**'
+      - '.github/workflows/deploy-angular.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build Angular + Deploy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: propintel/package-lock.json
+
+      - name: Install dependencies
+        working-directory: propintel
+        run: npm ci
+
+      - name: Build production
+        working-directory: propintel
+        run: npm run build -- --configuration=production
+        env:
+          # La URL de la API se inyecta en build-time
+          # Configura este secret en tu repo: Settings → Secrets → Actions
+          API_URL: ${{ secrets.PROPINTEL_API_URL }}
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: propintel
+          output_location: dist/propintel/browser
+          skip_app_build: true   # ya lo hemos compilado arriba

@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd c:\\\\Proyectos\\\\PropIntel\\\\propintel-scraper; pip install -r requirements\\.txt 2>&1 \\| Select-Object -Last 20$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

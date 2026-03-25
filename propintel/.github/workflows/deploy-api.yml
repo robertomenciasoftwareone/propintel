@@ -1,0 +1,47 @@
+name: Deploy .NET API → Azure App Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'PropIntel.Api/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    name: Build .NET 8 + Deploy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: PropIntel.Api
+        run: dotnet restore
+
+      - name: Build
+        working-directory: PropIntel.Api
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        working-directory: PropIntel.Api
+        run: dotnet publish --configuration Release --output ./publish --no-build
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: propintel-api          # Nombre del App Service en Azure
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: PropIntel.Api/publish
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f https://propintel-api.azurewebsites.net/api/ciudades || exit 1
