@@ -1,13 +1,73 @@
 # Ignore Python virtual environments
+# --- Python ---
+# Virtualenvs
 propintel-scraper/.venv/
+.venv/
+venv/
+ENV/
+env/
 
-# Node modules
-**/node_modules/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Build artifacts
-dist/
+# C extensions
+*.so
+
+# Distribution / packaging
 build/
+dist/
+eggs/
+*.egg-info/
+pip-wheel-metadata/
+wheelhouse/
 
-# OS files
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+*,cover
+
+# PyInstaller
+*.manifest
+*.spec
+
+# env files
+.env
+.env.*
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- IDE / Editor ---
+.vscode/
+*.code-workspace
+.idea/
+
+# --- OS ---
 .DS_Store
-thumbs.db
+Thumbs.db
+
+# --- .NET / Visual Studio ---
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# --- Misc ---
+*.log
+*.sqlite3
+*.db
+*.tmp
+
