@@ -1,11 +1,50 @@
 # Ignore Python virtual environments
 # --- Python ---
 # Virtualenvs
+# Virtualenvs (local and project-specific)
 propintel-scraper/.venv/
 .venv/
 venv/
 ENV/
 env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+*.egg-info/
+pip-wheel-metadata/
+wheelhouse/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+coverage.xml
+*,cover
+
+# PyInstaller
+*.manifest
+*.spec
+
+# env files
+.env
+.env.*
+
+# bytecode caches for other languages
+*/__pycache__/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -47,14 +86,35 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Angular / build
+dist/
+out-tsc/
+coverage/
+/.angular/cache/
+
+# Playwright / Chromium caches
+playwright-report/
+playwright/.local-browsers/
+
+
 # --- IDE / Editor ---
 .vscode/
 *.code-workspace
 .idea/
 
+# JetBrains
+.idea/
+*.iml
+
+
 # --- OS ---
 .DS_Store
 Thumbs.db
+
+# Windows image file caches
+ehthumbs.db
+Icon?
+
 
 # --- .NET / Visual Studio ---
 .vs/
@@ -65,9 +125,33 @@ obj/
 *.userosscache
 *.sln.docstates
 
+# Rider
+.idea/
+.idea/*
+*.sln.iml
+
+# dotnet publish
+publish/
+
+
 # --- Misc ---
 *.log
 *.sqlite3
 *.db
 *.tmp
+
+# Sensitive or local files
+local.settings.json
+appsettings.Development.json
+
+# Ignore generated VS packaging files
+*.nupkg
+
+# Ignore large local build/test artifacts
+**/build/
+**/bin/
+**/obj/
+
+# Keep track of node.exe/other large binaries via LFS (do not commit binaries)
+# (Binaries are tracked via .gitattributes and git-lfs where needed)
 
