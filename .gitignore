@@ -1,0 +1,13 @@
+# Ignore Python virtual environments
+propintel-scraper/.venv/
+
+# Node modules
+**/node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# OS files
+.DS_Store
+thumbs.db
