@@ -38,6 +38,7 @@ class AnuncioPortal(BaseModel):
     tipo:          TipoInmueble = TipoInmueble.PISO
     fecha_scraping: datetime = Field(default_factory=datetime.utcnow)
     activo:        bool = True
+    canonical_key: Optional[str] = None
 
     def calcular_precio_m2(self) -> Optional[float]:
         if self.precio_m2:

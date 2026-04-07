@@ -8,277 +8,352 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
 import { AnuncioDetalle, CatastroResult, CatastroFicha, ValorReferencia, EstimacionAvm } from '../../core/models/inmobiliario.model';
 import { environment } from '../../../environments/environment';
 
+interface GeminiZoneAnalysis {
+  calidad_zona: string;
+  score: number;
+  transporte: string[];
+  puntos_interes: string[];
+  resumen: string;
+  pros: string[];
+  contras: string[];
+}
+
 @Component({
   selector: 'app-ficha-inmueble',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, NgClass, UpperCasePipe, RouterLink],
+  imports: [DecimalPipe, DatePipe, NgClass, RouterLink],
   template: `
     <div class="page">
-      <a routerLink="/" class="back-link">← Volver al dashboard</a>
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <a routerLink="/mapa-resultados" class="back-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver al mapa
+        </a>
+        @if (detalle(); as d) {
+          <span class="fuente-chip" [ngClass]="d.fuente">{{ d.fuente }}</span>
+        }
+      </div>
 
       @if (loading()) {
-        <div class="loading-state">
+        <div class="state-center">
           <div class="spinner"></div>
           <p>Cargando ficha del inmueble…</p>
         </div>
       }
 
       @if (error()) {
-        <div class="error-state">
+        <div class="state-center">
+          <div class="error-icon">⚠️</div>
           <p>{{ error() }}</p>
-          <a routerLink="/" class="btn-back">Volver</a>
+          <a routerLink="/mapa-resultados" class="btn-ghost">Volver al mapa</a>
         </div>
       }
 
       @if (detalle(); as d) {
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">FICHA DEL INMUEBLE</h1>
-            <p class="page-sub">{{ d.titulo || d.idExterno }}</p>
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             LAYER 1 — SIMPLE VERDICT HERO
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="verdict-hero" [ngClass]="verdictColor(d)">
+          <div class="verdict-left">
+            <div class="verdict-badge">
+              <span class="verdict-dot"></span>
+              {{ verdictLabel(d) }}
+            </div>
+            <div class="verdict-pct">{{ verdictPctText(d) }}</div>
+            <p class="verdict-sub">{{ verdictSub(d) }}</p>
           </div>
-          <div class="fuente-badge" [ngClass]="d.fuente">{{ d.fuente | uppercase }}</div>
+          <div class="verdict-right">
+            <div class="verdict-key-price">
+              <span class="vkp-label">Precio pedido</span>
+              <span class="vkp-value">{{ d.precioTotal | number:'1.0-0':'es-ES' }} €</span>
+            </div>
+            @if (avm(); as est) {
+              <div class="verdict-key-price">
+                <span class="vkp-label">Estimado AVM</span>
+                <span class="vkp-value avm-v">{{ est.precioEstimado | number:'1.0-0':'es-ES' }} €</span>
+              </div>
+            } @else if (d.notarialMedioM2 && d.superficieM2) {
+              <div class="verdict-key-price">
+                <span class="vkp-label">Precio notarial estimado</span>
+                <span class="vkp-value not-v">{{ (d.notarialMedioM2 * d.superficieM2) | number:'1.0-0':'es-ES' }} €</span>
+              </div>
+            }
+          </div>
         </div>
 
-        <!-- ── PORTAL ──────────────────────────────────────────────────── -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><span class="section-icon">🏠</span> Datos del Portal</div>
+        <!-- ══════════════════════════════════════════════════════════════════
+             LAYER 2 — DECISION: PRICE COMPARISON TABLE
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="layer2-card">
+          <div class="l2-title">
+            <span class="section-icon">⚖️</span>
+            Análisis de precio comparado
+          </div>
+          <div class="l2-grid">
+
+            <!-- Portal asking price -->
+            <div class="l2-col">
+              <div class="l2-col-header">
+                <span class="l2-source-dot portal-dot"></span>
+                <span class="l2-source">Precio pedido</span>
+              </div>
+              <div class="l2-price">{{ d.precioTotal | number:'1.0-0':'es-ES' }} €</div>
+              <div class="l2-price-m2">{{ d.precioM2 | number:'1.0-0':'es-ES' }} €/m²</div>
+              <div class="l2-sub">{{ d.fuente }}</div>
+            </div>
+
+            <!-- Notarial -->
+            @if (d.notarialMedioM2) {
+              <div class="l2-col">
+                <div class="l2-col-header">
+                  <span class="l2-source-dot notarial-dot"></span>
+                  <span class="l2-source">Precio notarial</span>
+                </div>
+                <div class="l2-price">
+                  @if (d.superficieM2) {
+                    {{ (d.notarialMedioM2 * d.superficieM2) | number:'1.0-0':'es-ES' }} €
+                  } @else { N/D }
+                </div>
+                <div class="l2-price-m2">{{ d.notarialMedioM2 | number:'1.0-0':'es-ES' }} €/m²</div>
+                <div class="l2-sub">Registro notarial · {{ d.notarialPeriodo }}</div>
+              </div>
+              <!-- Gap badge -->
+              <div class="l2-gap-badge" [ngClass]="getGapClass(d.gapPct)">
+                <div class="l2-gap-label">Gap asking/notarial</div>
+                <div class="l2-gap-pct">{{ (d.gapPct ?? 0) > 0 ? '+' : '' }}{{ d.gapPct | number:'1.1-1':'es-ES' }}%</div>
+              </div>
+            }
+
+            <!-- AVM -->
+            @if (avm(); as est) {
+              <div class="l2-col">
+                <div class="l2-col-header">
+                  <span class="l2-source-dot avm-dot"></span>
+                  <span class="l2-source">Estimación AVM</span>
+                </div>
+                <div class="l2-price">{{ est.precioEstimado | number:'1.0-0':'es-ES' }} €</div>
+                <div class="l2-price-m2">
+                  @if (d.superficieM2) {
+                    {{ (est.precioEstimado / d.superficieM2) | number:'1.0-0':'es-ES' }} €/m²
+                  }
+                </div>
+                <div class="l2-sub">IA · {{ est.comparablesUsados }} comparables</div>
+              </div>
+              <!-- AVM gap badge -->
+              <div class="l2-gap-badge" [ngClass]="difVrefClass(d.precioTotal, est.precioEstimado)">
+                <div class="l2-gap-label">Gap asking/AVM</div>
+                <div class="l2-gap-pct">
+                  {{ difAvmPct(d.precioTotal, est.precioEstimado) > 0 ? '+' : '' }}{{ difAvmPct(d.precioTotal, est.precioEstimado) | number:'1.1-1':'es-ES' }}%
+                </div>
+              </div>
+            } @else if (avmLoading()) {
+              <div class="l2-col l2-loading">
+                <div class="spinner-sm"></div>
+                <span>Calculando AVM…</span>
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             LAYER 3 — EXPERT DATA (collapsible sections)
+        ══════════════════════════════════════════════════════════════════ -->
+
+        <!-- Property meta (portal) -->
+        <div class="expert-card">
+          <div class="expert-header">
+            <div class="expert-title">
+              <span class="section-icon">🏠</span>
+              Datos del portal
+            </div>
             @if (d.url) {
               <a [href]="d.url" target="_blank" rel="noopener noreferrer" class="btn-portal">
                 Ver en {{ d.fuente }} ↗
               </a>
             }
           </div>
-          <div class="grid-datos">
+          <div class="data-grid">
             <div class="dato">
-              <div class="dato-label">Precio</div>
-              <div class="dato-value accent">{{ d.precioTotal | number:'1.0-0':'es-ES' }} €</div>
-            </div>
-            <div class="dato">
-              <div class="dato-label">€/m²</div>
-              <div class="dato-value">{{ d.precioM2 | number:'1.0-0':'es-ES' }} €/m²</div>
-            </div>
-            <div class="dato">
-              <div class="dato-label">Superficie</div>
-              <div class="dato-value">{{ d.superficieM2 | number:'1.0-0':'es-ES' }} m²</div>
-            </div>
-            <div class="dato">
-              <div class="dato-label">Habitaciones</div>
-              <div class="dato-value">{{ d.habitaciones ?? '—' }}</div>
-            </div>
-            <div class="dato">
-              <div class="dato-label">Tipo</div>
+              <div class="dato-label">TIPO</div>
               <div class="dato-value">{{ d.tipoInmueble ?? '—' }}</div>
             </div>
             <div class="dato">
-              <div class="dato-label">Ciudad</div>
+              <div class="dato-label">SUPERFICIE</div>
+              <div class="dato-value">{{ d.superficieM2 | number:'1.0-0':'es-ES' }} m²</div>
+            </div>
+            <div class="dato">
+              <div class="dato-label">HABITACIONES</div>
+              <div class="dato-value">{{ d.habitaciones ?? '—' }}</div>
+            </div>
+            <div class="dato">
+              <div class="dato-label">CIUDAD</div>
               <div class="dato-value">{{ d.ciudad }}</div>
             </div>
             <div class="dato">
-              <div class="dato-label">Distrito / Zona</div>
+              <div class="dato-label">DISTRITO / ZONA</div>
               <div class="dato-value">{{ d.distrito ?? '—' }}</div>
             </div>
             <div class="dato">
-              <div class="dato-label">Fecha scraping</div>
+              <div class="dato-label">FECHA SCRAPING</div>
               <div class="dato-value">{{ d.fechaScraping | date:'d MMM yyyy':'':'es-ES' }}</div>
             </div>
           </div>
         </div>
 
-        <!-- ── NOTARIAL ────────────────────────────────────────────────── -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><span class="section-icon">📋</span> Datos Notariales</div>
-            @if (d.notarialPeriodo) {
-              <span class="periodo-badge">{{ d.notarialPeriodo }}</span>
-            }
-          </div>
-          @if (d.notarialMedioM2) {
-            <div class="grid-datos">
+        <!-- Notarial detail -->
+        @if (d.notarialMedioM2) {
+          <div class="expert-card">
+            <div class="expert-header">
+              <div class="expert-title">
+                <span class="section-icon">📋</span>
+                Datos notariales
+                @if (d.notarialPeriodo) {
+                  <span class="period-badge">{{ d.notarialPeriodo }}</span>
+                }
+              </div>
+            </div>
+            <div class="data-grid">
               <div class="dato">
-                <div class="dato-label">Precio medio notarial</div>
-                <div class="dato-value notarial">{{ d.notarialMedioM2 | number:'1.0-0':'es-ES' }} €/m²</div>
+                <div class="dato-label">PRECIO MEDIO NOTARIAL</div>
+                <div class="dato-value green-val">{{ d.notarialMedioM2 | number:'1.0-0':'es-ES' }} €/m²</div>
               </div>
               <div class="dato">
-                <div class="dato-label">Rango notarial</div>
-                <div class="dato-value">
-                  {{ d.notarialMinM2 | number:'1.0-0':'es-ES' }} – {{ d.notarialMaxM2 | number:'1.0-0':'es-ES' }} €/m²
-                </div>
+                <div class="dato-label">RANGO NOTARIAL</div>
+                <div class="dato-value">{{ d.notarialMinM2 | number:'1.0-0':'es-ES' }} – {{ d.notarialMaxM2 | number:'1.0-0':'es-ES' }} €/m²</div>
               </div>
               <div class="dato">
-                <div class="dato-label">Gap asking vs notarial</div>
+                <div class="dato-label">GAP ASKING VS NOTARIAL</div>
                 <div class="dato-value" [ngClass]="getGapClass(d.gapPct)">
-                  {{ d.gapPct | number:'1.1-1':'es-ES' }}%
+                  {{ (d.gapPct ?? 0) > 0 ? '+' : '' }}{{ d.gapPct | number:'1.1-1':'es-ES' }}%
                 </div>
               </div>
               <div class="dato">
-                <div class="dato-label">Transacciones en zona</div>
+                <div class="dato-label">Nº TRANSACCIONES</div>
                 <div class="dato-value">{{ d.numTransacciones ?? '—' }}</div>
               </div>
             </div>
+            <!-- Bar chart -->
             <div class="gap-bar-wrap">
-              <div class="gap-bar-labels">
-                <span class="notarial-label">Notarial: {{ d.notarialMedioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
-                <span class="asking-label">Asking: {{ d.precioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
+              <div class="gap-bar-row">
+                <span class="gap-bar-label green-label">Notarial: {{ d.notarialMedioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
+                <span class="gap-bar-label blue-label">Asking: {{ d.precioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
               </div>
-              <div class="gap-bar">
-                <div class="gap-bar-notarial" [style.width.%]="getNotarialBarWidth(d)"></div>
+              <div class="gap-track">
+                <div class="gap-fill" [style.width.%]="getNotarialBarWidth(d)"></div>
               </div>
               <div class="gap-bar-pct" [ngClass]="getGapClass(d.gapPct)">
                 {{ (d.gapPct ?? 0) > 0 ? '+' : '' }}{{ d.gapPct | number:'1.1-1':'es-ES' }}% sobrevalorado
               </div>
             </div>
-          } @else {
-            <div class="no-data">No hay datos notariales disponibles para esta zona.</div>
-          }
-        </div>
+          </div>
+        }
 
-        <!-- ── CATASTRO ────────────────────────────────────────────────── -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><span class="section-icon">🏛️</span> Catastro</div>
+        <!-- Catastro -->
+        <div class="expert-card">
+          <div class="expert-header">
+            <div class="expert-title">
+              <span class="section-icon">🏛️</span>
+              Catastro
+            </div>
             @if (catastroFicha()?.urlFicha) {
-              <a [href]="catastroFicha()!.urlFicha" target="_blank" rel="noopener noreferrer" class="btn-catastro">
+              <a [href]="catastroFicha()!.urlFicha" target="_blank" rel="noopener noreferrer" class="btn-secondary">
                 Ver ficha completa ↗
               </a>
             }
           </div>
-
           @if (catastroLoading()) {
             <div class="loading-inline"><div class="spinner-sm"></div> Consultando Catastro…</div>
           } @else {
-
-            <!-- Ficha rica si tenemos RC -->
             @if (catastroFicha(); as f) {
-              <div class="catastro-rica">
-                <div class="grid-datos">
-                  @if (f.direccion) {
-                    <div class="dato span-2">
-                      <div class="dato-label">Dirección catastral</div>
-                      <div class="dato-value" style="font-size:14px">{{ f.direccion }}</div>
-                    </div>
-                  }
-                  @if (f.uso) {
-                    <div class="dato">
-                      <div class="dato-label">Uso</div>
-                      <div class="dato-value" style="font-size:14px">{{ f.uso }}</div>
-                    </div>
-                  }
-                  @if (f.tipoInmueble) {
-                    <div class="dato">
-                      <div class="dato-label">Tipo</div>
-                      <div class="dato-value" style="font-size:14px">{{ f.tipoInmueble }}</div>
-                    </div>
-                  }
-                  @if (f.superficieTotal) {
-                    <div class="dato">
-                      <div class="dato-label">Superficie catastral</div>
-                      <div class="dato-value">{{ f.superficieTotal | number:'1.0-0':'es-ES' }} m²</div>
-                    </div>
-                  }
-                  @if (f.annoConstruccion) {
-                    <div class="dato">
-                      <div class="dato-label">Año construcción</div>
-                      <div class="dato-value">{{ f.annoConstruccion }}</div>
-                    </div>
-                  }
-                  @if (f.valorCatastral) {
-                    <div class="dato">
-                      <div class="dato-label">Valor catastral</div>
-                      <div class="dato-value purple">{{ f.valorCatastral }} €</div>
-                    </div>
-                  }
-                  @if (f.numPlantasSobre) {
-                    <div class="dato">
-                      <div class="dato-label">Plantas s/rasante</div>
-                      <div class="dato-value">{{ f.numPlantasSobre }}</div>
-                    </div>
-                  }
-                  @if (f.codigoPostal) {
-                    <div class="dato">
-                      <div class="dato-label">C. Postal</div>
-                      <div class="dato-value">{{ f.codigoPostal }}</div>
-                    </div>
-                  }
-                </div>
+              <div class="data-grid">
+                @if (f.direccion) {
+                  <div class="dato dato-wide">
+                    <div class="dato-label">DIRECCIÓN CATASTRAL</div>
+                    <div class="dato-value">{{ f.direccion }}</div>
+                  </div>
+                }
+                @if (f.uso) {
+                  <div class="dato"><div class="dato-label">USO</div><div class="dato-value">{{ f.uso }}</div></div>
+                }
+                @if (f.tipoInmueble) {
+                  <div class="dato"><div class="dato-label">TIPO</div><div class="dato-value">{{ f.tipoInmueble }}</div></div>
+                }
+                @if (f.superficieTotal) {
+                  <div class="dato"><div class="dato-label">SUPERFICIE CATASTRAL</div><div class="dato-value">{{ f.superficieTotal | number:'1.0-0':'es-ES' }} m²</div></div>
+                }
+                @if (f.annoConstruccion) {
+                  <div class="dato"><div class="dato-label">AÑO CONSTRUCCIÓN</div><div class="dato-value">{{ f.annoConstruccion }}</div></div>
+                }
+                @if (f.valorCatastral) {
+                  <div class="dato"><div class="dato-label">VALOR CATASTRAL</div><div class="dato-value purple-val">{{ f.valorCatastral }} €</div></div>
+                }
+                @if (f.numPlantasSobre) {
+                  <div class="dato"><div class="dato-label">PLANTAS S/RASANTE</div><div class="dato-value">{{ f.numPlantasSobre }}</div></div>
+                }
+                @if (f.codigoPostal) {
+                  <div class="dato"><div class="dato-label">C. POSTAL</div><div class="dato-value">{{ f.codigoPostal }}</div></div>
+                }
               </div>
-            }
-
-            <!-- Fallback: catastro por dirección (sistema anterior) -->
-            @else if (catastro(); as c) {
+            } @else if (catastro(); as c) {
               @if (!c.encontrado || c.inmuebles.length === 0) {
-                <div class="no-data">
+                <p class="no-data">
                   No se encontraron datos catastrales para esta dirección.
-                  @if (c.error) { <br><span style="font-size:11px;opacity:.7">{{ c.error }}</span> }
-                </div>
+                  @if (c.error) { <br><small>{{ c.error }}</small> }
+                </p>
               } @else {
                 @for (inm of c.inmuebles; track inm.referenciaCatastral) {
                   <div class="catastro-item">
-                    <div class="grid-datos">
+                    <div class="data-grid">
                       <div class="dato">
-                        <div class="dato-label">Ref. Catastral</div>
+                        <div class="dato-label">REF. CATASTRAL</div>
                         <div class="dato-value mono">{{ inm.referenciaCatastral }}</div>
                       </div>
-                      <div class="dato">
-                        <div class="dato-label">Uso</div>
-                        <div class="dato-value">{{ inm.uso }}</div>
-                      </div>
-                      <div class="dato">
-                        <div class="dato-label">Superficie</div>
-                        <div class="dato-value">{{ inm.superficieM2 | number:'1.0-0':'es-ES' }} m²</div>
-                      </div>
-                      <div class="dato">
-                        <div class="dato-label">Año construcción</div>
-                        <div class="dato-value">{{ inm.anoConstruccion ?? '—' }}</div>
-                      </div>
-                      <div class="dato span-2">
-                        <div class="dato-label">Dirección</div>
+                      <div class="dato"><div class="dato-label">USO</div><div class="dato-value">{{ inm.uso }}</div></div>
+                      <div class="dato"><div class="dato-label">SUPERFICIE</div><div class="dato-value">{{ inm.superficieM2 | number:'1.0-0':'es-ES' }} m²</div></div>
+                      <div class="dato"><div class="dato-label">AÑO</div><div class="dato-value">{{ inm.anoConstruccion ?? '—' }}</div></div>
+                      <div class="dato dato-wide">
+                        <div class="dato-label">DIRECCIÓN</div>
                         <div class="dato-value">{{ inm.direccion ?? '—' }}</div>
-                      </div>
-                      <div class="dato">
-                        <div class="dato-label">C. Postal</div>
-                        <div class="dato-value">{{ inm.codigoPostal ?? '—' }}</div>
-                      </div>
-                      <div class="dato">
-                        <div class="dato-label">Planta / Puerta</div>
-                        <div class="dato-value">{{ inm.planta ?? '—' }} / {{ inm.puerta ?? '—' }}</div>
                       </div>
                     </div>
                     @if (inm.urlCatastro) {
-                      <a [href]="inm.urlCatastro" target="_blank" rel="noopener noreferrer" class="btn-catastro">
-                        Ver en Catastro ↗
-                      </a>
+                      <a [href]="inm.urlCatastro" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="margin-top:12px">Ver en Catastro ↗</a>
                     }
                   </div>
                 }
               }
-            }
-
-            @if (!catastroFicha() && !catastro()) {
-              <div class="no-data">No hay datos catastrales disponibles.</div>
+            } @else {
+              <p class="no-data">No hay datos catastrales disponibles.</p>
             }
           }
         </div>
 
-        <!-- ── VALOR DE REFERENCIA AEAT ────────────────────────────────── -->
+        <!-- Valor referencia AEAT -->
         @if (valorRef()) {
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title"><span class="section-icon">📜</span> Valor de Referencia AEAT {{ valorRef()!.anno }}</div>
+          <div class="expert-card">
+            <div class="expert-header">
+              <div class="expert-title">
+                <span class="section-icon">📜</span>
+                Valor de Referencia AEAT {{ valorRef()!.anno }}
+              </div>
             </div>
             @if (valorRef()!.valorReferencia) {
-              <div class="vref-grid">
+              <div class="data-grid">
                 <div class="dato">
-                  <div class="dato-label">Valor de referencia</div>
-                  <div class="dato-value purple">{{ valorRef()!.valorReferencia | number:'1.0-0':'es-ES' }} €</div>
+                  <div class="dato-label">VALOR DE REFERENCIA</div>
+                  <div class="dato-value purple-val">{{ valorRef()!.valorReferencia | number:'1.0-0':'es-ES' }} €</div>
                 </div>
                 @if (d.precioTotal) {
                   <div class="dato">
-                    <div class="dato-label">Precio asking</div>
-                    <div class="dato-value accent">{{ d.precioTotal | number:'1.0-0':'es-ES' }} €</div>
+                    <div class="dato-label">PRECIO ASKING</div>
+                    <div class="dato-value">{{ d.precioTotal | number:'1.0-0':'es-ES' }} €</div>
                   </div>
                   <div class="dato">
-                    <div class="dato-label">Diferencia vs. ref.</div>
+                    <div class="dato-label">DIFERENCIA VS REF.</div>
                     <div class="dato-value" [ngClass]="difVrefClass(d.precioTotal, valorRef()!.valorReferencia!)">
                       {{ difVref(d.precioTotal, valorRef()!.valorReferencia!) | number:'1.0-0':'es-ES' }} €
                       ({{ difVrefPct(d.precioTotal, valorRef()!.valorReferencia!) | number:'1.1-1':'es-ES' }}%)
@@ -286,19 +361,20 @@ import { environment } from '../../../environments/environment';
                   </div>
                 }
               </div>
-              <p class="vref-desc">
-                Base de cotización para ITP y AJD (AEAT). Por encima = posible sobreprecio fiscal.
-              </p>
+              <p class="data-note">Base de cotización para ITP y AJD (AEAT). Por encima = posible sobreprecio fiscal.</p>
             } @else {
-              <div class="no-data">{{ valorRef()!.mensaje }}</div>
+              <p class="no-data">{{ valorRef()!.mensaje }}</p>
             }
           </div>
         }
 
-        <!-- ── TASACIÓN AVM ─────────────────────────────────────────────── -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title"><span class="section-icon">🤖</span> Tasación Automática (AVM)</div>
+        <!-- AVM detail -->
+        <div class="expert-card">
+          <div class="expert-header">
+            <div class="expert-title">
+              <span class="section-icon">🤖</span>
+              Tasación Automática (AVM)
+            </div>
             @if (!avmLoading() && !avm()) {
               <button class="btn-calcular" (click)="calcularAvm(d)">Calcular estimación</button>
             }
@@ -307,208 +383,427 @@ import { environment } from '../../../environments/environment';
           @if (avmLoading()) {
             <div class="loading-inline"><div class="spinner-sm"></div> Calculando estimación de valor…</div>
           } @else if (avm(); as est) {
-            <div class="avm-result">
-              <div class="avm-precio-row">
-                <div>
-                  <div class="avm-label">Valor estimado de mercado</div>
-                  <div class="avm-precio">{{ est.precioEstimado | number:'1.0-0':'es-ES' }} €</div>
-                </div>
-                <div class="avm-rango">
-                  <div class="avm-label">Rango fiable</div>
-                  <div class="avm-rango-val">
-                    {{ est.rangoMin | number:'1.0-0':'es-ES' }} € — {{ est.rangoMax | number:'1.0-0':'es-ES' }} €
-                  </div>
-                </div>
-                @if (d.precioTotal) {
-                  <div>
-                    <div class="avm-label">Diferencia vs. precio pedido</div>
-                    <div class="avm-dif" [class.positivo]="d.precioTotal > est.precioEstimado" [class.negativo]="d.precioTotal <= est.precioEstimado">
-                      {{ difAvm(d.precioTotal, est.precioEstimado) | number:'1.0-0':'es-ES' }} €
-                      ({{ difAvmPct(d.precioTotal, est.precioEstimado) | number:'1.1-1':'es-ES' }}%)
-                    </div>
-                  </div>
-                }
+            <div class="avm-hero">
+              <div class="avm-col">
+                <div class="dato-label">VALOR ESTIMADO</div>
+                <div class="avm-price">{{ est.precioEstimado | number:'1.0-0':'es-ES' }} €</div>
               </div>
-              <p class="avm-metodo">{{ est.metodologia }}</p>
-
-              @if (est.comparables.length > 0) {
-                <div class="comparables">
-                  <div class="comparables-title">Comparables usados ({{ est.comparablesUsados }} total)</div>
-                  <div class="comparables-list">
-                    @for (c of est.comparables; track c.id) {
-                      <div class="comp-row">
-                        <span class="comp-precio">{{ c.precioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
-                        <span class="comp-meta">
-                          @if (c.superficieM2) { {{ c.superficieM2 | number:'1.0-0':'es-ES' }} m² · }
-                          @if (c.habitaciones) { {{ c.habitaciones }} hab · }
-                          {{ c.fuente }}
-                          @if (c.distanciaM > 0) { · {{ c.distanciaM | number:'1.0-0':'es-ES' }}m }
-                        </span>
-                        <a [href]="c.url" target="_blank" class="comp-link">Ver →</a>
-                      </div>
-                    }
+              <div class="avm-col">
+                <div class="dato-label">RANGO FIABLE</div>
+                <div class="avm-range">{{ est.rangoMin | number:'1.0-0':'es-ES' }} — {{ est.rangoMax | number:'1.0-0':'es-ES' }} €</div>
+              </div>
+              @if (d.precioTotal) {
+                <div class="avm-col">
+                  <div class="dato-label">DIF. VS ASKING</div>
+                  <div class="avm-dif" [class.red-val]="d.precioTotal > est.precioEstimado" [class.green-val]="d.precioTotal <= est.precioEstimado">
+                    {{ difAvm(d.precioTotal, est.precioEstimado) | number:'1.0-0':'es-ES' }} €
+                    ({{ difAvmPct(d.precioTotal, est.precioEstimado) | number:'1.1-1':'es-ES' }}%)
                   </div>
                 </div>
               }
             </div>
-          } @else if (!avmLoading()) {
-            <div class="avm-empty">
+            <p class="data-note">{{ est.metodologia }}</p>
+
+            @if (est.comparables.length > 0) {
+              <div class="comparables-section">
+                <div class="comparables-title">Comparables utilizados ({{ est.comparablesUsados }})</div>
+                @for (c of est.comparables; track c.id) {
+                  <div class="comp-row">
+                    <span class="comp-price">{{ c.precioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
+                    <span class="comp-meta">
+                      @if (c.superficieM2) { {{ c.superficieM2 | number:'1.0-0':'es-ES' }} m² · }
+                      @if (c.habitaciones) { {{ c.habitaciones }} hab · }
+                      {{ c.fuente }}
+                      @if (c.distanciaM > 0) { · {{ c.distanciaM | number:'1.0-0':'es-ES' }}m }
+                    </span>
+                    <a [href]="c.url" target="_blank" class="comp-link">Ver →</a>
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            <div class="avm-cta">
               <p>Estimación AVM basada en comparables reales de mercado y datos notariales de la zona.</p>
-              <button class="btn-calcular-lg" (click)="calcularAvm(d)">Calcular ahora</button>
+              <button class="btn-calcular" (click)="calcularAvm(d)">Calcular ahora</button>
             </div>
           }
         </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             GEMINI — ANÁLISIS DE ZONA IA
+        ══════════════════════════════════════════════════════════════════ -->
+        @if (geminiLoading()) {
+          <div class="expert-card gemini-card">
+            <div class="expert-header">
+              <div class="expert-title">
+                <span class="section-icon">✨</span>
+                Análisis de Zona IA
+                <span class="gemini-badge">Gemini</span>
+              </div>
+            </div>
+            <div class="loading-inline"><div class="spinner-sm"></div> Analizando la zona con Gemini…</div>
+          </div>
+        } @else if (geminiAnalysis(); as g) {
+          <div class="expert-card gemini-card">
+            <div class="expert-header">
+              <div class="expert-title">
+                <span class="section-icon">✨</span>
+                Análisis de Zona IA
+                <span class="gemini-badge">Gemini</span>
+              </div>
+              <div class="gemini-score" [ngClass]="geminiScoreClass(g.score)">
+                <span class="gemini-score-num">{{ g.score }}/10</span>
+                <span class="gemini-score-label">{{ g.calidad_zona }}</span>
+              </div>
+            </div>
+            <p class="gemini-resumen">{{ g.resumen }}</p>
+            @if (g.transporte.length > 0) {
+              <div class="gemini-section">
+                <div class="gemini-section-title">🚇 Transporte</div>
+                <div class="gemini-chips">
+                  @for (t of g.transporte; track t) {
+                    <span class="gemini-chip">{{ t }}</span>
+                  }
+                </div>
+              </div>
+            }
+            @if (g.puntos_interes.length > 0) {
+              <div class="gemini-section">
+                <div class="gemini-section-title">📍 Puntos de interés</div>
+                <div class="gemini-chips">
+                  @for (p of g.puntos_interes; track p) {
+                    <span class="gemini-chip gemini-chip-poi">{{ p }}</span>
+                  }
+                </div>
+              </div>
+            }
+            <div class="gemini-pros-contras">
+              <div class="gemini-pros">
+                <div class="gemini-section-title">✅ Pros</div>
+                @for (pro of g.pros; track pro) {
+                  <div class="gemini-item">{{ pro }}</div>
+                }
+              </div>
+              <div class="gemini-contras">
+                <div class="gemini-section-title">⚠️ Contras</div>
+                @for (con of g.contras; track con) {
+                  <div class="gemini-item">{{ con }}</div>
+                }
+              </div>
+            </div>
+            <p class="data-note gemini-note">Análisis generativo basado en conocimiento general. Verifica siempre in situ.</p>
+          </div>
+        } @else if (geminiEnabled) {
+          <!-- geminiEnabled but failed silently — do not show anything -->
+        }
 
       }
     </div>
   `,
   styles: [`
-    .page { padding: 24px 32px; max-width: 960px; }
-
-    .back-link {
-      color: var(--text-secondary); text-decoration: none; font-size: 13px;
-      display: inline-block; margin-bottom: 16px;
+    /* ── PAGE ────────────────────────── */
+    .page {
+      padding: 24px 32px;
+      max-width: 900px;
+      margin: 0 auto;
+      font-family: 'Inter', sans-serif;
     }
-    .back-link:hover { color: var(--accent); }
 
-    .page-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
+    /* TOP BAR */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 24px;
     }
-    .page-title { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-    .page-sub { color: var(--text-secondary); font-size: 13px; margin-top: 4px; max-width: 600px; }
-
-    .fuente-badge {
-      padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 13px; font-weight: 600; color: #6B7280;
+      text-decoration: none;
+      padding: 7px 14px; border-radius: 8px; border: 1px solid #E5E7EB;
+      transition: background .15s, color .15s;
     }
-    .fuente-badge.fotocasa { background: rgba(232,197,71,.15); color: #e8c547; }
-    .fuente-badge.idealista { background: rgba(79,209,165,.15); color: #4fd1a5; }
+    .back-btn:hover { background: #F9FAFB; color: #374151; }
+    .fuente-chip {
+      padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .fuente-chip.fotocasa { background: #FEF3C7; color: #D97706; }
+    .fuente-chip.idealista { background: #D1FAE5; color: #059669; }
 
-    .card {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    /* STATE SCREENS */
+    .state-center {
+      text-align: center; padding: 80px 0;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      color: #6B7280;
+    }
+    .error-icon { font-size: 32px; }
+    .btn-ghost {
+      display: inline-block; padding: 8px 20px; border-radius: 8px;
+      border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151;
+      text-decoration: none; transition: background .15s;
+    }
+    .btn-ghost:hover { background: #F9FAFB; }
+
+    /* ── LAYER 1: VERDICT HERO ───────── */
+    .verdict-hero {
+      border-radius: 16px; padding: 28px 28px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px; gap: 20px;
+    }
+    .verdict-hero.green-verdict { background: #F0FDF4; border: 1.5px solid #BBF7D0; }
+    .verdict-hero.yellow-verdict { background: #FFFBEB; border: 1.5px solid #FDE68A; }
+    .verdict-hero.red-verdict { background: #FEF2F2; border: 1.5px solid #FECACA; }
+    .verdict-hero.neutral-verdict { background: #F9FAFB; border: 1.5px solid #E5E7EB; }
+
+    .verdict-left { display: flex; flex-direction: column; gap: 6px; }
+    .verdict-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700;
+    }
+    .green-verdict .verdict-badge { color: #15803D; }
+    .yellow-verdict .verdict-badge { color: #D97706; }
+    .red-verdict .verdict-badge { color: #B91C1C; }
+    .neutral-verdict .verdict-badge { color: #374151; }
+    .verdict-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .green-verdict .verdict-dot { background: #16A34A; box-shadow: 0 0 0 3px #BBF7D0; }
+    .yellow-verdict .verdict-dot { background: #F59E0B; box-shadow: 0 0 0 3px #FDE68A; }
+    .red-verdict .verdict-dot { background: #DC2626; box-shadow: 0 0 0 3px #FECACA; }
+    .neutral-verdict .verdict-dot { background: #9CA3AF; }
+
+    .verdict-pct {
+      font-size: 44px; font-weight: 900; letter-spacing: -0.05em; line-height: 1;
+    }
+    .green-verdict .verdict-pct { color: #15803D; }
+    .yellow-verdict .verdict-pct { color: #D97706; }
+    .red-verdict .verdict-pct { color: #B91C1C; }
+    .neutral-verdict .verdict-pct { color: #374151; }
+
+    .verdict-sub { font-size: 13px; color: #6B7280; max-width: 280px; line-height: 1.5; margin: 0; }
+
+    .verdict-right {
+      display: flex; flex-direction: column; gap: 14px; text-align: right;
+    }
+    .verdict-key-price { display: flex; flex-direction: column; gap: 3px; }
+    .vkp-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: .06em; }
+    .vkp-value { font-size: 20px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.03em; }
+    .avm-v { color: #2563EB; }
+    .not-v { color: #16A34A; }
+
+    /* ── LAYER 2: PRICE COMPARISON ──── */
+    .layer2-card {
+      background: #fff; border: 1px solid #E5E7EB; border-radius: 14px;
       padding: 20px 24px; margin-bottom: 16px;
     }
-    .card-header {
-      display: flex; justify-content: space-between; align-items: center;
+    .l2-title {
+      font-size: 14px; font-weight: 600; color: #1A1A1A;
+      display: flex; align-items: center; gap: 8px;
       margin-bottom: 16px;
     }
-    .card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .section-icon { font-size: 18px; }
+    .section-icon { font-size: 16px; }
+    .l2-grid {
+      display: flex; gap: 0; align-items: stretch;
+      border: 1px solid #F3F4F6; border-radius: 10px; overflow: hidden;
+    }
+    .l2-col {
+      flex: 1; padding: 16px;
+      border-right: 1px solid #F3F4F6;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .l2-col:last-child { border-right: none; }
+    .l2-col-header { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+    .l2-source-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .portal-dot { background: #2563EB; }
+    .notarial-dot { background: #16A34A; }
+    .avm-dot { background: #8B5CF6; }
+    .l2-source { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9CA3AF; }
+    .l2-price { font-size: 18px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.03em; }
+    .l2-price-m2 { font-size: 11px; color: #6B7280; }
+    .l2-sub { font-size: 10px; color: #9CA3AF; }
+    .l2-gap-badge {
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+      padding: 14px 16px; min-width: 80px;
+      border-right: 1px solid #F3F4F6;
+    }
+    .l2-gap-badge:last-child { border-right: none; }
+    .l2-gap-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9CA3AF; }
+    .l2-gap-pct { font-size: 18px; font-weight: 800; }
+    .l2-gap-badge.gap-high .l2-gap-pct { color: #DC2626; }
+    .l2-gap-badge.gap-med .l2-gap-pct { color: #D97706; }
+    .l2-gap-badge.gap-low .l2-gap-pct { color: #16A34A; }
+    .l2-loading {
+      display: flex; flex-direction: row; align-items: center; gap: 10px;
+      color: #9CA3AF; font-size: 12px;
+    }
+
+    /* ── LAYER 3: EXPERT CARDS ───────── */
+    .expert-card {
+      background: #fff; border: 1px solid #E5E7EB; border-radius: 14px;
+      padding: 20px 24px; margin-bottom: 12px;
+    }
+    .expert-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .expert-title {
+      font-size: 14px; font-weight: 600; color: #1A1A1A;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .period-badge {
+      padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600;
+      background: #D1FAE5; color: #059669;
+    }
 
     .btn-portal {
-      padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
-      text-decoration: none; background: var(--accent); color: #000; transition: background .15s;
+      padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      text-decoration: none; background: #2563EB; color: #fff; transition: background .15s;
     }
-    .btn-portal:hover { background: #d4b23e; }
-    .btn-catastro {
-      display: inline-block; padding: 5px 12px; border-radius: 6px; font-size: 12px;
+    .btn-portal:hover { background: #1D4ED8; }
+    .btn-secondary {
+      display: inline-block; padding: 6px 14px; border-radius: 8px; font-size: 12px;
       font-weight: 600; text-decoration: none;
-      background: rgba(79,209,165,.12); color: #4fd1a5; transition: background .15s;
+      background: #F9FAFB; color: #374151;
+      border: 1px solid #E5E7EB;
+      transition: background .15s;
     }
-    .btn-catastro:hover { background: rgba(79,209,165,.22); }
-
-    .periodo-badge {
-      padding: 3px 10px; border-radius: 4px; font-size: 11px;
-      background: rgba(79,209,165,.12); color: var(--notarial);
+    .btn-secondary:hover { background: #F3F4F6; }
+    .btn-calcular {
+      padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      background: #EFF6FF; color: #2563EB;
+      border: 1px solid #BFDBFE; cursor: pointer; transition: background .15s;
     }
+    .btn-calcular:hover { background: #DBEAFE; }
 
-    .grid-datos {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    /* ── DATA GRID ───────────────────── */
+    .data-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;
     }
-    .dato.span-2 { grid-column: span 2; }
-    .dato-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-    .dato-value { font-size: 16px; font-weight: 600; }
-    .dato-value.accent { color: var(--accent); }
-    .dato-value.notarial { color: var(--notarial); }
-    .dato-value.purple { color: #a78bfa; }
-    .dato-value.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-    .dato-value.gap-high { color: #f87171; }
-    .dato-value.gap-med { color: #e8c547; }
-    .dato-value.gap-low { color: #4fd1a5; }
-
-    .gap-bar-wrap { margin-top: 20px; padding: 16px; background: var(--bg3); border-radius: 8px; }
-    .gap-bar-labels { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-    .notarial-label { color: var(--notarial); }
-    .asking-label { color: var(--accent); }
-    .gap-bar { height: 8px; border-radius: 4px; background: var(--accent); position: relative; overflow: hidden; }
-    .gap-bar-notarial { position: absolute; left: 0; top: 0; height: 100%; background: var(--notarial); border-radius: 4px 0 0 4px; }
-    .gap-bar-pct { text-align: right; font-size: 13px; font-weight: 600; margin-top: 6px; }
-
-    .catastro-rica { }
-    .catastro-item { padding: 16px 0; }
-    .catastro-item:not(:last-child) { border-bottom: 1px solid var(--border); }
-
-    /* Valor referencia */
-    .vref-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 10px; }
-    .vref-desc { font-size: 11.5px; color: var(--text-muted); margin: 0; font-style: italic; }
-
-    /* AVM */
-    .avm-result { }
-    .avm-precio-row {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
-      background: var(--bg3); border-radius: 10px; padding: 16px; margin-bottom: 12px;
+    .dato { display: flex; flex-direction: column; gap: 3px; }
+    .dato-wide { grid-column: span 2; }
+    .dato-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; color: #9CA3AF;
     }
-    .avm-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
-    .avm-precio { font-size: 24px; font-weight: 700; color: var(--accent); }
-    .avm-rango-val { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-    .avm-dif { font-size: 15px; font-weight: 700; }
-    .avm-dif.positivo { color: #f87171; }
-    .avm-dif.negativo { color: #4fd1a5; }
-    .avm-metodo { font-size: 11.5px; color: var(--text-muted); margin: 0 0 12px; font-style: italic; }
+    .dato-value { font-size: 15px; font-weight: 600; color: #1A1A1A; }
+    .dato-value.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .dato-value.green-val { color: #16A34A; }
+    .dato-value.red-val { color: #DC2626; }
+    .dato-value.purple-val { color: #7C3AED; }
+    .gap-high { color: #DC2626 !important; }
+    .gap-med  { color: #D97706 !important; }
+    .gap-low  { color: #16A34A !important; }
 
-    .comparables { }
-    .comparables-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-    .comparables-list { display: flex; flex-direction: column; gap: 0; }
+    /* GAP BAR */
+    .gap-bar-wrap {
+      margin-top: 18px; padding: 14px 16px;
+      background: #F9FAFB; border-radius: 10px; border: 1px solid #F3F4F6;
+    }
+    .gap-bar-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .gap-bar-label { font-size: 11px; font-weight: 600; }
+    .green-label { color: #16A34A; }
+    .blue-label { color: #2563EB; }
+    .gap-track {
+      height: 8px; border-radius: 4px; background: #2563EB; position: relative; overflow: hidden;
+    }
+    .gap-fill {
+      position: absolute; left: 0; top: 0; height: 100%;
+      background: #16A34A; border-radius: 4px 0 0 4px;
+    }
+    .gap-bar-pct { text-align: right; font-size: 12px; font-weight: 700; margin-top: 6px; }
+
+    /* AVM HERO */
+    .avm-hero {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+      background: #F9FAFB; border-radius: 10px; padding: 16px; margin-bottom: 12px;
+      border: 1px solid #F3F4F6;
+    }
+    .avm-col { display: flex; flex-direction: column; gap: 4px; }
+    .avm-price { font-size: 24px; font-weight: 800; color: #2563EB; letter-spacing: -0.04em; }
+    .avm-range { font-size: 13px; font-weight: 600; color: #374151; }
+    .avm-dif { font-size: 16px; font-weight: 700; }
+
+    /* Comparables */
+    .comparables-section { }
+    .comparables-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+      color: #9CA3AF; margin-bottom: 8px; margin-top: 4px;
+    }
     .comp-row {
       display: flex; align-items: center; gap: 12px;
-      padding: 7px 0; border-bottom: 1px solid var(--border);
+      padding: 8px 0; border-bottom: 1px solid #F3F4F6;
     }
     .comp-row:last-child { border-bottom: none; }
-    .comp-precio { font-size: 13px; font-weight: 700; color: var(--text-primary); min-width: 90px; }
-    .comp-meta { font-size: 11px; color: var(--text-muted); flex: 1; }
-    .comp-link { font-size: 11px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+    .comp-price { font-size: 13px; font-weight: 700; color: #1A1A1A; min-width: 90px; }
+    .comp-meta { font-size: 11px; color: #9CA3AF; flex: 1; }
+    .comp-link { font-size: 11px; color: #2563EB; text-decoration: none; white-space: nowrap; }
+    .comp-link:hover { text-decoration: underline; }
 
-    .avm-empty { text-align: center; padding: 16px; }
-    .avm-empty p { color: var(--text-secondary); font-size: 13px; margin: 0 0 12px; }
+    .avm-cta { text-align: center; padding: 12px 0; }
+    .avm-cta p { font-size: 13px; color: #6B7280; margin: 0 0 12px; }
 
-    .btn-calcular {
-      padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
-      background: rgba(232,197,71,.12); color: var(--accent);
-      border: 1px solid rgba(232,197,71,.3); cursor: pointer; transition: background .15s;
-    }
-    .btn-calcular:hover { background: rgba(232,197,71,.22); }
-    .btn-calcular-lg {
-      padding: 9px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
-      background: rgba(232,197,71,.12); color: var(--accent);
-      border: 1px solid rgba(232,197,71,.3); cursor: pointer; transition: background .15s;
-    }
-    .btn-calcular-lg:hover { background: rgba(232,197,71,.22); }
+    /* Catastro */
+    .catastro-item { padding: 12px 0; }
+    .catastro-item:not(:last-child) { border-bottom: 1px solid #F3F4F6; }
 
-    .no-data { color: var(--text-secondary); font-size: 13px; padding: 12px 0; }
-    .loading-state, .error-state { text-align: center; padding: 60px 0; color: var(--text-secondary); }
-    .loading-inline { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 13px; padding: 12px 0; }
+    /* Misc */
+    .no-data { font-size: 13px; color: #9CA3AF; padding: 8px 0; }
+    .data-note { font-size: 11.5px; color: #9CA3AF; font-style: italic; margin: 4px 0 0; }
+    .loading-inline { display: flex; align-items: center; gap: 10px; color: #9CA3AF; font-size: 13px; padding: 12px 0; }
 
-    .spinner, .spinner-sm {
-      border: 2px solid var(--border); border-top-color: var(--accent);
+    .spinner {
+      width: 32px; height: 32px; margin: 0 auto 4px;
+      border: 3px solid #E5E7EB; border-top-color: #2563EB;
       border-radius: 50%; animation: spin .8s linear infinite;
     }
-    .spinner { width: 32px; height: 32px; margin: 0 auto 12px; border-width: 3px; }
-    .spinner-sm { width: 16px; height: 16px; flex-shrink: 0; }
+    .spinner-sm {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 2px solid #E5E7EB; border-top-color: #2563EB;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .btn-back {
-      display: inline-block; margin-top: 12px; padding: 8px 20px;
-      background: var(--accent); color: #000; border-radius: 6px;
-      text-decoration: none; font-weight: 600; font-size: 13px;
+    /* ── Gemini Zone Analysis ──── */
+    .gemini-card { border-color: #EDE9FE; background: linear-gradient(135deg, #FAFAFF 0%, #F5F3FF 100%); }
+    .gemini-badge {
+      padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff;
     }
+    .gemini-score {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+    }
+    .gemini-score-num { font-size: 20px; font-weight: 800; letter-spacing: -0.04em; }
+    .gemini-score-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .score-high .gemini-score-num, .score-high .gemini-score-label { color: #16A34A; }
+    .score-med  .gemini-score-num, .score-med  .gemini-score-label { color: #D97706; }
+    .score-low  .gemini-score-num, .score-low  .gemini-score-label { color: #DC2626; }
+    .gemini-resumen { font-size: 13.5px; line-height: 1.6; color: #374151; margin: 0 0 16px; }
+    .gemini-section { margin-bottom: 14px; }
+    .gemini-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #6B7280; margin-bottom: 8px;
+    }
+    .gemini-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .gemini-chip {
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500;
+      background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE;
+    }
+    .gemini-chip-poi { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
+    .gemini-pros-contras { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .gemini-pros, .gemini-contras { display: flex; flex-direction: column; gap: 6px; }
+    .gemini-item {
+      font-size: 12.5px; color: #374151; padding: 6px 10px;
+      border-radius: 8px; border: 1px solid #F3F4F6; background: #fff;
+    }
+    .gemini-pros .gemini-item { border-color: #D1FAE5; }
+    .gemini-contras .gemini-item { border-color: #FEE2E2; }
+    .gemini-note { margin-top: 12px; }
 
     @media (max-width: 700px) {
       .page { padding: 16px; }
-      .grid-datos { grid-template-columns: repeat(2,1fr); }
-      .dato.span-2 { grid-column: span 2; }
-      .avm-precio-row { grid-template-columns: 1fr; }
-      .vref-grid { grid-template-columns: 1fr 1fr; }
+      .l2-grid { flex-direction: column; }
+      .avm-hero { grid-template-columns: 1fr; }
+      .verdict-hero { flex-direction: column; text-align: center; }
+      .verdict-right { text-align: center; }
     }
   `]
 })
@@ -528,6 +823,9 @@ export class FichaInmuebleComponent implements OnInit {
   error          = signal<string | null>(null);
   catastroLoading = signal(true);
   avmLoading     = signal(false);
+  geminiAnalysis = signal<GeminiZoneAnalysis | null>(null);
+  geminiLoading  = signal(false);
+  readonly geminiEnabled = !!environment.geminiApiKey;
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -543,8 +841,9 @@ export class FichaInmuebleComponent implements OnInit {
       next: (d) => {
         this.detalle.set(d);
         this.loading.set(false);
-        // Con los datos del anuncio, lanzar automáticamente el AVM
+        // Con los datos del anuncio, lanzar automáticamente el AVM y el análisis de zona
         this.calcularAvm(d);
+        this.analizarZona(d);
       },
       error: () => {
         this.error.set('No se pudo cargar el detalle del anuncio.');
@@ -590,7 +889,6 @@ export class FichaInmuebleComponent implements OnInit {
   }
 
   calcularAvm(d: AnuncioDetalle): void {
-    if (this.avmLoading()) return;
     this.avmLoading.set(true);
 
     const body = {
@@ -613,6 +911,100 @@ export class FichaInmuebleComponent implements OnInit {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private analizarZona(d: AnuncioDetalle): void {
+    if (!environment.geminiApiKey) return;
+    this.geminiLoading.set(true);
+
+    const prompt = `Analiza la zona para un inmueble en España con estas características:
+- Ciudad: ${d.ciudad}
+- Distrito/Barrio: ${d.distrito ?? 'desconocido'}
+- Tipo de inmueble: ${d.tipoInmueble ?? 'piso'}
+- Superficie: ${d.superficieM2 ?? '?'} m²
+- Habitaciones: ${d.habitaciones ?? '?'}
+- Precio anunciado: ${d.precioTotal ? d.precioTotal.toLocaleString('es-ES') + ' €' : 'desconocido'}
+
+Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exactamente estas claves:
+{
+  "calidad_zona": "Alta|Media-Alta|Media|Media-Baja|Baja",
+  "score": número del 0 al 10,
+  "transporte": ["Metro L1 Sol 400m", "Bus 27 100m"],
+  "puntos_interes": ["Mercado San Miguel 300m", "Parque del Retiro 800m"],
+  "resumen": "Descripción de 2-3 frases sobre la zona",
+  "pros": ["pro 1", "pro 2", "pro 3"],
+  "contras": ["contra 1", "contra 2", "contra 3"]
+}`;
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' }
+    };
+
+    this.http.post<{ candidates: { content: { parts: { text: string }[] } }[] }>(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${environment.geminiApiKey}`,
+      body
+    ).subscribe({
+      next: (res) => {
+        try {
+          const text = res.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+          const data: GeminiZoneAnalysis = JSON.parse(text);
+          this.geminiAnalysis.set(data);
+        } catch {
+          // silently fail — no panel shown
+        }
+        this.geminiLoading.set(false);
+      },
+      error: () => this.geminiLoading.set(false)
+    });
+  }
+
+  geminiScoreClass(score: number): string {
+    if (score >= 7.5) return 'score-high';
+    if (score >= 5)   return 'score-med';
+    return 'score-low';
+  }
+
+  // ── Verdict helpers (Layer 1) ──────────────
+  private verdictPct(d: AnuncioDetalle): number | null {
+    const est = this.avm();
+    if (est?.precioEstimado && d.precioTotal) {
+      return this.difAvmPct(d.precioTotal, est.precioEstimado);
+    }
+    if (d.gapPct != null) return d.gapPct;
+    return null;
+  }
+
+  verdictColor(d: AnuncioDetalle): string {
+    const pct = this.verdictPct(d);
+    if (pct == null) return 'neutral-verdict';
+    if (pct <= -5) return 'green-verdict';
+    if (pct < 10) return 'yellow-verdict';
+    return 'red-verdict';
+  }
+
+  verdictLabel(d: AnuncioDetalle): string {
+    const pct = this.verdictPct(d);
+    if (pct == null) return 'Sin datos suficientes';
+    if (pct <= -5) return 'Infravalorado';
+    if (pct < 10) return 'Precio de mercado';
+    return 'Precio elevado';
+  }
+
+  verdictPctText(d: AnuncioDetalle): string {
+    const pct = this.verdictPct(d);
+    if (pct == null) return '—';
+    return (pct > 0 ? '+' : '') + pct.toFixed(1) + '%';
+  }
+
+  verdictSub(d: AnuncioDetalle): string {
+    const est = this.avm();
+    const pct = this.verdictPct(d);
+    if (pct == null) return 'Calcula el AVM para obtener un veredicto completo.';
+    const source = est ? 'según el modelo AVM' : 'respecto al precio notarial de la zona';
+    if (pct <= -5) return `Este inmueble está ${Math.abs(pct).toFixed(1)}% por debajo del valor estimado ${source}.`;
+    if (pct < 10) return `El precio pedido está en línea con el mercado (${pct > 0 ? '+' : ''}${pct.toFixed(1)}%) ${source}.`;
+    return `Este inmueble está ${pct.toFixed(1)}% por encima del valor estimado ${source}.`;
+  }
 
   getGapClass(gap: number | null): string {
     if (!gap) return '';

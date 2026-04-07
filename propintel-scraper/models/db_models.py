@@ -65,6 +65,7 @@ class AnuncioDB(Base):
     lon             = Column(Float, nullable=True)
     activo          = Column(Boolean, default=True)
     fecha_scraping  = Column(DateTime, default=datetime.utcnow, index=True)
+    canonical_key   = Column(String(200), nullable=True, index=True)
 
     __table_args__ = (
         Index("ix_anuncio_ciudad_distrito", "ciudad", "distrito"),

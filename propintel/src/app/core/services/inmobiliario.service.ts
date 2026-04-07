@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin, of, catchError } from 'rxjs';
-import { CiudadData, HistoricoMes, DistritoGap, Transaccion, Municipio, AnuncioDetalle, CatastroResult, NotarialZona } from '../models/inmobiliario.model';
+import { CiudadData, HistoricoMes, DistritoGap, Transaccion, Municipio, AnuncioDetalle, CatastroResult, NotarialZona, AnuncioResumen } from '../models/inmobiliario.model';
 import { environment } from '../../../environments/environment';
 
 // ── DTOs que devuelve la API .NET ──────────────────────────────────────────
@@ -253,6 +253,13 @@ export class InmobiliarioService {
 
   getCatastro(anuncioId: number) {
     return this.http.get<CatastroResult>(`${this.apiBase}/anuncios/${anuncioId}/catastro`, this.authHeaders);
+  }
+
+  getAnunciosPorCiudad(ciudad: string, page = 1, size = 20) {
+    return this.http.get<AnuncioResumen[]>(`${this.apiBase}/anuncios/ciudad/${ciudad}`, {
+      ...this.authHeaders,
+      params: { page, size }
+    });
   }
 
   private buildEmpty(id: string, nombre: string): CiudadData {

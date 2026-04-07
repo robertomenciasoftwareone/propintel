@@ -79,3 +79,7 @@ C:\Proyectos\PropIntel\PropIntel.Api\bin\release_check\Npgsql.EntityFrameworkCor
 C:\Proyectos\PropIntel\PropIntel.Api\bin\release_check\Swashbuckle.AspNetCore.Swagger.dll
 C:\Proyectos\PropIntel\PropIntel.Api\bin\release_check\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Proyectos\PropIntel\PropIntel.Api\bin\release_check\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Proyectos\PropIntel\PropIntel.Api\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.InMemory.dll
+C:\Proyectos\PropIntel\PropIntel.Api\bin\Debug\net8.0\Seed\anuncios_fotocasa_madrid.json
+C:\Proyectos\PropIntel\PropIntel.Api\bin\Debug\net8.0\Seed\datos_notariales_madrid.json
+C:\Proyectos\PropIntel\PropIntel.Api\bin\Debug\net8.0\Seed\gaps_madrid.json

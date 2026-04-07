@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS anuncios (
     codigo_postal   VARCHAR(10),
     lat             DOUBLE PRECISION,
     lon             DOUBLE PRECISION,
+    canonical_key   VARCHAR(200),
     activo          BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_scraping  TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -56,6 +57,8 @@ CREATE INDEX IF NOT EXISTS ix_anuncios_ciudad_distrito
     ON anuncios (ciudad, distrito);
 CREATE INDEX IF NOT EXISTS ix_anuncios_fecha
     ON anuncios (fecha_scraping DESC);
+CREATE INDEX IF NOT EXISTS ix_anuncios_canonical_key
+    ON anuncios (canonical_key);
 
 CREATE TABLE IF NOT EXISTS gap_analisis (
     id                      SERIAL PRIMARY KEY,
@@ -108,4 +111,39 @@ CREATE TABLE IF NOT EXISTS disparos_alertas (
 CREATE INDEX IF NOT EXISTS ix_disparos_creado
     ON disparos_alertas (creado_en DESC);
 
+CREATE TABLE IF NOT EXISTS analytics_eventos (
+    id              BIGSERIAL PRIMARY KEY,
+    evento          VARCHAR(120) NOT NULL,
+    session_id      VARCHAR(120),
+    user_email      VARCHAR(255),
+    municipio       VARCHAR(120),
+    barrio          VARCHAR(120),
+    payload_json    TEXT,
+    creado_en       TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ix_analytics_evento_fecha
+    ON analytics_eventos (evento, creado_en DESC);
+
+CREATE TABLE IF NOT EXISTS newsletter_suscripciones (
+    id                  BIGSERIAL PRIMARY KEY,
+    email               VARCHAR(255) NOT NULL UNIQUE,
+    nombre              VARCHAR(120),
+    municipio_interes   VARCHAR(120),
+    barrio_interes      VARCHAR(120),
+    activa              BOOLEAN NOT NULL DEFAULT TRUE,
+    creada_en           TIMESTAMP NOT NULL DEFAULT NOW(),
+    actualizada_en      TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS ix_newsletter_activa
+    ON newsletter_suscripciones (activa);
+
 \echo '✅ Tablas creadas correctamente'
+
+-- ── TABLA USUARIOS ────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS usuarios (
+    id          SERIAL PRIMARY KEY,
+    email       VARCHAR(255) NOT NULL UNIQUE,
+    nombre      VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
+    creado_en   TIMESTAMP DEFAULT NOW()
+);

@@ -1,0 +1,1 @@
+WEB_URL=https://nice-desert-07ca1ce10.2.azurestaticapps.net;LOCALHOST_5050_FOUND=False

@@ -1,7 +1,6 @@
 import { Component, inject, effect, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { InmobiliarioService } from '../../core/services/inmobiliario.service';
-
-declare const ApexCharts: any;
+import ApexCharts from 'apexcharts';
 
 @Component({
   selector: 'app-evolucion-chart',
@@ -53,7 +52,7 @@ export class EvolucionChartComponent implements AfterViewInit, OnDestroy {
 
   private initChart() {
     const d = this.svc.ciudadData();
-    this.chart = new ApexCharts(this.chartEl.nativeElement, this.buildOptions(d));
+    this.chart = new ApexCharts(this.chartEl.nativeElement, this.buildOptions(d) as any);
     this.chart.render();
   }
 

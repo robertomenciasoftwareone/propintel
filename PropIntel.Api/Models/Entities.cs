@@ -55,6 +55,7 @@ public class Anuncio
     public string? Cp { get; set; }
     public double? Lat { get; set; }
     public double? Lon { get; set; }
+    public string? CanonicalKey { get; set; }
 }
 
 [Table("codigos_postales")]
@@ -66,6 +67,32 @@ public class CodigoPostal
     public double? Lat { get; set; }
     public double? Lon { get; set; }
     public string? MunicipioIne { get; set; }
+}
+
+[Table("analytics_eventos")]
+public class AnalyticsEvento
+{
+    [Key] public long Id { get; set; }
+    public string Evento { get; set; } = "";
+    public string? SessionId { get; set; }
+    public string? UserEmail { get; set; }
+    public string? Municipio { get; set; }
+    public string? Barrio { get; set; }
+    public string? PayloadJson { get; set; }
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+}
+
+[Table("newsletter_suscripciones")]
+public class NewsletterSuscripcion
+{
+    [Key] public long Id { get; set; }
+    public string Email { get; set; } = "";
+    public string? Nombre { get; set; }
+    public string? MunicipioInteres { get; set; }
+    public string? BarrioInteres { get; set; }
+    public bool Activa { get; set; } = true;
+    public DateTime CreadaEn { get; set; } = DateTime.UtcNow;
+    public DateTime? ActualizadaEn { get; set; }
 }
 
 [Table("gap_analisis")]
@@ -384,3 +411,63 @@ public record BdeTipoInteresDto(
     double? TipoHipotecario,
     double? Euribor
 );
+
+public record AnalyticsEventCreateDto(
+    string Evento,
+    string? SessionId,
+    string? UserEmail,
+    string? Municipio,
+    string? Barrio,
+    string? PayloadJson
+);
+
+public record NewsletterSubscribeDto(
+    string Email,
+    string? Nombre,
+    string? MunicipioInteres,
+    string? BarrioInteres
+);
+
+public record BusquedasDiaDto(string Fecha, int Count);
+
+public record AdminMetricasDto(
+    int UsuariosRegistrados,
+    int Busquedas,
+    int TiempoMedioSegundos,
+    int PorcentajeUsuariosRecurrentes,
+    int SuscripcionesNewsletter,
+    List<PatronBusquedaDto> Patrones,
+    List<BusquedasDiaDto> BusquedasPorDia
+);
+
+public record PatronBusquedaDto(
+    string Patron,
+    int Veces
+);
+
+public record AsistentePreguntaDto(
+    string Pregunta,
+    string? Municipio,
+    string? Barrio,
+    int? PrecioMaximo,
+    int? Habitaciones
+);
+
+public record AsistenteRespuestaDto(
+    string Respuesta,
+    int TotalResultados,
+    List<AnuncioResumenDto> Muestra
+);
+
+[Table("usuarios")]
+public class Usuario
+{
+    [Key] public int Id { get; set; }
+    public string Email { get; set; } = "";
+    public string Nombre { get; set; } = "";
+    public string? PasswordHash { get; set; }
+    public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
+}
+
+public record LoginRequestDto(string Email, string Nombre);
+public record UsuarioDto(int Id, string Email, string Nombre, DateTime CreadoEn);

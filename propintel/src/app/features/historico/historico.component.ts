@@ -1,8 +1,7 @@
 import { Component, inject, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { NgFor, DecimalPipe } from '@angular/common';
 import { InmobiliarioService } from '../../core/services/inmobiliario.service';
-
-declare const ApexCharts: any;
+import ApexCharts from 'apexcharts';
 
 @Component({
   selector: 'app-historico',
@@ -253,9 +252,9 @@ export class HistoricoComponent implements AfterViewInit, OnDestroy {
 
   private initCharts() {
     const d = this.svc.ciudadData();
-    this.trendChart = new ApexCharts(this.trendChartEl.nativeElement, this.trendOptions(d));
+    this.trendChart = new ApexCharts(this.trendChartEl.nativeElement, this.trendOptions(d) as any);
     this.trendChart.render();
-    this.gapChart = new ApexCharts(this.gapChartEl.nativeElement, this.gapOptions(d));
+    this.gapChart = new ApexCharts(this.gapChartEl.nativeElement, this.gapOptions(d) as any);
     this.gapChart.render();
   }
 

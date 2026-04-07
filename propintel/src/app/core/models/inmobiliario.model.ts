@@ -125,6 +125,20 @@ export interface AnuncioDetalle {
   gapPeriodo: string | null;
 }
 
+export interface AnuncioResumen {
+  id: number;
+  fuente: string;
+  titulo: string | null;
+  precioTotal: number;
+  precioM2: number | null;
+  superficieM2: number | null;
+  habitaciones: number | null;
+  distrito: string | null;
+  tipoInmueble: string | null;
+  fechaScraping: string;
+  url: string;
+}
+
 export interface CatastroInmueble {
   referenciaCatastral: string;
   uso: string;

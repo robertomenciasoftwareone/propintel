@@ -5,6 +5,8 @@ Usa SQLAlchemy con sesiones síncronas (suficiente para el job diario).
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Optional
+import re
+import unicodedata
 from loguru import logger
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -20,6 +22,35 @@ from models.schemas import (
 
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+
+def _normalize_text(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    text = unicodedata.normalize("NFKD", value)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.lower().strip()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def _build_canonical_key(anuncio: AnuncioPortal) -> str:
+    cp_digits = ""
+    if anuncio.codigo_postal:
+        cp_digits = re.sub(r"\D", "", anuncio.codigo_postal)[:5]
+
+    ciudad = _normalize_text(anuncio.ciudad)
+    distrito = _normalize_text(anuncio.distrito)
+    m2_bin = int(round((anuncio.superficie_m2 or 0) / 5.0) * 5)
+    hab = anuncio.habitaciones or 0
+    precio_k = int(round(anuncio.precio_total / 5000.0))
+    geo = ""
+    if anuncio.lat is not None and anuncio.lon is not None:
+        geo = f"{round(anuncio.lat, 3)}:{round(anuncio.lon, 3)}"
+
+    if cp_digits:
+        return f"cp:{cp_digits}|m2:{m2_bin}|h:{hab}|p:{precio_k}|g:{geo}"
+    return f"c:{ciudad}|d:{distrito}|m2:{m2_bin}|h:{hab}|p:{precio_k}|g:{geo}"
 
 
 @contextmanager
@@ -101,7 +132,20 @@ class DBService:
     def guardar_anuncios(self, anuncios: list[AnuncioPortal]) -> int:
         """Insert de anuncios nuevos, skip si ya existe el id_externo."""
         nuevos = 0
+        # Deduplicar el batch por id_externo y por clave canónica inter-portal.
+        seen = {}
+        seen_canonical = set()
+        for a in anuncios:
+            if not a.canonical_key:
+                a.canonical_key = _build_canonical_key(a)
+            if a.canonical_key in seen_canonical:
+                continue
+            seen[a.id_externo] = a
+            seen_canonical.add(a.canonical_key)
+        anuncios = list(seen.values())
+
         with get_session() as session:
+            canonical_keys = [a.canonical_key for a in anuncios if a.canonical_key]
             ids_existentes = set(
                 session.scalars(
                     select(AnuncioDB.id_externo).where(
@@ -109,8 +153,19 @@ class DBService:
                     )
                 ).all()
             )
+            canonical_existentes = set()
+            if canonical_keys:
+                canonical_existentes = set(
+                    session.scalars(
+                        select(AnuncioDB.canonical_key).where(
+                            AnuncioDB.canonical_key.in_(canonical_keys)
+                        )
+                    ).all()
+                )
             for anuncio in anuncios:
                 if anuncio.id_externo in ids_existentes:
+                    continue
+                if anuncio.canonical_key and anuncio.canonical_key in canonical_existentes:
                     continue
                 precio_m2 = anuncio.calcular_precio_m2()
                 session.add(AnuncioDB(
@@ -130,6 +185,7 @@ class DBService:
                     lon=anuncio.lon,
                     activo=anuncio.activo,
                     fecha_scraping=anuncio.fecha_scraping,
+                    canonical_key=anuncio.canonical_key,
                 ))
                 nuevos += 1
         logger.info(f"DB: {nuevos}/{len(anuncios)} anuncios guardados (resto ya existían)")

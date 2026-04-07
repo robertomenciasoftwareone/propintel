@@ -3,6 +3,10 @@
         "/^cd c:\\\\Proyectos\\\\PropIntel\\\\propintel-scraper; pip install -r requirements\\.txt 2>&1 \\| Select-Object -Last 20$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^Set-Location \"C:/Proyectos/PropIntel\"; dotnet build PropIntel\\.sln \\*> build_latest\\.log$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

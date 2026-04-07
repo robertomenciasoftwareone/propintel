@@ -2,9 +2,6 @@ import { Component, inject, AfterViewInit, OnDestroy, ElementRef, ViewChild, sig
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
-import type * as LeafletType from 'leaflet';
-
-const L = (window as any)['L'] as typeof LeafletType & { markerClusterGroup: any };
 
 interface AnuncioMapa {
   id: number; zona: string; lat: number; lon: number;
@@ -265,10 +262,11 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
   private http   = inject(HttpClient);
   private router = inject(Router);
-  private map!: L.Map;
-  private clusterGroup!: any;
-  private cpLayer: L.LayerGroup | null = null;
-  private catastroLayer: L.TileLayer | null = null;
+  private map: any = null;
+  private L: any = null;
+  private clusterGroup: any = null;
+  private cpLayer: any = null;
+  private catastroLayer: any = null;
 
   readonly loading        = signal(true);
   readonly totalPins      = signal(0);
@@ -279,8 +277,8 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   private readonly headers = { 'X-Api-Key': environment.apiKey };
   private readonly cities  = ['madrid', 'barcelona', 'asturias', 'valencia', 'sevilla'];
 
-  ngAfterViewInit(): void {
-    this.initMap();
+  async ngAfterViewInit(): Promise<void> {
+    await this.initMap();
     this.loadPins();
   }
 
@@ -302,13 +300,13 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   }
 
   toggleCatastro(): void {
+    if (!this.L) return;
     if (this.catastroVisible()) {
       this.catastroLayer && this.map.removeLayer(this.catastroLayer);
       this.catastroLayer = null;
       this.catastroVisible.set(false);
     } else {
-      // WMS Catastro — visible a partir de zoom 14
-      this.catastroLayer = L.tileLayer.wms(
+      this.catastroLayer = this.L.tileLayer.wms(
         'https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx',
         {
           layers: 'Catastro',
@@ -321,48 +319,56 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       );
       this.catastroLayer.addTo(this.map);
       this.catastroVisible.set(true);
-      // Aviso si el zoom es bajo
-      if (this.map.getZoom() < 14) {
-        this.map.setZoom(14);
-      }
+      if (this.map.getZoom() < 14) this.map.setZoom(14);
     }
   }
 
-  private initMap(): void {
+  private async initMap(): Promise<void> {
+    const leafletModule = await import('leaflet');
+    const L = (leafletModule as any).default ?? leafletModule;
+    (window as any)['L'] = L; // el plugin necesita window.L
+    await import('leaflet.markercluster' as any);
+    this.L = L;
+
     const container = this.mapContainer.nativeElement;
     (container as any)._leaflet_id = undefined;
 
     this.map = L.map(container, {
-      center: [40.0, -3.5],
+      center: [40.4168, -3.7038],
       zoom: 6,
       zoomControl: true,
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
-      maxZoom: 19,
-      subdomains: 'abcd',
+    // Stadia Alidade Dark — oscuro con iconos de metro/bus/cercanías visibles
+    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
+      maxZoom: 20,
     }).addTo(this.map);
 
-    this.clusterGroup = (L as any).markerClusterGroup({
-      maxClusterRadius: 60,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      animate: true,
-      animateAddingMarkers: false,
-      disableClusteringAtZoom: 16,
-      iconCreateFunction: (cluster: any) => {
-        const count = cluster.getChildCount();
-        let size = count >= 20 ? 'large' : count >= 8 ? 'medium' : 'small';
-        return L.divIcon({
-          html: `<div>${count}</div>`,
-          className: `marker-cluster marker-cluster-${size}`,
-          iconSize: L.point(44, 44),
-        });
-      },
-    });
+    // markerCluster es opcional — si no está disponible usamos layerGroup normal
+    if (typeof (L as any).markerClusterGroup === 'function') {
+      this.clusterGroup = (L as any).markerClusterGroup({
+        maxClusterRadius: 60,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        animate: true,
+        animateAddingMarkers: false,
+        disableClusteringAtZoom: 16,
+        iconCreateFunction: (cluster: any) => {
+          const count = cluster.getChildCount();
+          const size = count >= 20 ? 'large' : count >= 8 ? 'medium' : 'small';
+          return L.divIcon({
+            html: `<div>${count}</div>`,
+            className: `marker-cluster marker-cluster-${size}`,
+            iconSize: L.point(44, 44),
+          });
+        },
+      });
+    } else {
+      this.clusterGroup = L.layerGroup();
+    }
     this.map.addLayer(this.clusterGroup);
   }
 
@@ -386,13 +392,16 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderPins(pins: AnuncioMapa[]): void {
+    const L = this.L;
     this.loading.set(false);
     this.totalPins.set(pins.length);
-    if (!pins.length) return;
+    if (!pins.length || !L) return;
 
-    this.clusterGroup.clearLayers();
+    if (typeof this.clusterGroup.clearLayers === 'function') {
+      this.clusterGroup.clearLayers();
+    }
     const bounds = L.latLngBounds([]);
-    const markers: L.CircleMarker[] = [];
+    const markers: any[] = [];
 
     for (const p of pins) {
       if (!p.lat || !p.lon) continue;
@@ -438,7 +447,11 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       markers.push(marker);
     }
 
-    this.clusterGroup.addLayers(markers);
+    if (typeof this.clusterGroup.addLayers === 'function') {
+      this.clusterGroup.addLayers(markers);
+    } else {
+      markers.forEach(m => this.clusterGroup.addLayer(m));
+    }
     if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
     setTimeout(() => this.map.invalidateSize(), 100);
   }
@@ -463,8 +476,10 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   }
 
   private renderCapaCP(datos: PrecioCP[]): void {
+    const L = this.L;
     this.loading.set(false);
     this.totalCp.set(datos.length);
+    if (!L) return;
 
     this.cpLayer && this.map.removeLayer(this.cpLayer);
     this.cpLayer = L.layerGroup();

@@ -13,6 +13,9 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
     public DbSet<Alerta>        Alertas          => Set<Alerta>();
     public DbSet<DisparoAlerta> DisparosAlertas  => Set<DisparoAlerta>();
     public DbSet<CodigoPostal>  CodigosPostales  => Set<CodigoPostal>();
+    public DbSet<AnalyticsEvento> AnalyticsEventos => Set<AnalyticsEvento>();
+    public DbSet<NewsletterSuscripcion> NewsletterSuscripciones => Set<NewsletterSuscripcion>();
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -65,6 +68,29 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
             e.Property(p => p.Cp).HasColumnName("cp");
             e.Property(p => p.Lat).HasColumnName("lat");
             e.Property(p => p.Lon).HasColumnName("lon");
+            e.Property(p => p.CanonicalKey).HasColumnName("canonical_key");
+        });
+
+        mb.Entity<AnalyticsEvento>(e =>
+        {
+            e.Property(p => p.Evento).HasColumnName("evento");
+            e.Property(p => p.SessionId).HasColumnName("session_id");
+            e.Property(p => p.UserEmail).HasColumnName("user_email");
+            e.Property(p => p.Municipio).HasColumnName("municipio");
+            e.Property(p => p.Barrio).HasColumnName("barrio");
+            e.Property(p => p.PayloadJson).HasColumnName("payload_json");
+            e.Property(p => p.CreadoEn).HasColumnName("creado_en");
+        });
+
+        mb.Entity<NewsletterSuscripcion>(e =>
+        {
+            e.Property(p => p.Email).HasColumnName("email");
+            e.Property(p => p.Nombre).HasColumnName("nombre");
+            e.Property(p => p.MunicipioInteres).HasColumnName("municipio_interes");
+            e.Property(p => p.BarrioInteres).HasColumnName("barrio_interes");
+            e.Property(p => p.Activa).HasColumnName("activa");
+            e.Property(p => p.CreadaEn).HasColumnName("creada_en");
+            e.Property(p => p.ActualizadaEn).HasColumnName("actualizada_en");
         });
 
         mb.Entity<CodigoPostal>(e =>
@@ -76,6 +102,15 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
             e.Property(p => p.Lat).HasColumnName("lat");
             e.Property(p => p.Lon).HasColumnName("lon");
             e.Property(p => p.MunicipioIne).HasColumnName("municipio_ine");
+        });
+
+        mb.Entity<Usuario>(e =>
+        {
+            e.Property(p => p.Email).HasColumnName("email");
+            e.Property(p => p.Nombre).HasColumnName("nombre");
+            e.Property(p => p.PasswordHash).HasColumnName("password_hash");
+            e.Property(p => p.CreadoEn).HasColumnName("creado_en");
+            e.HasIndex(p => p.Email).IsUnique();
         });
 
         mb.Entity<GapAnalisis>(e =>

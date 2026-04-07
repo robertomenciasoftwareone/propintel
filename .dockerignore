@@ -1,0 +1,17 @@
+# Docker build ignores
+.git
+.gitignore
+.dockerignore
+.vs
+.vscode
+bin/
+obj/
+dist/
+node_modules/
+.env
+.env.local
+*.log
+*.md
+!README.md
+.github/
+propintel-scraper/
