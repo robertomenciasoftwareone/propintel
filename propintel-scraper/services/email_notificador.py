@@ -69,7 +69,7 @@ HTML_TEMPLATE = """
 
   <div class="footer">
     Alerta configurada: asking ≤ {precio_max}€/m² · gap ≥ {gap_min}% · {descripcion}<br>
-    <a href="https://propintel.es/alertas" style="color:#4a4d55">Gestionar alertas</a> · PropIntel
+    <a href="https://urbia.es/alertas" style="color:#4a4d55">Gestionar alertas</a> · UrbIA
   </div>
 </div>
 </body>
@@ -108,7 +108,7 @@ class EmailNotificador:
             )
 
             msg = MIMEMultipart("alternative")
-            msg["Subject"] = f"🔔 PropIntel: oportunidad en {alerta.zona} (+{gap_pct:.1f}% gap)"
+            msg["Subject"] = f"🔔 UrbIA: oportunidad en {alerta.zona} (+{gap_pct:.1f}% gap)"
             msg["From"]    = settings.alert_from
             msg["To"]      = alerta.email_destino
             msg.attach(MIMEText(html, "html"))

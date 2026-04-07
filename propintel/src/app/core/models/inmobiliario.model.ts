@@ -123,6 +123,7 @@ export interface AnuncioDetalle {
   notarialPeriodo: string | null;
   gapPct: number | null;
   gapPeriodo: string | null;
+  fotoPrincipal: string | null;
 }
 
 export interface AnuncioResumen {

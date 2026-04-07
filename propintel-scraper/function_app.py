@@ -1,5 +1,5 @@
 """
-Azure Function — HTTP Trigger para el scraper PropIntel.
+Azure Function — HTTP Trigger para el scraper UrbIA.
 Permite ejecutarlo manualmente desde el portal de Azure
 o desde GitHub Actions.
 

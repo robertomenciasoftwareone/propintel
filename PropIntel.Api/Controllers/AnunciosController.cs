@@ -61,10 +61,45 @@ public class AnunciosController(PropIntelDbContext db, IHttpClientFactory httpFa
             NumTransacciones:notarial?.NumTransacciones,
             NotarialPeriodo: notarial?.Periodo,
             GapPct:          gap?.GapPct,
-            GapPeriodo:      gap?.Periodo
+            GapPeriodo:      gap?.Periodo,
+            FotoPrincipal:   anuncio.FotoPrincipal
         );
 
         return Ok(dto);
+    }
+
+    // GET /api/anuncios/{id}/foto-base64
+    // Proxy server-side para evitar CORS: descarga la foto del portal y la devuelve en base64
+    [AllowAnonymous]
+    [HttpGet("{id:int}/foto-base64")]
+    public async Task<IActionResult> GetFotoBase64(int id)
+    {
+        var anuncio = await db.Anuncios.FindAsync(id);
+        if (anuncio is null || string.IsNullOrEmpty(anuncio.FotoPrincipal))
+            return NotFound(new { error = "Sin foto disponible" });
+
+        try
+        {
+            var client = httpFactory.CreateClient();
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Referer",
+                anuncio.Fuente.Equals("idealista", StringComparison.OrdinalIgnoreCase)
+                    ? "https://www.idealista.com/"
+                    : "https://www.fotocasa.es/");
+
+            var bytes = await client.GetByteArrayAsync(anuncio.FotoPrincipal);
+            var base64 = Convert.ToBase64String(bytes);
+            var mimeType = anuncio.FotoPrincipal.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)
+                ? "image/webp"
+                : "image/jpeg";
+
+            return Ok(new { base64, mimeType });
+        }
+        catch
+        {
+            return StatusCode(502, new { error = "No se pudo descargar la imagen" });
+        }
     }
 
     // GET /api/anuncios/{id}/catastro

@@ -1,5 +1,5 @@
 """
-Modelos SQLAlchemy — tablas de PostgreSQL para PropIntel.
+Modelos SQLAlchemy — tablas de PostgreSQL para UrbIA.
 Ejecutar una vez: python -c "from models.db_models import Base, engine; Base.metadata.create_all(engine)"
 """
 from datetime import datetime
@@ -63,6 +63,7 @@ class AnuncioDB(Base):
     codigo_postal   = Column(String(10), nullable=True)
     lat             = Column(Float, nullable=True)
     lon             = Column(Float, nullable=True)
+    foto_principal  = Column(Text, nullable=True)       # URL primera foto
     activo          = Column(Boolean, default=True)
     fecha_scraping  = Column(DateTime, default=datetime.utcnow, index=True)
     canonical_key   = Column(String(200), nullable=True, index=True)

@@ -369,6 +369,17 @@ class FotocasaScraper:
             if not item_id:
                 item_id = re.sub(r"[^\w]", "", url[-20:])
 
+            # ── Foto principal ───────────────────────────────────────────
+            foto_principal = None
+            img_elem = await item.query_selector("picture img, img.re-Card-figure-image, img[data-src]")
+            if img_elem:
+                foto_principal = (
+                    await img_elem.get_attribute("data-src")
+                    or await img_elem.get_attribute("src")
+                )
+                if foto_principal and (foto_principal.startswith("data:") or len(foto_principal) < 10):
+                    foto_principal = None
+
             return AnuncioPortal(
                 id_externo=f"fotocasa_{item_id}",
                 fuente=FuentePrecio.FOTOCASA,
@@ -385,6 +396,7 @@ class FotocasaScraper:
                 lat=None,
                 lon=None,
                 tipo=self._detectar_tipo(titulo),
+                foto_principal=foto_principal,
             )
 
         except Exception as e:

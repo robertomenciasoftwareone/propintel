@@ -295,6 +295,18 @@ class IdealistaScraper:
                 else None
             )
 
+            # ── Foto principal ───────────────────────────────────────────
+            foto_principal = None
+            img_elem = await item.query_selector("picture img, img.item-multimedia-image, img[data-src]")
+            if img_elem:
+                foto_principal = (
+                    await img_elem.get_attribute("data-src")
+                    or await img_elem.get_attribute("src")
+                )
+                # Descartar placeholders / base64 inline
+                if foto_principal and (foto_principal.startswith("data:") or len(foto_principal) < 10):
+                    foto_principal = None
+
             # ── ID externo ───────────────────────────────────────────────
             item_id = await item.get_attribute("data-adid") or url.split("/")[-2]
 
@@ -310,6 +322,7 @@ class IdealistaScraper:
                 ciudad=ciudad,
                 distrito=zona,
                 tipo=self._detectar_tipo(titulo),
+                foto_principal=foto_principal,
             )
 
         except Exception as e:

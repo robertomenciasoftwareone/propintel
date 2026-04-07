@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # Azure Blob (snapshots raw)
     azure_storage_connection_string: Optional[str] = None
-    azure_container_name: str = "propintel-snapshots"
+    azure_container_name: str = "urbia-snapshots"
 
     # Scraping
     scraper_delay_seconds:   float = 2.5   # entre peticiones
@@ -28,14 +28,17 @@ class Settings(BaseSettings):
     scraper_consecutive_block_limit: int = 2
     scraper_cache_enabled: bool = True
     scraper_cache_ttl_seconds: int = 900
-    scraper_user_agent: str = "PropIntelBot/1.0 (+contacto@propintel.local)"
+    scraper_user_agent: str = "UrbIABot/1.0 (+contacto@urbia.es)"
 
+    # Idealista API oficial (OAuth2 client credentials)
+    idealista_api_key:    str = ""
+    idealista_api_secret: str = ""
     # Alertas — email
     smtp_host:     str = "smtp.gmail.com"
     smtp_port:     int = 587
     smtp_user:     str = ""
     smtp_password: str = ""
-    alert_from:    str = "alertas@propintel.es"
+    alert_from:    str = "alertas@urbia.es"
 
     # Scheduler
     scraper_hora_ejecucion: str = "07:00"  # hora local cada día

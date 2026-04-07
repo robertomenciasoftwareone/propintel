@@ -18,6 +18,16 @@ interface GeminiZoneAnalysis {
   contras: string[];
 }
 
+interface GeminiPhotoAnalysis {
+  exterior: boolean;
+  luminosidad: string;   // 'Muy luminoso' | 'Luminoso' | 'Normal' | 'Oscuro'
+  estado: string;        // 'Excelente' | 'Bueno' | 'Regular' | 'Malo'
+  calidad: string;       // 'Premium' | 'Alta' | 'Media' | 'Básica'
+  descripcion: string;
+  puntuacion: number;    // 0-10
+  caracteristicas: string[];
+}
+
 @Component({
   selector: 'app-ficha-inmueble',
   standalone: true,
@@ -497,6 +507,64 @@ interface GeminiZoneAnalysis {
           <!-- geminiEnabled but failed silently — do not show anything -->
         }
 
+        <!-- ══════════════════════════════════════════════════════════════════
+             GEMINI — ANÁLISIS DE FOTOS IA
+        ══════════════════════════════════════════════════════════════════ -->
+        @if (d.fotoPrincipal) {
+          @if (geminiPhotoLoading()) {
+            <div class="expert-card gemini-card">
+              <div class="expert-header">
+                <div class="expert-title">
+                  <span class="section-icon">📸</span>
+                  Análisis de Fotos IA
+                  <span class="gemini-badge">Gemini Vision</span>
+                </div>
+              </div>
+              <div class="loading-inline"><div class="spinner-sm"></div> Analizando la foto con Gemini Vision…</div>
+            </div>
+          } @else if (geminiPhotoAnalysis(); as ph) {
+            <div class="expert-card gemini-card">
+              <div class="expert-header">
+                <div class="expert-title">
+                  <span class="section-icon">📸</span>
+                  Análisis de Fotos IA
+                  <span class="gemini-badge">Gemini Vision</span>
+                </div>
+                <div class="gemini-score" [ngClass]="geminiScoreClass(ph.puntuacion)">
+                  <span class="gemini-score-num">{{ ph.puntuacion }}/10</span>
+                  <span class="gemini-score-label">{{ ph.calidad }}</span>
+                </div>
+              </div>
+              <p class="gemini-resumen">{{ ph.descripcion }}</p>
+              <div class="photo-meta-row">
+                <div class="photo-meta-item">
+                  <span class="photo-meta-label">Tipo</span>
+                  <span class="photo-meta-value">{{ ph.exterior ? 'Exterior' : 'Interior' }}</span>
+                </div>
+                <div class="photo-meta-item">
+                  <span class="photo-meta-label">Luminosidad</span>
+                  <span class="photo-meta-value">{{ ph.luminosidad }}</span>
+                </div>
+                <div class="photo-meta-item">
+                  <span class="photo-meta-label">Estado</span>
+                  <span class="photo-meta-value">{{ ph.estado }}</span>
+                </div>
+              </div>
+              @if (ph.caracteristicas.length > 0) {
+                <div class="gemini-section">
+                  <div class="gemini-section-title">🏠 Características detectadas</div>
+                  <div class="gemini-chips">
+                    @for (c of ph.caracteristicas; track c) {
+                      <span class="gemini-chip">{{ c }}</span>
+                    }
+                  </div>
+                </div>
+              }
+              <p class="data-note gemini-note">Análisis basado en la foto principal del anuncio. Solo una foto puede ser representativa.</p>
+            </div>
+          }
+        }
+
       }
     </div>
   `,
@@ -798,6 +866,19 @@ interface GeminiZoneAnalysis {
     .gemini-contras .gemini-item { border-color: #FEE2E2; }
     .gemini-note { margin-top: 12px; }
 
+    /* Photo analysis meta row */
+    .photo-meta-row {
+      display: flex; gap: 12px; margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    .photo-meta-item {
+      display: flex; flex-direction: column; gap: 2px;
+      background: #F9FAFB; border: 1px solid #E5E7EB;
+      border-radius: 10px; padding: 8px 14px; min-width: 90px;
+    }
+    .photo-meta-label { font-size: 11px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .photo-meta-value { font-size: 13px; color: #111827; font-weight: 600; }
+
     @media (max-width: 700px) {
       .page { padding: 16px; }
       .l2-grid { flex-direction: column; }
@@ -823,8 +904,10 @@ export class FichaInmuebleComponent implements OnInit {
   error          = signal<string | null>(null);
   catastroLoading = signal(true);
   avmLoading     = signal(false);
-  geminiAnalysis = signal<GeminiZoneAnalysis | null>(null);
-  geminiLoading  = signal(false);
+  geminiAnalysis      = signal<GeminiZoneAnalysis | null>(null);
+  geminiLoading       = signal(false);
+  geminiPhotoAnalysis = signal<GeminiPhotoAnalysis | null>(null);
+  geminiPhotoLoading  = signal(false);
   readonly geminiEnabled = !!environment.geminiApiKey;
 
   ngOnInit(): void {
@@ -841,9 +924,10 @@ export class FichaInmuebleComponent implements OnInit {
       next: (d) => {
         this.detalle.set(d);
         this.loading.set(false);
-        // Con los datos del anuncio, lanzar automáticamente el AVM y el análisis de zona
+        // Con los datos del anuncio, lanzar automáticamente el AVM, análisis de zona y fotos
         this.calcularAvm(d);
         this.analizarZona(d);
+        this.analizarFotos(d);
       },
       error: () => {
         this.error.set('No se pudo cargar el detalle del anuncio.');
@@ -955,6 +1039,54 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
         this.geminiLoading.set(false);
       },
       error: () => this.geminiLoading.set(false)
+    });
+  }
+
+  private analizarFotos(d: AnuncioDetalle): void {
+    if (!environment.geminiApiKey || !d.fotoPrincipal) return;
+    this.geminiPhotoLoading.set(true);
+
+    // Fetch image as base64 through our server-side proxy (avoids CORS)
+    this.http.get<{ base64: string; mimeType: string }>(
+      `${environment.apiUrl}/anuncios/${d.id}/foto-base64`,
+      this.headers
+    ).pipe(catchError(() => of(null))).subscribe(foto => {
+      if (!foto) { this.geminiPhotoLoading.set(false); return; }
+
+      const prompt = `Eres un experto inmobiliario. Analiza esta foto de un inmueble en venta en España.
+Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exactamente estas claves:
+{
+  "exterior": false,
+  "luminosidad": "Muy luminoso|Luminoso|Normal|Oscuro",
+  "estado": "Excelente|Bueno|Regular|Malo",
+  "calidad": "Premium|Alta|Media|Básica",
+  "descripcion": "2-3 frases describiendo lo que ves en la foto",
+  "puntuacion": 7,
+  "caracteristicas": ["Suelos de parquet", "Techos altos", "Ventanas grandes"]
+}`;
+
+      const body = {
+        contents: [{ parts: [
+          { inlineData: { mimeType: foto.mimeType, data: foto.base64 } },
+          { text: prompt }
+        ]}],
+        generationConfig: { responseMimeType: 'application/json' }
+      };
+
+      this.http.post<{ candidates: { content: { parts: { text: string }[] } }[] }>(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${environment.geminiApiKey}`,
+        body
+      ).subscribe({
+        next: (res) => {
+          try {
+            const text = res.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+            const data: GeminiPhotoAnalysis = JSON.parse(text);
+            this.geminiPhotoAnalysis.set(data);
+          } catch { /* silently fail */ }
+          this.geminiPhotoLoading.set(false);
+        },
+        error: () => this.geminiPhotoLoading.set(false)
+      });
     });
   }
 

@@ -56,6 +56,7 @@ public class Anuncio
     public double? Lat { get; set; }
     public double? Lon { get; set; }
     public string? CanonicalKey { get; set; }
+    public string? FotoPrincipal { get; set; }
 }
 
 [Table("codigos_postales")]
@@ -283,7 +284,8 @@ public record AnuncioDetalleDto(
     int? NumTransacciones,
     string? NotarialPeriodo,
     double? GapPct,
-    string? GapPeriodo
+    string? GapPeriodo,
+    string? FotoPrincipal
 );
 
 public record AnuncioResumenDto(

@@ -6,14 +6,14 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var pgConn = builder.Configuration.GetConnectionString("PropIntel");
+var pgConn = builder.Configuration.GetConnectionString("UrbIA");
 var useInMemory = string.IsNullOrWhiteSpace(pgConn)
     || pgConn.Contains("tu-servidor.postgres.database.azure.com", StringComparison.OrdinalIgnoreCase);
 
 if (useInMemory)
 {
     builder.Services.AddDbContext<PropIntelDbContext>(opts =>
-        opts.UseInMemoryDatabase("propintel-fallback"));
+        opts.UseInMemoryDatabase("urbia-fallback"));
 }
 else
 {
@@ -28,7 +28,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "PropIntel API", Version = "v1" });
+    c.SwaggerDoc("v1", new() { Title = "UrbIA API", Version = "v1" });
     c.AddSecurityDefinition("ApiKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "X-Api-Key",

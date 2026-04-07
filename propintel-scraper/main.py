@@ -1,5 +1,5 @@
 """
-Orquestador principal del scraper PropIntel.
+Orquestador principal del scraper UrbIA.
 Ciclo completo diario:
   1. Scraping Portal Notarial  → precios reales por municipio
   2. Scraping Idealista        → asking prices actuales
@@ -25,11 +25,13 @@ from loguru import logger
 
 from scrapers.notarial_scraper import run_notarial_scraper
 from scrapers.idealista_scraper import run_idealista_scraper
+from scrapers.idealista_api_scraper import run_idealista_api_scraper
 from scrapers.fotocasa_scraper import run_fotocasa_scraper
 from services.gap_calculator import GapCalculator
 from services.email_notificador import EmailNotificador
 from services.db_service import DBService
 from models.schemas import AlertaConfig
+from config.settings import settings
 
 
 async def run_ciclo_completo(
@@ -37,9 +39,10 @@ async def run_ciclo_completo(
     max_paginas: int = 3,
     sin_fotocasa: bool = False,
     sin_idealista: bool = False,
+    forzar_playwright: bool = False,   # True = saltar API y usar Playwright directamente
 ) -> dict:
     inicio = datetime.utcnow()
-    logger.info(f"━━━ Inicio ciclo PropIntel · {inicio.strftime('%Y-%m-%d %H:%M UTC')} ━━━")
+    logger.info(f"━━━ Inicio ciclo UrbIA · {inicio.strftime('%Y-%m-%d %H:%M UTC')} ━━━")
 
     resumen = {
         "inicio": inicio.isoformat(),
@@ -70,15 +73,31 @@ async def run_ciclo_completo(
         # ── 2. Asking prices — Idealista ────────────────────────────────
         anuncios_idealista: list = []
         if not sin_idealista:
-            logger.info("🏠 [2/6] Scraping Idealista...")
-            try:
-                anuncios_idealista = await run_idealista_scraper(ciudades, max_paginas)
-                resumen["anuncios_idealista"] = len(anuncios_idealista)
-                if anuncios_idealista:
-                    db.guardar_anuncios(anuncios_idealista)
-            except Exception as e:
-                logger.warning(f"Idealista scraping falló (continuando sin él): {e}")
-                resumen["errores"].append(f"idealista: {e}")
+            # Preferir API oficial si hay credenciales configuradas
+            api_key_ok = bool(settings.idealista_api_key and settings.idealista_api_secret)
+            if api_key_ok and not forzar_playwright:
+                logger.info("🏠 [2/6] Idealista vía API oficial...")
+                try:
+                    anuncios_idealista = await run_idealista_api_scraper(ciudades, max(1, max_paginas - 1))
+                    resumen["anuncios_idealista"] = len(anuncios_idealista)
+                    if anuncios_idealista:
+                        db.guardar_anuncios(anuncios_idealista)
+                except Exception as e:
+                    logger.warning(f"API Idealista falló ({e}) — intentando Playwright como fallback")
+                    resumen["errores"].append(f"idealista_api: {e}")
+                    anuncios_idealista = []  # fuerza fallback abajo
+
+            # Fallback a Playwright si la API no devolvió nada
+            if not anuncios_idealista:
+                logger.info("🏠 [2/6] Scraping Idealista (Playwright)...")
+                try:
+                    anuncios_idealista = await run_idealista_scraper(ciudades, max_paginas)
+                    resumen["anuncios_idealista"] = len(anuncios_idealista)
+                    if anuncios_idealista:
+                        db.guardar_anuncios(anuncios_idealista)
+                except Exception as e:
+                    logger.warning(f"Idealista Playwright falló (continuando sin él): {e}")
+                    resumen["errores"].append(f"idealista_playwright: {e}")
         else:
             logger.info("🏠 [2/6] Idealista omitido (--sin-idealista)")
 
@@ -175,7 +194,7 @@ async def run_ciclo_completo(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PropIntel Scraper")
+    parser = argparse.ArgumentParser(description="UrbIA Scraper")
     parser.add_argument("--ciudad", nargs="+")
     parser.add_argument("--paginas", type=int, default=3)
     parser.add_argument("--sin-fotocasa", action="store_true", help="Omitir Fotocasa en el ciclo")

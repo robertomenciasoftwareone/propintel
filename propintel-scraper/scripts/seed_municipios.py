@@ -82,7 +82,7 @@ def descargar_excel(url: str) -> bytes:
     """Descarga el Excel del INE con reintentos."""
     logger.info(f"Descargando municipios INE desde {url} ...")
     with httpx.Client(timeout=60, follow_redirects=True) as client:
-        response = client.get(url, headers={"User-Agent": "PropIntel/1.0 (research)"})
+        response = client.get(url, headers={"User-Agent": "UrbIA/1.0 (research)"})
         response.raise_for_status()
     logger.info(f"Descargado: {len(response.content):,} bytes")
     return response.content

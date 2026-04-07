@@ -36,6 +36,7 @@ class AnuncioPortal(BaseModel):
     lat:           Optional[float]
     lon:           Optional[float]
     tipo:          TipoInmueble = TipoInmueble.PISO
+    foto_principal: Optional[str] = None   # URL de la primera foto del anuncio
     fecha_scraping: datetime = Field(default_factory=datetime.utcnow)
     activo:        bool = True
     canonical_key: Optional[str] = None

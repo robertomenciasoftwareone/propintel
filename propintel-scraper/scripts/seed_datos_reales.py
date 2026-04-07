@@ -355,7 +355,7 @@ def seed_alertas(session: Session):
             gap_minimo_pct=15.0,
             activa=True,
             descripcion="Madrid centro: gap >15% y asking <4500 €/m²",
-            email_destino="usuario@propintel.es",
+            email_destino="usuario@urbia.es",
         ),
         AlertaDB(
             id="alerta-bcn-gracia",
@@ -365,7 +365,7 @@ def seed_alertas(session: Session):
             gap_minimo_pct=20.0,
             activa=True,
             descripcion="Barcelona Gràcia: gap >20% y asking <5000 €/m²",
-            email_destino="usuario@propintel.es",
+            email_destino="usuario@urbia.es",
         ),
         AlertaDB(
             id="alerta-valencia-ruzafa",
@@ -375,7 +375,7 @@ def seed_alertas(session: Session):
             gap_minimo_pct=18.0,
             activa=True,
             descripcion="Valencia Ruzafa: gap >18%",
-            email_destino="usuario@propintel.es",
+            email_destino="usuario@urbia.es",
         ),
         AlertaDB(
             id="alerta-asturias-gijon",
@@ -385,7 +385,7 @@ def seed_alertas(session: Session):
             gap_minimo_pct=15.0,
             activa=True,
             descripcion="Gijón: gap >15% y asking <2000 €/m²",
-            email_destino="usuario@propintel.es",
+            email_destino="usuario@urbia.es",
         ),
         AlertaDB(
             id="alerta-sevilla-triana",
@@ -395,7 +395,7 @@ def seed_alertas(session: Session):
             gap_minimo_pct=20.0,
             activa=True,
             descripcion="Sevilla Triana: gap >20%",
-            email_destino="usuario@propintel.es",
+            email_destino="usuario@urbia.es",
         ),
     ]
 

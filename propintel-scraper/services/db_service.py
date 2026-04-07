@@ -1,5 +1,5 @@
 """
-Servicio de base de datos — toda la capa de persistencia de PropIntel.
+Servicio de base de datos — toda la capa de persistencia de UrbIA.
 Usa SQLAlchemy con sesiones síncronas (suficiente para el job diario).
 """
 from contextlib import contextmanager
