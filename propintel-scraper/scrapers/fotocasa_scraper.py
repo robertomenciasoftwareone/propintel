@@ -300,13 +300,20 @@ class FotocasaScraper:
             texto_completo = await item.inner_text()
 
             # ── Precio ──────────────────────────────────────────────────
-            # Price is in a <span> with pattern "NNN.NNN €"
-            # Find the first match in the article text
-            precio_match = re.search(r"([\d.]+)\s*€", texto_completo)
-            if not precio_match:
-                return None
+            # Intentar primero con el elemento span de precio directo
+            precio_total = None
+            precio_elem = await item.query_selector("span[class*='Price'], [data-testid*='price'], span[class*='price']")
+            if precio_elem:
+                precio_txt = (await precio_elem.inner_text()).strip()
+                precio_total = self._parse_int(precio_txt)
 
-            precio_total = self._parse_int(precio_match.group(1))
+            # Fallback: coger el mayor número con € del texto (precio de venta, no bajada)
+            if not precio_total or precio_total < 10_000:
+                todos_precios = re.findall(r"([\d]+(?:[.,][\d]+)*)\s*€", texto_completo)
+                candidatos = [self._parse_int(p) for p in todos_precios]
+                candidatos = [p for p in candidatos if p and p >= 10_000]
+                precio_total = max(candidatos) if candidatos else None
+
             if not precio_total or precio_total < 10_000:
                 return None
 
@@ -341,20 +348,26 @@ class FotocasaScraper:
             superficie = None
             habitaciones = None
 
-            # Features are in <li class="inline ..."> e.g. "3 habs", "89 m²"
+            # Features: <li class="inline ..."> con texto corto como "89 m²", "3 habs"
+            # Importante: ignorar <li> con texto largo (descripciones)
             feature_items = await item.query_selector_all("li.inline")
             for fi in feature_items:
                 texto = (await fi.inner_text()).strip()
-                if "m²" in texto:
-                    superficie = self._parse_float(texto.replace("m²", ""))
-                elif "hab" in texto.lower() or "dorm" in texto.lower():
+                if len(texto) > 30:  # ignorar descripciones largas
+                    continue
+                if "m²" in texto and superficie is None:
+                    superficie = self._parse_float(texto.replace("m²", "").strip())
+                elif ("hab" in texto.lower() or "dorm" in texto.lower()) and habitaciones is None:
                     habitaciones = self._parse_int(texto)
 
-            # Fallback: regex on full text
+            # Fallback: regex en texto completo — coger el primer m² que sea razonable
             if not superficie:
-                m2_match = re.search(r"(\d[\d.,]*)\s*m²", texto_completo)
-                if m2_match:
-                    superficie = self._parse_float(m2_match.group(1))
+                # Buscar patrón "NN m²" o "NNN m²" (superficie, no trastero)
+                m2_matches = re.findall(r"(\d{2,4}(?:[.,]\d+)?)\s*m²", texto_completo)
+                candidatos_m2 = [self._parse_float(m) for m in m2_matches]
+                candidatos_m2 = [m for m in candidatos_m2 if m and 10 < m < 1000]
+                if candidatos_m2:
+                    superficie = candidatos_m2[0]  # primera mención suele ser la superficie del piso
             if not habitaciones:
                 hab_match = re.search(r"(\d+)\s*(?:hab|dorm)", texto_completo, re.IGNORECASE)
                 if hab_match:

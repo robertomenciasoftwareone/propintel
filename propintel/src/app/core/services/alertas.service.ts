@@ -21,7 +21,7 @@ export interface AlertaDisparo {
 const ALERTAS_MOCK: Alerta[] = [
   { id: 'a1', zona: 'Tetuán',       ciudad: 'madrid',   precioMaxAsking: 4000, gapMinimo: 10, activa: true,  creadaEn: new Date('2026-01-15'), descripcion: 'Piso inversión' },
   { id: 'a2', zona: 'Carabanchel',  ciudad: 'madrid',   precioMaxAsking: 3000, gapMinimo: 8,  activa: true,  creadaEn: new Date('2026-02-01'), descripcion: 'Reformar y vender' },
-  { id: 'a3', zona: 'Gijón centro', ciudad: 'asturias', precioMaxAsking: 2200, gapMinimo: 15, activa: false, creadaEn: new Date('2025-12-10'), descripcion: 'Primera vivienda' },
+  { id: 'a3', zona: 'Vallecas',     ciudad: 'madrid',   precioMaxAsking: 2800, gapMinimo: 15, activa: false, creadaEn: new Date('2025-12-10'), descripcion: 'Primera vivienda' },
 ];
 const DISPAROS_MOCK: AlertaDisparo[] = [
   { id: 1, alertaId: 'a1', zona: 'Tetuán',      askingActual: 3850, notarialReferencia: 3480, gapActual: 10.6, fecha: new Date(Date.now() - 7200000),    leida: false, anuncioUrl: '#', descripcion: 'Piso inversión' },

@@ -87,7 +87,7 @@ export class ServiciosPanelComponent {
       desc: 'Superficie real, año de construcción, valor catastral y valor de referencia AEAT por RC.',
       precio: 'Gratis · API oficial',
       tag: 'Oficial', tagColor: '#6ec1e4',
-      route: '/tasacion',
+      route: '/catastro',
     },
     {
       icon: '📊', nombre: 'Estadísticas INE / BdE',

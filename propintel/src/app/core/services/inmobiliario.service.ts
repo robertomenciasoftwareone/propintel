@@ -80,16 +80,15 @@ export class InmobiliarioService {
   }
 
   // ── Estado reactivo ────────────────────────────────────────────────────────
-  readonly ciudadActiva = signal<string>('asturias');
+  readonly ciudadActiva = signal<string>('madrid');
   readonly loading      = signal(false);
-  readonly ciudadData   = signal<CiudadData>(this.buildEmpty('asturias', 'Asturias'));
+  readonly ciudadData   = signal<CiudadData>(this.buildEmpty('madrid', 'Madrid'));
 
   // ── Municipios para el autocomplete ────────────────────────────────────────
   readonly municipios   = signal<Municipio[]>([]);
 
   constructor() {
-    // Cargar Asturias al iniciar (ciudad con datos reales scrapeados)
-    this.cargarCiudad('asturias', 'Asturias');
+    this.cargarCiudad('madrid', 'Madrid');
   }
 
   // ── Cambiar ciudad y cargar datos ──────────────────────────────────────────

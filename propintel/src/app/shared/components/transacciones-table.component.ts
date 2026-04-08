@@ -68,7 +68,7 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
 
       <div class="empty-state" *ngIf="svc.ciudadData().transacciones.length === 0">
         <p>No hay transacciones recientes para esta ciudad.</p>
-        <p class="hint">Prueba con otra ciudad que tenga anuncios scrapeados (ej. Asturias).</p>
+        <p class="hint">Los datos se actualizan cada noche con el scraper.</p>
       </div>
 
       <div class="table-footer">

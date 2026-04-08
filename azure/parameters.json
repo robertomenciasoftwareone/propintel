@@ -14,8 +14,11 @@
     "apiContainerImage": {
       "value": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
     },
-    "cosmosEnableFreeTier": {
-      "value": false
+    "dbPassword": {
+      "value": "CAMBIAR_DB_PASSWORD_AQUI"
+    },
+    "acrPassword": {
+      "value": "CAMBIAR_ACR_PASSWORD_AQUI"
     }
   }
 }

@@ -3,7 +3,7 @@ targetScope = 'resourceGroup'
 @description('Nombre del proyecto (ej: urbia)')
 param projectName string = 'urbia'
 
-@description('Región compatible para todos los recursos (recomendado: centralus)')
+@description('Región compatible para todos los recursos')
 param location string = 'centralus'
 
 @description('API Key para autenticación del backend')
@@ -13,8 +13,13 @@ param apiKey string
 @description('Imagen de contenedor para la API .NET')
 param apiContainerImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-@description('Activar Free Tier de Cosmos DB (solo 1 cuenta por suscripción)')
-param cosmosEnableFreeTier bool = false
+@description('Contraseña del admin de PostgreSQL')
+@secure()
+param dbPassword string
+
+@description('Contraseña del Azure Container Registry')
+@secure()
+param acrPassword string
 
 var tags = {
   project: projectName
@@ -23,90 +28,14 @@ var tags = {
 }
 var suffix = toLower(uniqueString(subscription().id, resourceGroup().id, projectName))
 var staticWebAppName = '${projectName}-${suffix}-web'
-var cosmosAccountName = '${projectName}${suffix}cosmos'
 var containerEnvironmentName = '${projectName}-${suffix}-cae'
 var containerAppName = '${projectName}-${suffix}-api'
 var logAnalyticsName = '${projectName}-${suffix}-law'
+var dbServerName = '${projectName}-${suffix}-db'
+var dbName = 'propintel'
+var dbUser = 'urbiaadmin'
 
-resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
-  name: staticWebAppName
-  location: location
-  sku: {
-    name: 'Free'
-    tier: 'Free'
-  }
-  properties: {
-    allowConfigFileUpdates: true
-  }
-  tags: tags
-}
-
-resource cosmosDb 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosAccountName
-  location: location
-  kind: 'GlobalDocumentDB'
-  properties: {
-    databaseAccountOfferType: 'Standard'
-    enableFreeTier: cosmosEnableFreeTier
-    capabilities: [
-      {
-        name: 'EnableServerless'
-      }
-    ]
-    consistencyPolicy: {
-      defaultConsistencyLevel: 'Session'
-    }
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-        isZoneRedundant: false
-      }
-    ]
-  }
-  tags: tags
-}
-
-resource cosmosSqlDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-04-15' = {
-  parent: cosmosDb
-  name: 'propintel'
-  properties: {
-    resource: {
-      id: 'propintel'
-    }
-  }
-}
-
-resource cosmosSqlContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-04-15' = {
-  parent: cosmosSqlDb
-  name: 'items'
-  properties: {
-    resource: {
-      id: 'items'
-      partitionKey: {
-        paths: [
-          '/pk'
-        ]
-        kind: 'Hash'
-      }
-      indexingPolicy: {
-        indexingMode: 'consistent'
-        automatic: true
-        includedPaths: [
-          {
-            path: '/*'
-          }
-        ]
-        excludedPaths: [
-          {
-            path: '/"_etag"/?'
-          }
-        ]
-      }
-    }
-  }
-}
-
+// ── Log Analytics ─────────────────────────────────────────────────────────────
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsName
   location: location
@@ -119,6 +48,70 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   tags: tags
 }
 
+// ── Static Web App (Angular) ──────────────────────────────────────────────────
+resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
+  name: staticWebAppName
+  location: 'centralus'
+  sku: {
+    name: 'Free'
+    tier: 'Free'
+  }
+  properties: {
+    allowConfigFileUpdates: true
+  }
+  tags: tags
+}
+
+// ── PostgreSQL Flexible Server ────────────────────────────────────────────────
+resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-03-01-preview' = {
+  name: dbServerName
+  location: location
+  sku: {
+    name: 'Standard_B1ms'   // Burstable — ~7€/mes
+    tier: 'Burstable'
+  }
+  properties: {
+    administratorLogin: dbUser
+    administratorLoginPassword: dbPassword
+    storage: {
+      storageSizeGB: 32
+    }
+    backup: {
+      backupRetentionDays: 7
+      geoRedundantBackup: 'Disabled'
+    }
+    highAvailability: {
+      mode: 'Disabled'
+    }
+    version: '16'
+    authConfig: {
+      activeDirectoryAuth: 'Disabled'
+      passwordAuth: 'Enabled'
+    }
+  }
+  tags: tags
+}
+
+resource postgresDb 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-03-01-preview' = {
+  parent: postgresServer
+  name: dbName
+  properties: {
+    charset: 'utf8'
+    collation: 'en_US.utf8'
+  }
+}
+
+// Permitir acceso desde Azure Services (Container Apps)
+resource postgresFirewallAzure 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-03-01-preview' = {
+  parent: postgresServer
+  name: 'AllowAzureServices'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
+  }
+}
+
+// ── Container Apps Environment ────────────────────────────────────────────────
 resource containerEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = {
   name: containerEnvironmentName
   location: location
@@ -127,12 +120,15 @@ resource containerEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
         customerId: logAnalytics.properties.customerId
-        sharedKey: listKeys(logAnalytics.id, logAnalytics.apiVersion).primarySharedKey
+        sharedKey: logAnalytics.listKeys().primarySharedKey
       }
     }
   }
   tags: tags
 }
+
+// ── Container App (API .NET) ──────────────────────────────────────────────────
+var dbConnectionString = 'Host=${postgresServer.properties.fullyQualifiedDomainName};Database=${dbName};Username=${dbUser};Password=${dbPassword};SSL Mode=Require;Trust Server Certificate=true'
 
 resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: containerAppName
@@ -146,10 +142,25 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
         transport: 'auto'
       }
       activeRevisionsMode: 'Single'
+      registries: [
+        {
+          server: 'urbiaacr2026.azurecr.io'
+          username: 'urbiaacr2026'
+          passwordSecretRef: 'acr-password'
+        }
+      ]
       secrets: [
         {
           name: 'api-key'
           value: apiKey
+        }
+        {
+          name: 'db-connection'
+          value: dbConnectionString
+        }
+        {
+          name: 'acr-password'
+          value: acrPassword
         }
       ]
     }
@@ -176,8 +187,8 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
               secretRef: 'api-key'
             }
             {
-              name: 'ConnectionStrings__Cosmos'
-              value: 'AccountEndpoint=${cosmosDb.properties.documentEndpoint};AccountKey=${listKeys(cosmosDb.id, cosmosDb.apiVersion).primaryMasterKey};'
+              name: 'ConnectionStrings__UrbIA'
+              secretRef: 'db-connection'
             }
           ]
         }
@@ -201,10 +212,11 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
   tags: tags
 }
 
+// ── Outputs ───────────────────────────────────────────────────────────────────
 output resourceGroupName string = resourceGroup().name
 output staticWebAppName string = staticWebApp.name
 output staticWebAppHostname string = staticWebApp.properties.defaultHostname
 output containerAppName string = containerApp.name
 output containerAppUrl string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
-output cosmosDbAccountName string = cosmosDb.name
-output cosmosDbEndpoint string = cosmosDb.properties.documentEndpoint
+output postgresHost string = postgresServer.properties.fullyQualifiedDomainName
+output dbConnectionStringForScraper string = 'Host=${postgresServer.properties.fullyQualifiedDomainName};Port=5432;Database=${dbName};Username=${dbUser};Password=<TU_PASSWORD>'

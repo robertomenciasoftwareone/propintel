@@ -95,6 +95,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/estadisticas/estadisticas.component').then(m => m.EstadisticasComponent),
   },
+  {
+    path: 'catastro',
+    loadComponent: () =>
+      import('./features/catastro/catastro.component').then(m => m.CatastroComponent),
+  },
 
   { path: '**', redirectTo: '' },
 ];

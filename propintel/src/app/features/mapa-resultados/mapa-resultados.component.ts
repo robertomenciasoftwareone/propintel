@@ -750,10 +750,11 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
 
     const map = L.map('mapa-resultados-map', { center: [40.4168, -3.7038], zoom: 13, zoomControl: true });
 
-    // OSM estándar — incluye iconos de metro, bus, cercanías, etc. nativamente
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19
+    // Maptiler Streets — estilo claro con metro, bus, POI, transporte completo
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=0ONivd6VfHWkfYnnsxcJ', {
+      attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      maxZoom: 20,
+      tileSize: 256,
     }).addTo(map);
 
     // Cluster group para agrupar pisos en bolas con número

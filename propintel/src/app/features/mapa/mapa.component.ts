@@ -203,58 +203,57 @@ type Vista = 'pins' | 'cp';
     /* Cluster bubbles */
     :host ::ng-deep .marker-cluster { background: transparent !important; }
     :host ::ng-deep .marker-cluster div {
-      background: rgba(232, 197, 71, 0.18) !important;
-      border: 2px solid rgba(232, 197, 71, 0.5) !important;
-      color: var(--text-primary) !important;
+      background: rgba(232, 197, 71, 0.85) !important;
+      border: 2px solid rgba(180, 140, 20, 0.8) !important;
+      color: #3d2e00 !important;
       font-family: 'DM Sans', sans-serif !important;
-      font-weight: 600 !important; font-size: 13px !important;
+      font-weight: 700 !important; font-size: 13px !important;
       display: flex !important; align-items: center !important;
       justify-content: center !important; border-radius: 50% !important;
-      box-shadow: 0 0 18px rgba(232,197,71,.2), 0 4px 12px rgba(0,0,0,.4) !important;
-      backdrop-filter: blur(4px) !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,.25) !important;
       transition: transform .2s, box-shadow .2s !important;
     }
     :host ::ng-deep .marker-cluster:hover div {
       transform: scale(1.12) !important;
-      box-shadow: 0 0 24px rgba(232,197,71,.35), 0 6px 20px rgba(0,0,0,.5) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3) !important;
     }
     :host ::ng-deep .marker-cluster-small div  { width: 36px !important; height: 36px !important; }
-    :host ::ng-deep .marker-cluster-medium div { width: 44px !important; height: 44px !important; font-size: 14px !important; background: rgba(232,197,71,.22) !important; border-color: rgba(232,197,71,.6) !important; }
-    :host ::ng-deep .marker-cluster-large div  { width: 54px !important; height: 54px !important; font-size: 15px !important; background: rgba(232,197,71,.28) !important; border-color: rgba(232,197,71,.7) !important; }
+    :host ::ng-deep .marker-cluster-medium div { width: 44px !important; height: 44px !important; font-size: 14px !important; background: rgba(232,197,71,.92) !important; }
+    :host ::ng-deep .marker-cluster-large div  { width: 54px !important; height: 54px !important; font-size: 15px !important; background: rgba(232,130,71,.92) !important; border-color: rgba(180,80,20,.8) !important; color: #fff !important; }
 
     /* Popup */
     :host ::ng-deep .leaflet-popup-content-wrapper {
-      background: var(--bg3); color: var(--text-primary);
-      border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.5);
-      border: 1px solid var(--border-bright);
+      background: #fff; color: #1a1a2e;
+      border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+      border: 1px solid #e2e8f0;
     }
-    :host ::ng-deep .leaflet-popup-tip { background: var(--bg3); }
+    :host ::ng-deep .leaflet-popup-tip { background: #fff; }
     :host ::ng-deep .leaflet-popup-content { margin: 12px 14px; font-size: 12.5px; line-height: 1.6; }
     :host ::ng-deep .popup-gap { font-weight: 600; font-size: 13px; }
-    :host ::ng-deep .popup-gap.neg  { color: #4fd1a5; }
-    :host ::ng-deep .popup-gap.low  { color: #6ec1e4; }
-    :host ::ng-deep .popup-gap.med  { color: #e8c547; }
-    :host ::ng-deep .popup-gap.high { color: #f87171; }
+    :host ::ng-deep .popup-gap.neg  { color: #0d9f72; }
+    :host ::ng-deep .popup-gap.low  { color: #2563eb; }
+    :host ::ng-deep .popup-gap.med  { color: #b45309; }
+    :host ::ng-deep .popup-gap.high { color: #dc2626; }
     :host ::ng-deep .popup-btn {
       display: inline-block; margin-top: 6px; padding: 5px 12px;
-      border-radius: 6px; background: rgba(232,197,71,.12);
-      color: var(--accent); font-size: 11px; font-weight: 500;
-      cursor: pointer; border: 1px solid rgba(232,197,71,.2);
+      border-radius: 6px; background: rgba(232,197,71,.15);
+      color: #92660a; font-size: 11px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(232,197,71,.4);
       transition: background .15s;
     }
-    :host ::ng-deep .popup-btn:hover { background: rgba(232,197,71,.22); }
+    :host ::ng-deep .popup-btn:hover { background: rgba(232,197,71,.28); }
 
     /* Controls */
     :host ::ng-deep .leaflet-control-attribution {
-      background: rgba(13,15,18,.7) !important;
-      color: var(--text-muted) !important; font-size: 10px !important;
+      background: rgba(255,255,255,.85) !important;
+      color: #666 !important; font-size: 10px !important;
     }
-    :host ::ng-deep .leaflet-control-attribution a { color: var(--text-secondary) !important; }
+    :host ::ng-deep .leaflet-control-attribution a { color: #444 !important; }
     :host ::ng-deep .leaflet-control-zoom a {
-      background: var(--bg3) !important; color: var(--text-primary) !important;
-      border-color: var(--border) !important;
+      background: #fff !important; color: #333 !important;
+      border-color: #ccc !important;
     }
-    :host ::ng-deep .leaflet-control-zoom a:hover { background: var(--bg2) !important; }
+    :host ::ng-deep .leaflet-control-zoom a:hover { background: #f5f5f5 !important; }
   `]
 })
 export class MapaComponent implements AfterViewInit, OnDestroy {
@@ -275,7 +274,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   readonly catastroVisible = signal(false);
 
   private readonly headers = { 'X-Api-Key': environment.apiKey };
-  private readonly cities  = ['madrid', 'barcelona', 'asturias', 'valencia', 'sevilla'];
+  private readonly cities  = ['madrid'];
 
   async ngAfterViewInit(): Promise<void> {
     await this.initMap();
@@ -335,15 +334,16 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
     this.map = L.map(container, {
       center: [40.4168, -3.7038],
-      zoom: 6,
+      zoom: 12,
       zoomControl: true,
       attributionControl: true,
     });
 
-    // Stadia Alidade Dark — oscuro con iconos de metro/bus/cercanías visibles
-    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
+    // Maptiler Streets — estilo claro con metro, bus, POI, transporte completo
+    L.tileLayer('https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=0ONivd6VfHWkfYnnsxcJ', {
+      attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
       maxZoom: 20,
+      tileSize: 256,
     }).addTo(this.map);
 
     // markerCluster es opcional — si no está disponible usamos layerGroup normal
@@ -421,16 +421,18 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       const habLabel = p.habitaciones ? `${p.habitaciones} hab` : '';
       const meta     = [m2Label, habLabel].filter(Boolean).join(' · ');
 
+      const precioStr = p.precioTotal > 0
+        ? `<strong>${this.fmt(p.precioTotal)} €</strong><span style="color:#888"> · ${Math.round(p.precioM2)} €/m²</span>`
+        : `<strong>${Math.round(p.precioM2)} €/m²</strong>`;
+
       marker.bindPopup(`
-        <div style="min-width:180px">
-          <strong>${this.escapeHtml(titulo)}</strong><br>
-          <span style="color:var(--text-secondary)">${p.zona} · ${p.fuente}</span><br>
-          <span style="color:var(--text-secondary)">${meta}</span><br>
-          <div style="margin:6px 0">
-            <span style="color:var(--text-secondary)">Precio:</span>
-            <strong>${this.fmt(p.precioTotal)} €</strong>
-            <span style="color:var(--text-muted)"> · ${Math.round(p.precioM2)} €/m²</span><br>
-            <span style="color:var(--text-secondary)">Notarial:</span> ${Math.round(p.notarialM2)} €/m²<br>
+        <div style="min-width:180px;font-family:'DM Sans',sans-serif">
+          <strong style="font-size:13px;color:#1a1a2e">${this.escapeHtml(titulo)}</strong><br>
+          <span style="color:#666;font-size:11px">${p.zona} · ${p.fuente}</span><br>
+          ${meta ? `<span style="color:#888;font-size:11px">${meta}</span><br>` : ''}
+          <div style="margin:6px 0;border-top:1px solid #f0f0f0;padding-top:6px">
+            <div style="margin-bottom:2px"><span style="color:#666">Precio: </span>${precioStr}</div>
+            <div style="margin-bottom:2px"><span style="color:#666">Notarial: </span>${Math.round(p.notarialM2)} €/m²</div>
             <span class="popup-gap ${gapClass}">Gap: ${p.gapPct > 0 ? '+' : ''}${p.gapPct}%</span>
           </div>
           <span class="popup-btn" data-id="${p.id}">Ver ficha →</span>

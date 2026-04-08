@@ -21,11 +21,7 @@ import { AnuncioResumen } from '../../core/models/inmobiliario.model';
       <section class="filters card">
         <label for="ciudad">Ciudad</label>
         <select id="ciudad" [(ngModel)]="ciudad" (change)="buscar(true)">
-          <option value="asturias">Asturias</option>
           <option value="madrid">Madrid</option>
-          <option value="barcelona">Barcelona</option>
-          <option value="valencia">Valencia</option>
-          <option value="sevilla">Sevilla</option>
         </select>
 
         <button class="btn-primary" (click)="buscar(true)" [disabled]="loading()">Buscar viviendas</button>

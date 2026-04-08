@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     alert_from:    str = "alertas@urbia.es"
 
     # Scheduler
-    scraper_hora_ejecucion: str = "07:00"  # hora local cada día
+    scraper_hora_ejecucion: str = "03:00"  # hora local cada día
 
     @property
     def db_url(self) -> str:

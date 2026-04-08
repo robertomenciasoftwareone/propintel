@@ -16,6 +16,9 @@ class TipoInmueble(str, Enum):
     ATICO      = "atico"
     ESTUDIO    = "estudio"
     DUPLEX     = "duplex"
+    CHALET     = "chalet"
+    LOCAL      = "local"
+    GARAJE     = "garaje"
 
 
 # ─── Anuncio de portal (Idealista / Fotocasa) ──────────────────────────────

@@ -54,6 +54,8 @@ async def run_ciclo_completo(
         "gaps_calculados": 0,
         "alertas_disparadas": 0,
         "emails_enviados": 0,
+        "duplicados_marcados": 0,
+        "duplicados_eliminados": 0,
         "errores": [],
     }
 
@@ -88,8 +90,11 @@ async def run_ciclo_completo(
                     resumen["errores"].append(f"idealista_api: {e}")
                     anuncios_idealista = []  # fuerza fallback abajo
 
-            # Fallback a Playwright si la API no devolvió nada
-            if not anuncios_idealista:
+            # Fallback a Playwright SOLO si la API no está configurada o falló con excepción
+            # (lista vacía por quota agotada o ciudad no en CIUDADES_API NO activa el fallback)
+            _api_intentada = api_key_ok and not forzar_playwright
+            _api_fallo_excepcion = bool(resumen["errores"] and any("idealista_api" in e for e in resumen["errores"]))
+            if not _api_intentada or _api_fallo_excepcion:
                 logger.info("🏠 [2/6] Scraping Idealista (Playwright)...")
                 try:
                     anuncios_idealista = await run_idealista_scraper(ciudades, max_paginas)
@@ -99,6 +104,8 @@ async def run_ciclo_completo(
                 except Exception as e:
                     logger.warning(f"Idealista Playwright falló (continuando sin él): {e}")
                     resumen["errores"].append(f"idealista_playwright: {e}")
+            elif not anuncios_idealista:
+                logger.info("🏠 [2/6] API Idealista devolvió 0 anuncios (quota agotada o ciudad no configurada) — omitiendo Playwright")
         else:
             logger.info("🏠 [2/6] Idealista omitido (--sin-idealista)")
 
@@ -176,6 +183,16 @@ async def run_ciclo_completo(
         if disparos:
             db.guardar_disparos(disparos, emails_enviados_idx)
 
+        # ── 7. Deduplicación activa ─────────────────────────────────────
+        logger.info("🧹 [7/7] Limpiando duplicados en BD...")
+        try:
+            dedup = db.limpiar_duplicados()
+            resumen["duplicados_marcados"]  = dedup["canonical_marcados"]
+            resumen["duplicados_eliminados"] = dedup["id_externo_eliminados"]
+        except Exception as e:
+            logger.warning(f"Deduplicación falló (no crítico): {e}")
+            resumen["errores"].append(f"dedup: {e}")
+
     except Exception as e:
         logger.exception(f"Error crítico: {e}")
         resumen["errores"].append(str(e))
@@ -189,7 +206,9 @@ async def run_ciclo_completo(
         f"Fotocasa:{resumen['anuncios_fotocasa']} "
         f"Total:{resumen['anuncios_total']} "
         f"Gaps:{resumen['gaps_calculados']} "
-        f"Alertas:{resumen['alertas_disparadas']} ━━━"
+        f"Alertas:{resumen['alertas_disparadas']} "
+        f"DupMarcados:{resumen['duplicados_marcados']} "
+        f"DupEliminados:{resumen['duplicados_eliminados']} ━━━"
     )
     return resumen
 
@@ -200,14 +219,24 @@ def main():
     parser.add_argument("--paginas", type=int, default=3)
     parser.add_argument("--sin-fotocasa", action="store_true", help="Omitir Fotocasa en el ciclo")
     parser.add_argument("--sin-idealista", action="store_true", help="Omitir Idealista en el ciclo")
+    parser.add_argument("--solo-api", action="store_true", help="Solo API Idealista → BD (sin ciclo completo)")
     parser.add_argument("--scheduler", action="store_true")
     parser.add_argument("--init-db", action="store_true")
     parser.add_argument("--stats-macro", action="store_true", help="Descargar estadísticas INE/BdE ahora")
+    parser.add_argument("--dedup", action="store_true", help="Ejecutar solo limpieza de duplicados en BD")
     args = parser.parse_args()
 
     if args.init_db:
         from models.db_models import init_db
         init_db()
+        return
+
+    if getattr(args, "dedup", False):
+        db = DBService()
+        resultado = db.limpiar_duplicados()
+        print(f"\n✓ Deduplicación completada:")
+        print(f"  Duplicados por canonical_key marcados inactivos: {resultado['canonical_marcados']}")
+        print(f"  Duplicados por id_externo eliminados:            {resultado['id_externo_eliminados']}")
         return
 
     if getattr(args, "stats_macro", False):
@@ -219,25 +248,41 @@ def main():
         asyncio.run(_run_macro())
         return
 
+    if getattr(args, "solo_api", False):
+        async def _run_solo_api():
+            db = DBService()
+            ciudades = args.ciudad  # None = todas las zonas configuradas
+            logger.info(f"[solo-api] Ciudades/grupos: {ciudades or 'todas'}")
+            anuncios = await run_idealista_api_scraper(ciudades, args.paginas)
+            if anuncios:
+                db.guardar_anuncios(anuncios)
+            from scrapers.idealista_api_scraper import _quota_remaining
+            print(f"\n✓ API Idealista: {len(anuncios)} anuncios obtenidos y guardados en BD")
+            print(f"  Quota restante este mes: {_quota_remaining()}")
+        asyncio.run(_run_solo_api())
+        return
+
     if args.scheduler:
         from apscheduler.schedulers.blocking import BlockingScheduler
         from config.settings import settings
         scheduler = BlockingScheduler(timezone="Europe/Madrid")
         hora, minuto = settings.scraper_hora_ejecucion.split(":")
         sin_fc = getattr(args, "sin_fotocasa", False)
+        # Ciudades activas — ampliar cuando se quiera cubrir más mercados
+        ciudades_activas = args.ciudad or ["madrid"]
         scheduler.add_job(
-            lambda: asyncio.run(run_ciclo_completo(args.ciudad, args.paginas, sin_fc)),
+            lambda: asyncio.run(run_ciclo_completo(ciudades_activas, args.paginas, sin_fc)),
             trigger="cron", hour=int(hora), minute=int(minuto),
         )
-        # Estadísticas macro INE/BdE — cada lunes a las 07:00
+        # Estadísticas macro INE/BdE — cada lunes a las 03:30
         def _job_macro():
             async def _inner():
                 db = DBService()
                 datos = await run_ine_bde_scraper()
                 db.guardar_estadisticas_macro(datos)
             asyncio.run(_inner())
-        scheduler.add_job(_job_macro, trigger="cron", day_of_week="mon", hour=7, minute=0)
-        logger.info(f"⏰ Scheduler diario a las {settings.scraper_hora_ejecucion} + macro lunes 07:00")
+        scheduler.add_job(_job_macro, trigger="cron", day_of_week="mon", hour=3, minute=30)
+        logger.info(f"⏰ Scheduler diario a las {settings.scraper_hora_ejecucion} + macro lunes 03:30")
         try:
             scheduler.start()
         except (KeyboardInterrupt, SystemExit):

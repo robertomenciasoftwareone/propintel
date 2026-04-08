@@ -32,11 +32,37 @@ _QUOTA_FILE = Path(__file__).parent.parent / ".idealista_api_quota.json"
 # ── Ciudades: coordenadas centro + radio (metros) ─────────────────────────────
 # Ajustado para máxima cobertura con mínimas peticiones
 CIUDADES_API: dict[str, dict] = {
+    # ── Comunidad de Madrid (5 zonas) ──────────────────────────────────────
     "madrid": {
         "center": "40.4168,-3.7038",
         "distance": 15000,
         "ciudad": "madrid",
     },
+    "madrid_norte": {
+        # Alcobendas, San Sebastián de los Reyes, Tres Cantos, Colmenar Viejo
+        "center": "40.590,-3.690",
+        "distance": 20000,
+        "ciudad": "madrid",
+    },
+    "madrid_sur": {
+        # Leganés, Getafe, Fuenlabrada, Parla, Móstoles, Alcorcón
+        "center": "40.300,-3.790",
+        "distance": 22000,
+        "ciudad": "madrid",
+    },
+    "madrid_este": {
+        # Alcalá de Henares, Torrejón de Ardoz, Coslada, Rivas-Vaciamadrid
+        "center": "40.430,-3.490",
+        "distance": 18000,
+        "ciudad": "madrid",
+    },
+    "madrid_oeste": {
+        # Pozuelo de Alarcón, Majadahonda, Las Rozas, Boadilla del Monte
+        "center": "40.450,-3.880",
+        "distance": 18000,
+        "ciudad": "madrid",
+    },
+    # ── Otras ciudades ──────────────────────────────────────────────────────
     "barcelona": {
         "center": "41.3851,2.1734",
         "distance": 12000,
@@ -72,6 +98,11 @@ CIUDADES_API: dict[str, dict] = {
         "distance": 10000,
         "ciudad": "zaragoza",
     },
+}
+
+# ── Grupos predefinidos de zonas ──────────────────────────────────────────────
+GRUPOS_CIUDADES: dict[str, list[str]] = {
+    "comunidad_madrid": ["madrid", "madrid_norte", "madrid_sur", "madrid_este", "madrid_oeste"],
 }
 
 _TIPO_PATTERNS: list[tuple[re.Pattern, TipoInmueble]] = [
@@ -285,9 +316,19 @@ async def run_idealista_api_scraper(
         logger.warning("Quota mensual de Idealista API agotada — saltando")
         return []
 
+    # Expandir grupos (ej: 'comunidad_madrid' → 5 claves)
+    claves_expandidas: list[str] | None = None
+    if ciudades is not None:
+        claves_expandidas = []
+        for c in ciudades:
+            if c in GRUPOS_CIUDADES:
+                claves_expandidas.extend(GRUPOS_CIUDADES[c])
+            else:
+                claves_expandidas.append(c)
+
     zonas_seleccionadas = {
         k: v for k, v in CIUDADES_API.items()
-        if ciudades is None or k in ciudades
+        if claves_expandidas is None or k in claves_expandidas
     }
 
     # Calcular cuántas peticiones necesitamos

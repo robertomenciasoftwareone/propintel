@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PropIntel.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9b04e6ac51058c146620fc4bdd8b1c7e7902cbc7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a886c5a21e43e68a54bfcbc33f6e46f0334684a7")]
 [assembly: System.Reflection.AssemblyProductAttribute("PropIntel.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PropIntel.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -351,16 +351,25 @@ public class CiudadesController(PropIntelDbContext db) : ControllerBase
             var notarialM2 = notZona?.PrecioMedioM2 ?? a.PrecioM2!.Value;
             var gap = (a.PrecioM2!.Value - notarialM2) / notarialM2 * 100;
 
-            if (!zonaCentros.TryGetValue(zonaKey, out var centro))
-            {
-                // Fallback: use city center so the pin is still shown
-                if (!ciudadFallback.TryGetValue(ciudad, out centro))
-                    continue;
-            }
+            double lat, lon;
 
-            // Add small jitter so pins don't stack exactly
-            var lat = centro.Lat + (rng.NextDouble() - 0.5) * 0.008;
-            var lon = centro.Lon + (rng.NextDouble() - 0.5) * 0.008;
+            // Prioridad 1: coordenadas reales del anuncio (vienen de la API de Idealista)
+            if (a.Lat.HasValue && a.Lon.HasValue)
+            {
+                lat = a.Lat.Value;
+                lon = a.Lon.Value;
+            }
+            // Prioridad 2: centro del distrito con jitter
+            else if (zonaCentros.TryGetValue(zonaKey, out var centro) ||
+                     ciudadFallback.TryGetValue(ciudad, out centro))
+            {
+                lat = centro.Lat + (rng.NextDouble() - 0.5) * 0.008;
+                lon = centro.Lon + (rng.NextDouble() - 0.5) * 0.008;
+            }
+            else
+            {
+                continue; // sin coordenadas — no se puede pintar
+            }
 
             result.Add(new AnuncioMapaDto(
                 Id:           a.Id,

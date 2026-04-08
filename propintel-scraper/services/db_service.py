@@ -382,6 +382,113 @@ class DBService:
                 guardados += 1
         return guardados
 
+    # ── DEDUPLICACIÓN ACTIVA ────────────────────────────────────────────────
+
+    def limpiar_duplicados(self) -> dict:
+        """
+        Elimina anuncios duplicados que ya están en la BD.
+
+        Estrategia en dos pasadas:
+          1. Duplicados por canonical_key: si hay varios anuncios con la misma
+             clave canónica, conserva el más reciente y marca los demás como
+             inactivos (activo=False).
+          2. Duplicados por (fuente, id_externo): si por algún fallo se colaron
+             dos filas con el mismo id_externo en la misma fuente, elimina las
+             más antiguas dejando solo una.
+
+        Returns: resumen con conteos de duplicados encontrados y marcados.
+        """
+        resumen = {"canonical_marcados": 0, "id_externo_eliminados": 0}
+
+        with get_session() as session:
+            # ── Pasada 1: duplicados por canonical_key ──────────────────────
+            # Busca canonical_keys que aparecen en más de un anuncio activo
+            from sqlalchemy import text
+            duplicados_ck = session.execute(
+                text("""
+                    SELECT canonical_key, COUNT(*) as cnt
+                    FROM anuncios
+                    WHERE canonical_key IS NOT NULL
+                      AND activo = TRUE
+                    GROUP BY canonical_key
+                    HAVING COUNT(*) > 1
+                    ORDER BY cnt DESC
+                """)
+            ).fetchall()
+
+            for row in duplicados_ck:
+                ck = row[0]
+                # Obtener todos los anuncios con esa clave, ordenados por fecha desc
+                dupes = list(
+                    session.scalars(
+                        select(AnuncioDB)
+                        .where(
+                            and_(
+                                AnuncioDB.canonical_key == ck,
+                                AnuncioDB.activo == True,
+                            )
+                        )
+                        .order_by(desc(AnuncioDB.fecha_scraping))
+                    ).all()
+                )
+                # El primero (más reciente) se conserva; el resto se marca inactivo
+                for anuncio in dupes[1:]:
+                    anuncio.activo = False
+                    resumen["canonical_marcados"] += 1
+
+            logger.info(
+                f"[Dedup] Pasada 1 — {len(duplicados_ck)} canonical_keys duplicadas, "
+                f"{resumen['canonical_marcados']} anuncios marcados inactivos"
+            )
+
+            # ── Pasada 2: duplicados por id_externo (mismo portal) ──────────
+            # Esto no debería ocurrir por la restricción UNIQUE, pero por si acaso
+            # hay datos cargados antes de que existiera la constraint
+            dupes_id = session.execute(
+                text("""
+                    SELECT id_externo, MIN(id) as keep_id, COUNT(*) as cnt
+                    FROM anuncios
+                    GROUP BY id_externo
+                    HAVING COUNT(*) > 1
+                """)
+            ).fetchall()
+
+            ids_a_eliminar = []
+            for row in dupes_id:
+                id_externo = row[0]
+                keep_id = row[1]
+                # Obtener todos los ids con ese id_externo excepto el que conservamos
+                extra_ids = list(
+                    session.scalars(
+                        select(AnuncioDB.id).where(
+                            and_(
+                                AnuncioDB.id_externo == id_externo,
+                                AnuncioDB.id != keep_id,
+                            )
+                        )
+                    ).all()
+                )
+                ids_a_eliminar.extend(extra_ids)
+
+            if ids_a_eliminar:
+                from sqlalchemy import delete
+                session.execute(
+                    delete(AnuncioDB).where(AnuncioDB.id.in_(ids_a_eliminar))
+                )
+                resumen["id_externo_eliminados"] = len(ids_a_eliminar)
+
+            logger.info(
+                f"[Dedup] Pasada 2 — {len(dupes_id)} id_externo duplicados, "
+                f"{resumen['id_externo_eliminados']} filas eliminadas"
+            )
+
+        logger.info(
+            f"[Dedup] Limpieza completada: "
+            f"{resumen['canonical_marcados']} marcados inactivos, "
+            f"{resumen['id_externo_eliminados']} eliminados"
+        )
+        return resumen
+
     def get_disparos_recientes(
         self,
         alerta_id: Optional[str] = None,
