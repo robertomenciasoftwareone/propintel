@@ -27,6 +27,7 @@ from scrapers.notarial_scraper import run_notarial_scraper
 from scrapers.idealista_scraper import run_idealista_scraper
 from scrapers.idealista_api_scraper import run_idealista_api_scraper
 from scrapers.fotocasa_scraper import run_fotocasa_scraper
+from scrapers.ine_bde_scraper import run_ine_bde_scraper
 from services.gap_calculator import GapCalculator
 from services.email_notificador import EmailNotificador
 from services.db_service import DBService
@@ -201,11 +202,21 @@ def main():
     parser.add_argument("--sin-idealista", action="store_true", help="Omitir Idealista en el ciclo")
     parser.add_argument("--scheduler", action="store_true")
     parser.add_argument("--init-db", action="store_true")
+    parser.add_argument("--stats-macro", action="store_true", help="Descargar estadísticas INE/BdE ahora")
     args = parser.parse_args()
 
     if args.init_db:
         from models.db_models import init_db
         init_db()
+        return
+
+    if getattr(args, "stats_macro", False):
+        async def _run_macro():
+            db = DBService()
+            datos = await run_ine_bde_scraper()
+            guardados = db.guardar_estadisticas_macro(datos)
+            print(f"\n✓ Estadísticas macro: {len(datos)} puntos descargados, {guardados} guardados en BD")
+        asyncio.run(_run_macro())
         return
 
     if args.scheduler:
@@ -218,7 +229,15 @@ def main():
             lambda: asyncio.run(run_ciclo_completo(args.ciudad, args.paginas, sin_fc)),
             trigger="cron", hour=int(hora), minute=int(minuto),
         )
-        logger.info(f"⏰ Scheduler diario a las {settings.scraper_hora_ejecucion}")
+        # Estadísticas macro INE/BdE — cada lunes a las 07:00
+        def _job_macro():
+            async def _inner():
+                db = DBService()
+                datos = await run_ine_bde_scraper()
+                db.guardar_estadisticas_macro(datos)
+            asyncio.run(_inner())
+        scheduler.add_job(_job_macro, trigger="cron", day_of_week="mon", hour=7, minute=0)
+        logger.info(f"⏰ Scheduler diario a las {settings.scraper_hora_ejecucion} + macro lunes 07:00")
         try:
             scheduler.start()
         except (KeyboardInterrupt, SystemExit):

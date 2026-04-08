@@ -125,6 +125,19 @@ class GapAnalisis(BaseModel):
         )
 
 
+# ─── Estadística macro (INE / BdE / BCE) ──────────────────────────────────
+
+class EstadisticaMacro(BaseModel):
+    fuente:        str                         # 'INE', 'BDE', 'BCE'
+    indicador:     str                         # 'ipv_var_anual_general', ...
+    descripcion:   Optional[str] = None
+    periodo:       str                         # '2024-T3', '2024-11'
+    anyo:          Optional[int] = None
+    valor:         float
+    unidad:        Optional[str] = None        # '%', 'índice', 'unidades'
+    variacion_pct: Optional[float] = None      # variación vs período anterior
+
+
 # ─── Alerta (espejo del modelo Angular) ────────────────────────────────────
 
 class AlertaConfig(BaseModel):

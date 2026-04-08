@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { InmobiliarioService } from '../../core/services/inmobiliario.service';
 import { AnuncioDetalle, CatastroResult, CatastroFicha, ValorReferencia, EstimacionAvm } from '../../core/models/inmobiliario.model';
 import { environment } from '../../../environments/environment';
+import { MacroContextoComponent } from '../../shared/components/macro-contexto.component';
 
 interface GeminiZoneAnalysis {
   calidad_zona: string;
@@ -31,7 +32,7 @@ interface GeminiPhotoAnalysis {
 @Component({
   selector: 'app-ficha-inmueble',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, NgClass, RouterLink],
+  imports: [DecimalPipe, DatePipe, NgClass, RouterLink, MacroContextoComponent],
   template: `
     <div class="page">
 
@@ -564,6 +565,11 @@ interface GeminiPhotoAnalysis {
             </div>
           }
         }
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             CONTEXTO MACRO — IPV / Hipotecas / Tipo interés
+        ══════════════════════════════════════════════════════════════════ -->
+        <app-macro-contexto />
 
       }
     </div>

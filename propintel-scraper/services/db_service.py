@@ -14,10 +14,10 @@ from sqlalchemy import select, and_, desc, func
 
 from models.db_models import (
     engine, Base,
-    DatoNotarialDB, AnuncioDB, GapAnalisisDB, AlertaDB, DisparoAlertaDB,
+    DatoNotarialDB, AnuncioDB, GapAnalisisDB, AlertaDB, DisparoAlertaDB, EstadisticaMacroDB,
 )
 from models.schemas import (
-    DatoNotarial, AnuncioPortal, GapAnalisis, AlertaConfig,
+    DatoNotarial, AnuncioPortal, GapAnalisis, AlertaConfig, EstadisticaMacro,
 )
 
 
@@ -304,6 +304,49 @@ class DBService:
                     ).order_by(desc(GapAnalisisDB.gap_pct))
                 ).all()
             )
+
+    # ── ESTADÍSTICAS MACRO ───────────────────────────────────────────────────
+
+    def guardar_estadisticas_macro(self, estadisticas: list[EstadisticaMacro]) -> int:
+        """
+        Upsert de estadísticas macro en estadisticas_macro.
+        Actualiza 'valor' y 'variacion_pct' si el período ya existe.
+        Returns: número de registros insertados/actualizados.
+        """
+        if not estadisticas:
+            return 0
+
+        upserted = 0
+        with get_session() as session:
+            for est in estadisticas:
+                existing = session.scalars(
+                    select(EstadisticaMacroDB).where(
+                        EstadisticaMacroDB.fuente     == est.fuente,
+                        EstadisticaMacroDB.indicador  == est.indicador,
+                        EstadisticaMacroDB.periodo    == est.periodo,
+                    )
+                ).first()
+
+                if existing:
+                    existing.valor         = est.valor
+                    existing.variacion_pct = est.variacion_pct
+                    existing.calculado_en  = datetime.utcnow()
+                else:
+                    session.add(EstadisticaMacroDB(
+                        fuente        = est.fuente,
+                        indicador     = est.indicador,
+                        descripcion   = est.descripcion,
+                        periodo       = est.periodo,
+                        anyo          = est.anyo,
+                        valor         = est.valor,
+                        unidad        = est.unidad,
+                        variacion_pct = est.variacion_pct,
+                    ))
+                upserted += 1
+            session.commit()
+
+        logger.info(f"[DB] estadisticas_macro: {upserted} registros guardados")
+        return upserted
 
     # ── ALERTAS ─────────────────────────────────────────────────────────────
 

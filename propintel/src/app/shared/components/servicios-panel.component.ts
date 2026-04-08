@@ -94,6 +94,7 @@ export class ServiciosPanelComponent {
       desc: 'Índice de Precios de Vivienda (IPV), hipotecas constituidas y tipos de interés hipotecarios.',
       precio: 'Gratis · Datos oficiales',
       tag: 'INE', tagColor: '#a78bfa',
+      route: '/estadisticas',
     },
     {
       icon: '⚖️', nombre: 'Asesoría de negociación',

@@ -8,6 +8,7 @@ import { RangoFiableComponent } from '../../shared/components/rango-fiable.compo
 import { TransaccionesTableComponent } from '../../shared/components/transacciones-table.component';
 import { ServiciosPanelComponent } from '../../shared/components/servicios-panel.component';
 import { NotarialTableComponent } from '../../shared/components/notarial-table.component';
+import { MacroContextoComponent } from '../../shared/components/macro-contexto.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,6 +22,7 @@ import { NotarialTableComponent } from '../../shared/components/notarial-table.c
     TransaccionesTableComponent,
     NotarialTableComponent,
     ServiciosPanelComponent,
+    MacroContextoComponent,
   ],
   template: `
     <div class="dashboard">
@@ -52,6 +54,7 @@ import { NotarialTableComponent } from '../../shared/components/notarial-table.c
       </div>
 
       <app-kpi-cards />
+      <app-macro-contexto />
       <app-evolucion-chart />
       <app-gap-distritos />
       <app-rango-fiable />

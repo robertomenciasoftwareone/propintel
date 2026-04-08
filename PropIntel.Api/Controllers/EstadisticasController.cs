@@ -20,21 +20,28 @@ public class EstadisticasController : ControllerBase
         DefaultRequestHeaders = { { "Accept", "application/json" } }
     };
 
-    // Códigos de series del INE
-    // IPV: Índice de Precios de Vivienda (base 2015=100)
-    private const string IneIpvNacional    = "IPV0038"; // IPV general nacional
-    private const string IneIpvNuevaVivienda = "IPV0039";
-    private const string IneIpvSegundaMano = "IPV0040";
+    // ── Códigos verificados de series INE ───────────────────────────────────
+    // IPV: Índice de Precios de Vivienda (Base 2007 = 100, trimestral, Nacional)
+    // Verificados contra API: IPV1=Nacional.General.Índice, IPV3=Nacional.General.Var.anual
+    private const string IpvIndiceGeneral     = "IPV1";   // Índice general nacional
+    private const string IpvVarAnualGeneral   = "IPV3";   // Variación anual general  ← KPI principal
+    private const string IpvIndiceNueva       = "IPV5";   // Índice nueva vivienda
+    private const string IpvVarAnualNueva     = "IPV7";   // Variación anual nueva
+    private const string IpvIndiceSegundaMano = "IPV9";   // Índice segunda mano
+    private const string IpvVarAnualSegMano   = "IPV11";  // Variación anual segunda mano
 
-    // IneBaseUrl: API REST JSON del INE
+    // HPT: Estadística de Hipotecas Total (mensual, Total Nacional)
+    // Verificados: HPT10176=Número total nacional, HPT10123=Importe total nacional
+    private const string HptNumeroNacional  = "HPT10176";
+    private const string HptImporteNacional = "HPT10123";
+
     private const string IneBaseUrl = "https://servicios.ine.es/wstempus/js/ES";
 
     // ─── IPV: Índice de Precios de Vivienda ──────────────────────────────────
 
-    // GET /api/estadisticas/ine/ipv?periodos=8
     /// <summary>
     /// Índice de Precios de Vivienda (IPV) nacional — INE.
-    /// Devuelve la evolución trimestral del IPV general, vivienda nueva y segunda mano.
+    /// Devuelve la evolución trimestral: variación anual para General, Nueva y Segunda mano.
     /// </summary>
     [HttpGet("ine/ipv")]
     public async Task<IActionResult> GetIpv([FromQuery] int periodos = 8)
@@ -45,14 +52,17 @@ public class EstadisticasController : ControllerBase
         {
             var series = new[]
             {
-                (IneIpvNacional,      "IPV General"),
-                (IneIpvNuevaVivienda, "Vivienda nueva"),
-                (IneIpvSegundaMano,   "Segunda mano"),
+                (IpvVarAnualGeneral,  "IPV General — variación anual"),
+                (IpvVarAnualNueva,    "Vivienda nueva — variación anual"),
+                (IpvVarAnualSegMano,  "Segunda mano — variación anual"),
+                (IpvIndiceGeneral,    "IPV General — índice (Base 2007)"),
+                (IpvIndiceNueva,      "Vivienda nueva — índice (Base 2007)"),
+                (IpvIndiceSegundaMano,"Segunda mano — índice (Base 2007)"),
             };
 
             var tareas = series.Select(async s =>
             {
-                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=0";
+                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=2";
                 try
                 {
                     var json = await _http.GetStringAsync(url);
@@ -61,7 +71,8 @@ public class EstadisticasController : ControllerBase
                         .GetProperty("Data")
                         .EnumerateArray()
                         .Select(d => new IneDataPointDto(
-                            Periodo: d.GetProperty("NombrePeriodo").GetString() ?? "",
+                            Periodo: d.TryGetProperty("NombrePeriodo", out var np) && np.ValueKind == JsonValueKind.String
+                                     ? (np.GetString() ?? "") : FormatPeriodoIpv(d),
                             Valor:   d.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null
                                      ? v.GetDouble() : null
                         ))
@@ -84,29 +95,24 @@ public class EstadisticasController : ControllerBase
         }
     }
 
-    // GET /api/estadisticas/ine/hipotecas?periodos=12
     /// <summary>
-    /// Estadísticas de hipotecas sobre viviendas — INE.
-    /// Número de hipotecas constituidas y capital prestado medio mensual.
+    /// Estadísticas de hipotecas total nacional — INE/HPT.
+    /// Número e importe de hipotecas constituidas mensualmente.
     /// </summary>
     [HttpGet("ine/hipotecas")]
     public async Task<IActionResult> GetHipotecas([FromQuery] int periodos = 12)
     {
         periodos = Math.Clamp(periodos, 2, 48);
 
-        // Serie INE: hipotecas constituidas sobre viviendas (mensual)
-        const string serieNum    = "EH0020"; // Número de hipotecas
-        const string serieImport = "EH0023"; // Importe medio
-
         try
         {
             var tareas = new[]
             {
-                (serieNum,    "Número de hipotecas"),
-                (serieImport, "Importe medio (€)"),
+                (HptNumeroNacional,  "Número de hipotecas — Total Nacional"),
+                (HptImporteNacional, "Importe de hipotecas — Total Nacional (€)"),
             }.Select(async s =>
             {
-                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=0";
+                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=2";
                 try
                 {
                     var json = await _http.GetStringAsync(url);
@@ -115,7 +121,8 @@ public class EstadisticasController : ControllerBase
                         .GetProperty("Data")
                         .EnumerateArray()
                         .Select(d => new IneDataPointDto(
-                            Periodo: d.GetProperty("NombrePeriodo").GetString() ?? "",
+                            Periodo: d.TryGetProperty("NombrePeriodo", out var np) && np.ValueKind == JsonValueKind.String
+                                     ? (np.GetString() ?? "") : FormatPeriodoMensual(d),
                             Valor:   d.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null
                                      ? v.GetDouble() : null
                         ))
@@ -138,79 +145,119 @@ public class EstadisticasController : ControllerBase
         }
     }
 
-    // GET /api/estadisticas/bde/tipos-interes
     /// <summary>
-    /// Tipos de interés hipotecarios — Banco de España.
-    /// Tipo medio de préstamos hipotecarios para adquisición de vivienda libre.
+    /// Tipos de interés hipotecarios de referencia.
+    /// Euribor 12 meses y tipo medio hipotecario (BdE/BCE).
     /// </summary>
     [HttpGet("bde/tipos-interes")]
     public async Task<IActionResult> GetTiposInteres()
     {
+        // Intentar obtener Euribor 12M desde ECB Statistics
+        double? euribor12m = null;
+        string euriborFecha = "";
+        string euriborFuente = "BCE / BdE";
+
         try
         {
-            // Devolvemos referencia a los datos públicos del BdE.
-            // Su API SDMX requiere configuración adicional; se provee URL de referencia.
-            var datos = new[]
-            {
-                new BdeTipoInteresDto(
-                    Fecha:            DateTime.UtcNow.ToString("yyyy-MM"),
-                    TipoHipotecario:  null,
-                    Euribor:          null
-                )
-            };
+            // ECB MIR: préstamos hipotecarios nuevos para adquisición vivienda libre, España
+            // Dataset MIR, flow: M.ES.B.A2C.AM.R.A.2250.EUR.N
+            var ecbUrl = "https://data.ecb.europa.eu/api/data/MIR/M.ES.B.A2C.AM.R.A.2250.EUR.N?lastNObservations=3&detail=dataonly&format=jsondata";
+            var ecbJson = await _http.GetStringAsync(ecbUrl);
+            using var ecbDoc = JsonDocument.Parse(ecbJson);
 
-            return Ok(new
+            if (ecbDoc.RootElement.TryGetProperty("dataSets", out var ds))
             {
-                fuente      = "Banco de España",
-                descripcion = "Tipos de interés hipotecarios. Para datos en tiempo real consulte:",
-                urlReferencia = "https://www.bde.es/webbde/es/estadis/infoest/bolest12.html",
-                urlSdmx     = "https://www.bde.es/api/estadisticas/v2/datos?c=BI_1_1&p=12M&n=12",
-                datos
-            });
+                var obs = ds[0].GetProperty("series").EnumerateObject().First().Value
+                              .GetProperty("observations");
+                var keys = obs.EnumerateObject().OrderBy(o => int.Parse(o.Name)).ToList();
+                if (keys.Count > 0)
+                {
+                    var last = keys[^1].Value[0];
+                    if (last.ValueKind != JsonValueKind.Null)
+                        euribor12m = last.GetDouble();
+
+                    // Extract period from dimension structure
+                    if (ecbDoc.RootElement.TryGetProperty("structure", out var struct_))
+                    {
+                        var timeDim = struct_.GetProperty("dimensions").GetProperty("observation")[0]
+                                            .GetProperty("values").EnumerateArray()
+                                            .Skip(keys.Count - 1).First();
+                        euriborFecha = timeDim.GetProperty("id").GetString() ?? "";
+                    }
+                }
+            }
         }
-        catch (Exception ex)
+        catch
         {
-            return StatusCode(502, new { error = "Error al obtener datos del Banco de España", detail = ex.Message });
+            // BdE/ECB no disponible — usar valor de referencia
         }
+
+        var datos = new[]
+        {
+            new BdeTipoInteresDto(
+                Fecha:           string.IsNullOrEmpty(euriborFecha)
+                                     ? DateTime.UtcNow.AddMonths(-2).ToString("yyyy-MM")
+                                     : euriborFecha,
+                TipoHipotecario: euribor12m,
+                Euribor:         euribor12m
+            )
+        };
+
+        return Ok(new
+        {
+            fuente        = euriborFuente,
+            descripcion   = "Tipo de interés hipotecario para adquisición de vivienda libre — España",
+            disponible    = euribor12m.HasValue,
+            urlReferencia = "https://www.bde.es/webbde/es/estadis/infoest/bolest12.html",
+            datos
+        });
     }
 
-    // GET /api/estadisticas/resumen
     /// <summary>
-    /// Resumen ejecutivo con los últimos datos disponibles de todas las fuentes.
+    /// Resumen ejecutivo: último IPV, hipotecas y tipos de interés.
     /// </summary>
     [HttpGet("resumen")]
     public async Task<IActionResult> GetResumen()
     {
         try
         {
-            // IPV último trimestre
-            var urlIpv = $"{IneBaseUrl}/DATOS_SERIE/{IneIpvNacional}?nult=2&det=0";
-            var ipvJson = await _http.GetStringAsync(urlIpv);
-            using var ipvDoc = JsonDocument.Parse(ipvJson);
+            var tareaIpv     = FetchLastValue(IpvVarAnualGeneral,  $"{IneBaseUrl}/DATOS_SERIE/{IpvVarAnualGeneral}?nult=2&det=2");
+            var tareaHipNum  = FetchLastValue(HptNumeroNacional,   $"{IneBaseUrl}/DATOS_SERIE/{HptNumeroNacional}?nult=2&det=2");
+            var tareaHipImp  = FetchLastValue(HptImporteNacional,  $"{IneBaseUrl}/DATOS_SERIE/{HptImporteNacional}?nult=2&det=2");
 
-            var ipvData = ipvDoc.RootElement
-                .GetProperty("Data")
-                .EnumerateArray()
-                .LastOrDefault();
+            await Task.WhenAll(tareaIpv, tareaHipNum, tareaHipImp);
 
-            double? ipvValor = null;
-            string? ipvPeriodo = null;
-            if (ipvData.ValueKind != JsonValueKind.Undefined)
-            {
-                ipvPeriodo = ipvData.GetProperty("NombrePeriodo").GetString();
-                if (ipvData.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null)
-                    ipvValor = v.GetDouble();
-            }
+            var (ipvValor, ipvPeriodo) = tareaIpv.Result;
+            var (hipNumValor, hipNumPeriodo) = tareaHipNum.Result;
+            var (hipImpValor, _) = tareaHipImp.Result;
 
             return Ok(new
             {
-                ipv = new { valor = ipvValor, periodo = ipvPeriodo, base2015 = 100 },
+                ipvVarAnual = new
+                {
+                    valor   = ipvValor,
+                    periodo = ipvPeriodo,
+                    unidad  = "%",
+                    fuente  = "INE — IPV Base 2007"
+                },
+                hipotecasNumero = new
+                {
+                    valor   = hipNumValor,
+                    periodo = hipNumPeriodo,
+                    unidad  = "hipotecas/mes",
+                    fuente  = "INE — Estadística Hipotecas"
+                },
+                hipotecasImporte = new
+                {
+                    valor  = hipImpValor,
+                    unidad = "miles € medio",
+                    fuente = "INE — Estadística Hipotecas"
+                },
                 fuentes = new[]
                 {
-                    new { nombre = "INE - IPV", url = "https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736152838&menu=ultiDatos&idp=1254735976607" },
-                    new { nombre = "INE - Hipotecas", url = "https://www.ine.es/dyngs/INEbase/es/operacion.htm?c=Estadistica_C&cid=1254736170236&menu=ultiDatos&idp=1254735576757" },
+                    new { nombre = "INE — IPV",       url = "https://www.ine.es/jaxiT3/Tabla.htm?t=25171" },
+                    new { nombre = "INE — Hipotecas", url = "https://www.ine.es/jaxiT3/Tabla.htm?t=24457" },
                     new { nombre = "Banco de España", url = "https://www.bde.es/webbde/es/estadis/infoest/bolest12.html" },
-                    new { nombre = "Catastro", url = "https://www.catastro.meh.es" },
                 }
             });
         }
@@ -218,5 +265,53 @@ public class EstadisticasController : ControllerBase
         {
             return StatusCode(502, new { error = "Error al obtener resumen de estadísticas", detail = ex.Message });
         }
+    }
+
+    // ─── Helpers privados ───────────────────────────────────────────────────
+
+    private async Task<(double? valor, string periodo)> FetchLastValue(string serie, string url)
+    {
+        try
+        {
+            var json = await _http.GetStringAsync(url);
+            using var doc = JsonDocument.Parse(json);
+            var last = doc.RootElement.GetProperty("Data").EnumerateArray().LastOrDefault();
+            if (last.ValueKind == JsonValueKind.Undefined) return (null, "");
+
+            double? val = null;
+            if (last.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null)
+                val = v.GetDouble();
+
+            string periodo = last.TryGetProperty("NombrePeriodo", out var np) && np.ValueKind == JsonValueKind.String
+                            ? (np.GetString() ?? "") : "";
+            return (val, periodo);
+        }
+        catch { return (null, ""); }
+    }
+
+    private static string FormatPeriodoIpv(JsonElement d)
+    {
+        if (!d.TryGetProperty("Anyo", out var y)) return "";
+        int anyo = y.GetInt32();
+        if (d.TryGetProperty("FK_Periodo", out var pk))
+        {
+            int cod = pk.GetInt32();
+            string trim = cod switch { 22 => "T1", 23 => "T2", 24 => "T3", 25 => "T4", _ => $"P{cod}" };
+            return $"{anyo} {trim}";
+        }
+        return $"{anyo}";
+    }
+
+    private static string FormatPeriodoMensual(JsonElement d)
+    {
+        if (!d.TryGetProperty("Anyo", out var y)) return "";
+        int anyo = y.GetInt32();
+        if (d.TryGetProperty("FK_Periodo", out var pk))
+        {
+            int mes = pk.GetInt32() - 21; // INE: 22=Jan…33=Dec (offset 21)
+            if (mes >= 1 && mes <= 12)
+                return $"{anyo}-{mes:D2}";
+        }
+        return $"{anyo}";
     }
 }

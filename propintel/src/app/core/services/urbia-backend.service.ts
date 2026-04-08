@@ -99,6 +99,24 @@ export interface ScrapingStats {
   fotocasaResumen?: FotocasaResumenStats;
 }
 
+export interface IneDataPoint {
+  periodo: string;
+  valor: number | null;
+}
+
+export interface IneIpvSerie {
+  serie: string;
+  descripcion: string;
+  datos: IneDataPoint[];
+}
+
+export interface EstadisticasResumen {
+  ipvVarAnual: { valor: number | null; periodo: string; unidad: string; fuente: string };
+  hipotecasNumero: { valor: number | null; periodo: string; unidad: string; fuente: string };
+  hipotecasImporte: { valor: number | null; unidad: string; fuente: string };
+  fuentes: { nombre: string; url: string }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class UrbiaBackendService {
   private http = inject(HttpClient);
@@ -158,5 +176,19 @@ export class UrbiaBackendService {
 
   getScrapingStats(): Observable<ScrapingStats> {
     return this.http.get<ScrapingStats>(`${this.apiBase}/scraping-stats`, this.authHeaders);
+  }
+
+  getEstadisticasResumen(): Observable<EstadisticasResumen> {
+    return this.http.get<EstadisticasResumen>(`${this.apiBase}/estadisticas/resumen`, this.authHeaders);
+  }
+
+  getEstadisticasIpv(periodos = 8): Observable<IneIpvSerie[]> {
+    return this.http.get<IneIpvSerie[]>(`${this.apiBase}/estadisticas/ine/ipv`,
+      { ...this.authHeaders, params: { periodos } });
+  }
+
+  getEstadisticasHipotecas(periodos = 12): Observable<IneIpvSerie[]> {
+    return this.http.get<IneIpvSerie[]>(`${this.apiBase}/estadisticas/ine/hipotecas`,
+      { ...this.authHeaders, params: { periodos } });
   }
 }

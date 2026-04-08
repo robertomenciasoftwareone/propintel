@@ -1,0 +1,141 @@
+Traceback (most recent call last):
+=== IPV Series Nacionales ===
+Total IPV series: 1307
+  IPV1: Base 2007. Nacional. General. Indice
+  IPV2: Base 2007. Nacional. General. Variaci≤n trimestral.
+  IPV3: Base 2007. Nacional. General. Variaci≤n anual.
+  IPV4: Base 2007. Nacional. General. Variaci≤n trimestral acumulada.
+  IPV5: Base 2007. Nacional. Vivienda Nueva. Indice
+  IPV6: Base 2007. Nacional. Vivienda Nueva. Variaci≤n trimestral.
+  IPV7: Base 2007. Nacional. Vivienda Nueva. Variaci≤n anual.
+  IPV8: Base 2007. Nacional. Vivienda Nueva. Variaci≤n trimestral acumulada.
+  IPV9: Base 2007. Nacional. Vivienda segunda mano. Indice
+  IPV10: Base 2007. Nacional. Vivienda segunda mano. Variaci≤n trimestral.
+  IPV11: Base 2007. Nacional. Vivienda segunda mano. Variaci≤n anual.
+  IPV12: Base 2007. Nacional. Vivienda segunda mano. Variaci≤n trimestral acumulada.
+  IPV13: Base 2007. Andalucφa. General. Indice
+  IPV14: Base 2007. Andalucφa. General. Variaci≤n trimestral.
+  IPV15: Base 2007. Andalucφa. General. Variaci≤n anual.
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_transports\default.py", line 69, in map_httpcore_exceptions
+  IPV16: Base 2007. Andalucφa. General. Variaci≤n trimestral acumulada.
+  IPV306: Base 2007. Andalucφa. Vivienda nueva. ═ndice.
+  IPV307: Base 2007. Andalucφa. Vivienda nueva. Variaci≤n trimestral.
+  IPV308: Base 2007. Andalucφa. Vivienda nueva. Variaci≤n anual.
+  IPV309: Base 2007. Andalucφa. Vivienda nueva. Variaci≤n en lo que va de a±o.
+
+=== IPV ultimos datos (5 series) ===
+
+  IPV1: Base 2007. Nacional. General. Indice
+    2016/19: 68.7  [2016-Q1]
+    2016/20: 69.921  [2016-Q2]
+    2016/21: 70.476  [2016-Q3]
+    2016/22: 70.755  [2016-Q4]
+
+  IPV4: Base 2007. Nacional. General. Variaci≤n trimestral acumulada.
+    2016/19: 1.5  [2016-Q1]
+    2016/20: 3.3  [2016-Q2]
+    2016/21: 4.1  [2016-Q3]
+    2016/22: 4.5  [2016-Q4]
+
+  IPV5: Base 2007. Nacional. Vivienda Nueva. Indice
+    2016/19: 79.815  [2016-Q1]
+    2016/20: 82.74  [2016-Q2]
+    2016/21: 82.357  [2016-Q3]
+    2016/22: 81.204  [2016-Q4]
+
+  IPV6: Base 2007. Nacional. Vivienda Nueva. Variaci≤n trimestral.
+    2016/19: 2.6  [2016-Q1]
+    2016/20: 3.7  [2016-Q2]
+    2016/21: -0.5  [2016-Q3]
+    2016/22: -1.4  [2016-Q4]
+
+  IPV9: Base 2007. Nacional. Vivienda segunda mano. Indice
+    2016/19: 61.449  [2016-Q1]
+    2016/20: 62.355  [2016-Q2]
+    2016/21: 62.978  [2016-Q3]
+    2016/22: 63.409  [2016-Q4]
+
+=== Hipotecas Series (buscar total) ===
+Series relevantes hipotecas: 457
+  HPT1749: Fincas de regadφo. De 30.001 a 90.200 euros. Importe de hipotecas. Total Nacional. Base antigua. Men
+  HPT2544: Fincas de secano. Hasta 12.000 euros. N·mero de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT3498: Solares. De 14,1 % a 16 %. N·mero de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT795: Solares. De 12.001 a 30.000 euros. Importe de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT2597: Fincas de secano. Total. Importe de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT2703: Otros. Sin interΘs y no consta. Importe de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT3551: Solares. Hasta 14 %. Importe de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT848: Solares. De 12.001 a 30.000 euros. N·mero de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT2650: Fincas de secano. Total. N·mero de hipotecas. Total Nacional. Base antigua. Mensual. 
+  HPT2756: Otros. Sin interΘs y no consta. N·mero de hipotecas. Total Nacional. Base antigua. Mensual. 
+
+=== ECB tipos hipotecarios Espana ===
+    yield
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_transports\default.py", line 373, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_async\connection_pool.py", line 236, in handle_async_request
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_async\connection.py", line 101, in handle_async_request
+    raise exc
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_async\connection.py", line 78, in handle_async_request
+    stream = await self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_async\connection.py", line 124, in _connect
+    stream = await self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_backends\auto.py", line 31, in connect_tcp
+    return await self._backend.connect_tcp(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_backends\anyio.py", line 113, in connect_tcp
+    with map_exceptions(exc_map):
+  File "C:\Users\roberto.mencia\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpcore\_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ConnectError: [Errno 11001] getaddrinfo failed
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Proyectos\PropIntel\propintel-scraper\_test_macro.py", line 71, in <module>
+    asyncio.run(test())
+  File "C:\Users\roberto.mencia\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\roberto.mencia\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\roberto.mencia\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\_test_macro.py", line 52, in test
+    r4 = await client.get(ecb_url)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1801, in get
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1574, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1661, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1689, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1726, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_client.py", line 1763, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_transports\default.py", line 372, in handle_async_request
+    with map_httpcore_exceptions():
+  File "C:\Users\roberto.mencia\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "C:\Proyectos\PropIntel\propintel-scraper\.venv\Lib\site-packages\httpx\_transports\default.py", line 86, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.ConnectError: [Errno 11001] getaddrinfo failed

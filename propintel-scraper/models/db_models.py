@@ -160,6 +160,26 @@ class MunicipioDB(Base):
     )
 
 
+class EstadisticaMacroDB(Base):
+    """Serie temporal de indicadores macroeconómicos (INE/BdE/BCE)."""
+    __tablename__ = "estadisticas_macro"
+
+    id            = Column(Integer, primary_key=True, autoincrement=True)
+    fuente        = Column(String(20),  nullable=False)        # 'INE', 'BDE', 'BCE'
+    indicador     = Column(String(60),  nullable=False)        # 'ipv_var_anual_general'
+    descripcion   = Column(Text,        nullable=True)
+    periodo       = Column(String(15),  nullable=False)        # '2024-T3', '2024-11'
+    anyo          = Column(Integer,     nullable=True)
+    valor         = Column(Float,       nullable=False)
+    unidad        = Column(String(20),  nullable=True)
+    variacion_pct = Column(Float,       nullable=True)
+    calculado_en  = Column(DateTime,    default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("uq_estadistica_macro", "fuente", "indicador", "periodo", unique=True),
+    )
+
+
 def init_db():
     """Crea todas las tablas si no existen."""
     Base.metadata.create_all(engine)
