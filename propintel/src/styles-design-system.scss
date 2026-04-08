@@ -1,8 +1,9 @@
 // =========================================================================
-// UrbIA Design System v2.0 — Visual Enhancement "Boom"
+// UrbIA Design System v3.0 — Luxury PropTech 2027
 // =========================================================================
-// Colores Core: Blanco (#f4f8ff), Azul (#1f7ae0), Texto (#17243b)
-// Objetivo: Autentico, impactante, profesional — target: inversores/agentes
+// Palette: #FAFBFD / #1A6EFF / #0E1E35
+// Font: Plus Jakarta Sans + JetBrains Mono
+// Shadows: cold-blue tint, never pure black
 // =========================================================================
 
 // ── PALETA EXTENDIDA ─────────────────────────────────────────────────────
@@ -15,9 +16,9 @@
   --color-blue-200: #c1ddfd;
   --color-blue-300: #a2ccfc;
   --color-blue-400: #83bbfb;
-  --color-blue-500: #1f7ae0;  // MAIN ACCENT
-  --color-blue-600: #156ec9;  // Darker variant
-  --color-blue-700: #0d5ab8;  // Darkest variant
+  --color-blue-500: #1A6EFF;  // MAIN ACCENT
+  --color-blue-600: #1560E0;  // Darker variant
+  --color-blue-700: #0F50C0;  // Darkest variant
   --color-blue-800: #0a4299;
   --color-blue-900: #07307a;
 
@@ -71,27 +72,29 @@
   --color-purple-600: #9333ea;
 
   // Background & Text (CORE)
-  --color-background: #f4f8ff;    // Blanco premium
-  --color-surface: #ffffff;        // Blanco puro
-  --color-surface-alt: #f9fafb;    // Gris casi blanco
-  --color-text-primary: #17243b;   // Azul oscuro profundo
-  --color-text-secondary: #475569; // Gris/azul medio
-  --color-text-tertiary: #64748b;  // Gris claro
-  --color-text-inverse: #ffffff;   // Blanco para sobre oscuro
+  --color-background: #FAFBFD;    // Premium white
+  --color-surface: #FFFFFF;        // Pure white
+  --color-surface-alt: #F4F7FB;    // Alt bg
+  --color-text-primary: #0E1E35;   // Deep blue-black
+  --color-text-secondary: #4A6080; // Blue-grey
+  --color-text-tertiary: #8FA3BE;  // Muted blue
+  --color-text-inverse: #ffffff;   // White for dark bg
 
-  // Sombras (elevation system)
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-base: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.15);
-  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  // Sombras (cold blue elevation)
+  --shadow-xs: 0 1px 3px rgba(0, 28, 76, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 28, 76, 0.06);
+  --shadow-base: 0 4px 12px rgba(0, 28, 76, 0.07);
+  --shadow-md: 0 6px 20px rgba(0, 28, 76, 0.08), 0 1px 4px rgba(0, 28, 76, 0.04);
+  --shadow-lg: 0 16px 40px rgba(0, 28, 76, 0.10), 0 4px 8px rgba(0, 28, 76, 0.05);
+  --shadow-xl: 0 24px 48px rgba(0, 28, 76, 0.12);
+  --shadow-2xl: 0 32px 64px rgba(0, 28, 76, 0.14);
 
-  // Shadow blue (para énfasis)
-  --shadow-blue: 0 4px 12px rgba(31, 122, 224, 0.15);
-  --shadow-blue-lg: 0 8px 24px rgba(31, 122, 224, 0.2);
-  --shadow-blue-xl: 0 12px 32px rgba(31, 122, 224, 0.25);
+  // Shadow accent
+  --shadow-blue: 0 4px 12px rgba(26, 110, 255, 0.15);
+  --shadow-blue-lg: 0 6px 20px rgba(26, 110, 255, 0.22);
+  --shadow-blue-xl: 0 12px 32px rgba(26, 110, 255, 0.28);
+  --shadow-card: 0 4px 16px rgba(0, 28, 76, 0.07);
+  --shadow-accent: 0 6px 20px rgba(26, 110, 255, 0.22);
 
   // Border & Dividers
   --border-sm: 1px;
@@ -104,10 +107,10 @@
   // Radius (border-radius)
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
 
   // Spacing (8px base unit)
@@ -178,7 +181,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   background: var(--color-background);
@@ -292,9 +295,10 @@ a {
 
   // Variantes
   &.btn-primary {
-    background: linear-gradient(135deg, var(--color-blue-500) 0%, var(--color-blue-600) 100%);
+    background: var(--color-blue-500);
     color: white;
     box-shadow: var(--shadow-blue);
+    border-radius: 12px;
 
     &:hover:not(:disabled) {
       box-shadow: var(--shadow-blue-lg);

@@ -1,22 +1,27 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-// ── DESIGN SYSTEM v2.0 + LEGACY VARS ─────────────────────────────────────
+// ── DESIGN SYSTEM v3.0 — BLANCO SEDA & AZUL ZAFIRO ──────────────────────
 :root {
-  // ─ LEGACY VARS (compatibilidad) ──────────────────────────────────────────
-  --bg:            #f4f8ff;
-  --bg2:           #ffffff;
-  --bg3:           #eef4ff;
-  --border:        rgba(15, 66, 132, 0.12);
-  --border-bright: rgba(15, 66, 132, 0.22);
-  --asking:        #1f7ae0;
-  --notarial:      #12a06b;
-  --gap:           #db4a48;
-  --accent:        #1f7ae0;
-  --text-primary:  #17243b;
-  --text-secondary:#4d6385;
-  --text-muted:    #8ea1bf;
-  --shadow-soft:   0 14px 36px rgba(23, 53, 96, 0.08);
-  --shadow-card:   0 8px 20px rgba(23, 53, 96, 0.06);
+  // ─ LEGACY VARS (compatibilidad) — valores actualizados al nuevo ADN visual
+  --bg:            #F8FAFC;
+  --bg2:           #FFFFFF;
+  --bg3:           #F1F5F9;
+  --border:        rgba(0, 52, 255, 0.06);
+  --border-bright: rgba(0, 52, 255, 0.12);
+  --asking:        #0052FF;
+  --notarial:      #00B5A3;
+  --gap:           #F59E0B;
+  --accent:        #0052FF;
+  --text-primary:  #0F172A;
+  --text-secondary:#64748B;
+  --text-muted:    #94A3B8;
+  --shadow-soft:   0 16px 40px rgba(0, 52, 255, 0.07), 0 4px 8px rgba(0, 52, 255, 0.04);
+  --shadow-card:   0 10px 30px -10px rgba(0, 52, 255, 0.05);
+
+  // ─ ALIAS vars (nuevas) ───────────────────────────────────────────────────
+  --bg-main:       #F8FAFC;
+  --bg-card:       #FFFFFF;
+  --text-main:     #0F172A;
 
   // ─ EXTENDED COLOR PALETTE (Design System) ────────────────────────────────
   // Azules
@@ -66,19 +71,20 @@
   --color-surface: #ffffff;
   --color-surface-alt: #f9fafb;
 
-  // ─ SHADOWS (elevation system) ────────────────────────────────────────────
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-base: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.15);
-  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  // ─ SHADOWS (elevation system – cold blue, never black) ──────────────────
+  --shadow-xs: 0 1px 3px rgba(0, 28, 76, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 28, 76, 0.06);
+  --shadow-base: 0 4px 12px rgba(0, 28, 76, 0.07);
+  --shadow-md: 0 6px 20px rgba(0, 28, 76, 0.08), 0 1px 4px rgba(0, 28, 76, 0.04);
+  --shadow-lg: 0 16px 40px rgba(0, 28, 76, 0.10), 0 4px 8px rgba(0, 28, 76, 0.05);
+  --shadow-xl: 0 24px 48px rgba(0, 28, 76, 0.12);
+  --shadow-2xl: 0 32px 64px rgba(0, 28, 76, 0.14);
   
-  // Shadow Blue (énfasis)
-  --shadow-blue: 0 4px 12px rgba(31, 122, 224, 0.15);
-  --shadow-blue-lg: 0 8px 24px rgba(31, 122, 224, 0.2);
-  --shadow-blue-xl: 0 12px 32px rgba(31, 122, 224, 0.25);
+  // Shadow Accent (énfasis)
+  --shadow-blue: 0 4px 12px rgba(26, 110, 255, 0.15);
+  --shadow-blue-lg: 0 6px 20px rgba(26, 110, 255, 0.22);
+  --shadow-blue-xl: 0 12px 32px rgba(26, 110, 255, 0.28);
+  --shadow-accent: 0 6px 20px rgba(26, 110, 255, 0.22);
 
   // ─ BORDER & RADIUS ──────────────────────────────────────────────────────
   --border-color: #e0e7f0;
@@ -87,11 +93,13 @@
   
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
   --radius-full: 9999px;
+  --radius-badge: 6px;
+  --radius-btn: 12px;
 
   // ─ SPACING (8px base unit) ──────────────────────────────────────────────
   --space-1: 4px;
@@ -118,9 +126,10 @@
   --line-height-loose: 1.8;
 
   // ─ TRANSITIONS ──────────────────────────────────────────────────────────
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast:    150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:    300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:    500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-premium: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 
   // ─ Z-INDEX ──────────────────────────────────────────────────────────────
   --z-hide: -1;
@@ -135,42 +144,41 @@
 
 /* ── Tema claro (páginas públicas UrbIA) ─────────────────────────── */
 [data-theme="light"] {
-  --bg:            #f3f7fb;
-  --bg2:           #ffffff;
-  --bg3:           #edf3fa;
-  --border:        rgba(0,0,0,0.08);
-  --border-bright: rgba(0,0,0,0.14);
-  --asking:        #0f6bb3;
-  --notarial:      #0a9f67;
-  --gap:           #d83b34;
-  --accent:        #0f6bb3;
-  --text-primary:  #1a1d23;
-  --text-secondary:#4a5568;
-  --text-muted:    #9aa3b0;
+  --bg:            #F8FAFC;
+  --bg2:           #FFFFFF;
+  --bg3:           #F1F5F9;
+  --border:        rgba(0, 52, 255, 0.06);
+  --border-bright: rgba(0, 52, 255, 0.12);
+  --asking:        #0052FF;
+  --notarial:      #00B5A3;
+  --gap:           #F59E0B;
+  --accent:        #0052FF;
+  --text-primary:  #0F172A;
+  --text-secondary:#64748B;
+  --text-muted:    #94A3B8;
 }
 
 html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
 }
 
 body {
   position: relative;
-  background-image:
-    radial-gradient(900px 500px at 10% -5%, rgba(31,122,224,0.15), transparent 60%),
-    radial-gradient(680px 420px at 92% 4%, rgba(70,138,227,0.14), transparent 64%),
-    linear-gradient(180deg, #f7fbff 0%, #f2f7ff 100%);
-  background-attachment: fixed;
+  background: #F8FAFC;
 }
 
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 80%, #ffffff 20%);
+  outline: 2px solid rgba(0, 82, 255, 0.45);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .search-card,
@@ -181,10 +189,10 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(31,122,224,0.2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(31,122,224,0.35); }
+::-webkit-scrollbar-thumb { background: rgba(26,110,255,0.15); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(26,110,255,0.28); }
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Enhanced Visual Styling v2.0 (Boom Visual)
@@ -218,20 +226,22 @@ body {
     cursor: not-allowed;
   }
 
-  // Variante primaria (azul gradiente)
+  // Variante primaria (azul flat)
   &.btn-primary {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--color-blue-600) 100%);
+    background: var(--accent);
     color: white;
-    box-shadow: var(--shadow-blue);
+    box-shadow: 0 10px 30px -10px rgba(0, 82, 255, 0.35);
+    border-radius: var(--radius-btn);
+    transition: var(--transition-premium);
 
     &:hover:not(:disabled) {
-      box-shadow: var(--shadow-blue-lg);
-      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -8px rgba(0, 82, 255, 0.45);
+      transform: translateY(-1px);
     }
 
     &:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: var(--shadow-blue);
+      transform: scale(0.98);
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.25);
     }
   }
 
@@ -274,16 +284,16 @@ body {
 
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--border-color-light);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   padding: var(--space-6);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-premium);
 
   &:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 20px 40px -10px rgba(0, 52, 255, 0.10);
     transform: translateY(-4px);
-    border-color: var(--color-blue-200);
+    border-color: var(--border-bright);
   }
 
   &.card-elevated {
@@ -408,7 +418,7 @@ body {
 // ── SKELETON LOADING ─────────────────────────────────────────────────────
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-100) 50%, var(--color-gray-200) 75%);
+  background: linear-gradient(90deg, #F1F5F9 25%, #F8FAFC 50%, #F1F5F9 75%);
   background-size: 1000px 100%;
   animation: shimmer 2s infinite;
   border-radius: var(--radius-md);
@@ -422,25 +432,35 @@ table {
   font-size: 0.95rem;
 
   thead {
-    background: var(--color-gray-50);
-    border-bottom: 2px solid var(--accent);
+    background: #F8FAFC;
+    border-bottom: 0.5px solid rgba(0, 52, 255, 0.08);
   }
 
   th {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-3);
     text-align: left;
     font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
+    color: #94A3B8;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant: small-caps;
   }
 
   td {
-    padding: var(--space-4);
-    border-bottom: 1px solid var(--border-color-light);
+    padding: var(--space-4) var(--space-3);
+    border-bottom: 0.5px solid rgba(0, 52, 255, 0.05);
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    transition: background var(--transition-fast);
   }
 
-  tbody tr:hover {
-    background: var(--color-gray-50);
+  td.numeric {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  tbody tr:hover td {
+    background: #F0F7FF;
   }
 }
 
@@ -448,18 +468,19 @@ table {
 
 input, textarea, select {
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border: 1.5px solid rgba(0, 52, 255, 0.10);
+  border-radius: 12px;
+  background: #F8FAFC;
   color: var(--text-primary);
   font-size: 0.95rem;
   font-family: inherit;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-premium);
 
   &:focus {
     outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--color-blue-50);
+    border-color: #0052FF;
+    box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.08);
+    background: #FFFFFF;
   }
 
   &:disabled {

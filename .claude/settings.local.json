@@ -126,7 +126,30 @@
       "Bash(curl -s -H \"X-Api-Key: dev-urbia-key-2026\" \"http://localhost:5050/api/anuncios/ciudad/madrid?page=1&size=2\")",
       "Bash(.venv/Scripts/python scripts/migrate_to_azure.py)",
       "Bash(curl -s -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/anuncios/ciudad/madrid?page=1&size=2\")",
-      "Bash(az deployment:*)"
+      "Bash(az deployment:*)",
+      "Bash(python propintel-scraper/scripts/migrate_to_azure.py)",
+      "Bash(python -m pip install psycopg2-binary -q)",
+      "Bash(python scripts/migrate_to_azure.py)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/PostgreSQL/17/bin\")",
+      "Bash(psql --version)",
+      "Bash(cmd /c \"where psql\")",
+      "Bash(cmd /c \"dir \\\\\"C:\\\\Program Files\\\\PostgreSQL\\\\\" /ad /b\")",
+      "Bash(cmd /c \"dir \\\\\"C:\\\\Program Files\\\\PostgreSQL\\\\\" /ad /b 2>&1\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/transacciones\")",
+      "Bash(curl -s -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/transacciones\")",
+      "Bash(curl -v -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/transacciones\")",
+      "Bash(docker run:*)",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/transacciones\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/gaps\")",
+      "Bash(python -c \"import sys; data=sys.stdin.read\\(\\); lines=data.split\\('\\\\n'\\); print\\(lines[-1]\\); import json; parsed=json.loads\\(lines[0]\\); print\\(f'Gaps: {len\\(parsed\\)} zonas'\\); [print\\(f'  {g[\\\\\"zona\\\\\"]}: gap={g[\\\\\"gapPct\\\\\"]}%'\\) for g in parsed[:5]]\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" -H \"Origin: https://nice-desert-07ca1ce10.2.azurestaticapps.net\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/gaps\")",
+      "Bash(curl -s -I -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" -H \"Origin: https://nice-desert-07ca1ce10.2.azurestaticapps.net\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/gaps\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -H \"X-Api-Key: UrbIA-Prod-Temp-Key-2026\" \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/ciudades/madrid/transacciones?zona=Chamber%C3%AD\")",
+      "Bash(python -c \"import sys,json; d=sys.stdin.read\\(\\).split\\('\\\\n'\\); print\\(d[-1]\\); r=json.loads\\(d[0]\\); print\\(f'{len\\(r\\)} transacciones'\\)\")",
+      "Read(//c/Users/ROBERT~1.MEN/AppData/Local/Temp/claude/c--Proyectos-PropIntel/634b5b61-6572-4088-b694-56691e953685/tasks/**)",
+      "Bash(grep -v \"^$\")",
+      "Bash(python -c \"import sys,json; d=sys.stdin.read\\(\\).split\\('\\\\n'\\); print\\(d[-1]\\); r=json.loads\\(d[0]\\); print\\(f'{len\\(r\\)} gaps'\\)\")",
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"nombre\":\"Test\"}' \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/auth/login\")"
     ]
   }
 }

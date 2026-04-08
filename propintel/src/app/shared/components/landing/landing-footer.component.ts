@@ -51,55 +51,88 @@ import { RouterLink } from '@angular/router';
 </footer>
   `,
   styles: [`
-.footer {
-  background: #03050c;
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding: 80px 24px 40px;
+/* ════════════════════════════════════════════════════════
+   FOOTER — Pure Slate Minimalism
+════════════════════════════════════════════════════════ */
+:host {
+  --emerald: #00B5A3;
+  --gold:    #C59400;
 }
+
+.footer {
+  background: #08091A;
+  border-top: 1px solid rgba(255,255,255,.055);
+  padding: 88px 24px 44px;
+  position: relative;
+}
+/* Hairline gold accent at top */
+.footer::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(197,148,0,0.40), transparent);
+}
+
 .container { max-width: 1140px; margin: 0 auto; }
+
 .top {
   display: grid;
-  grid-template-columns: 1.8fr 1fr 1fr 1fr;
-  gap: 48px; margin-bottom: 64px;
+  grid-template-columns: 1.9fr 1fr 1fr 1fr;
+  gap: 52px; margin-bottom: 72px;
 }
+
 .brand-col .logo {
-  height: 32px; width: auto; object-fit: contain;
-  margin-bottom: 16px; filter: brightness(1.1);
+  height: 30px; width: auto; object-fit: contain;
+  margin-bottom: 18px; opacity: 0.90;
 }
 .brand-col p {
-  font-size: 13px; line-height: 1.7;
-  color: rgba(255,255,255,.3); margin: 0 0 20px;
+  font-size: 13px; line-height: 1.75;
+  color: rgba(255,255,255,.28); margin: 0 0 22px;
+  max-width: 220px;
 }
-.socials { display: flex; gap: 8px; }
+
+.socials { display: flex; gap: 9px; }
 .social {
-  width: 34px; height: 34px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.1);
+  width: 36px; height: 36px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,.085);
   display: grid; place-items: center;
-  color: rgba(255,255,255,.35); text-decoration: none;
-  transition: background .2s, color .2s, border-color .2s;
+  color: rgba(255,255,255,.30); text-decoration: none;
+  background: rgba(255,255,255,.025);
+  transition: background .25s, color .25s, border-color .25s, transform .25s;
 }
-.social:hover { background: rgba(255,255,255,.07); color: #fff; border-color: rgba(255,255,255,.2); }
+.social:hover {
+  background: rgba(0,181,163,0.09);
+  color: rgba(0,181,163,0.90);
+  border-color: rgba(0,181,163,0.22);
+  transform: translateY(-2px);
+}
+
 .col-title {
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .12em;
-  color: rgba(255,255,255,.55); margin: 0 0 16px;
+  font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  color: rgba(255,255,255,.50); margin: 0 0 18px;
 }
-.links-col { display: flex; flex-direction: column; gap: 10px; }
+.links-col { display: flex; flex-direction: column; gap: 11px; }
 .links-col a {
-  font-size: 13px; color: rgba(255,255,255,.32);
+  font-size: 13px; color: rgba(255,255,255,.35);
   text-decoration: none; cursor: pointer;
-  transition: color .2s;
+  letter-spacing: -0.005em;
+  transition: color .28s, transform .28s;
+  display: inline-block;
 }
-.links-col a:hover { color: rgba(255,255,255,.8); }
+.links-col a:hover { color: rgba(255,255,255,.82); transform: translateX(2px); }
+
 .bottom {
   display: flex; align-items: center; justify-content: space-between;
-  border-top: 1px solid rgba(255,255,255,.06);
-  padding-top: 28px;
-  font-size: 12px; color: rgba(255,255,255,.2);
+  border-top: 1px solid rgba(255,255,255,.05);
+  padding-top: 30px;
+  font-size: 12px; color: rgba(255,255,255,.18);
   flex-wrap: wrap; gap: 8px;
+  letter-spacing: 0.01em;
 }
+
 @media (max-width: 900px) { .top { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 500px) { .top { grid-template-columns: 1fr; gap: 32px; } }
+@media (max-width: 500px) { .top { grid-template-columns: 1fr; gap: 36px; } .footer { padding: 64px 20px 36px; } }
   `]
 })
 export class LandingFooterComponent {

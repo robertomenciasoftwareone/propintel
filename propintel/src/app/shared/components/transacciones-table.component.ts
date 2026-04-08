@@ -79,35 +79,46 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
   `,
   styles: [`
     .card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 24px;
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 52, 255, 0.06);
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: 0 10px 30px -10px rgba(0, 52, 255, 0.05);
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
-    .card-title { font-size: 13.5px; font-weight: 500; color: var(--text-primary); }
-    .card-sub   { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; font-weight: 300; }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0F172A;
+      letter-spacing: -0.03em;
+    }
+    .card-sub {
+      font-size: 11.5px;
+      color: #64748B;
+      margin-top: 4px;
+      font-weight: 400;
+    }
 
     .source-badge {
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      color: var(--notarial);
-      background: rgba(79,209,165,0.07);
-      border: 1px solid rgba(79,209,165,0.2);
-      padding: 5px 10px;
+      color: #00B5A3;
+      background: rgba(0, 181, 163, 0.06);
+      border: 1px solid rgba(0, 181, 163, 0.18);
+      padding: 5px 12px;
       border-radius: 20px;
     }
     .live-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--notarial);
+      background: #00B5A3;
       animation: pulse 2s ease-in-out infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
@@ -117,40 +128,43 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
 
     .tx-table th {
       font-size: 10px;
-      letter-spacing: 1px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 6px 10px;
+      font-variant: small-caps;
+      color: #94A3B8;
+      padding: 8px 12px;
       text-align: left;
-      border-bottom: 1px solid var(--border);
-      font-weight: 500;
+      border-bottom: 0.5px solid rgba(0, 52, 255, 0.08);
+      font-weight: 600;
+      background: #F8FAFC;
     }
     .tx-table td {
-      padding: 10px 10px;
+      padding: 11px 12px;
       font-size: 12.5px;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
+      border-bottom: 0.5px solid rgba(0, 52, 255, 0.05);
       vertical-align: middle;
+      transition: background 0.15s ease;
     }
     .tx-table tr:last-child td { border-bottom: none; }
-    .tx-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .tx-table tr:hover td { background: #F0F7FF; }
     .tx-table tr.clickable-row { cursor: pointer; }
-    .tx-table tr.clickable-row:hover td { background: rgba(232,197,71,0.04); }
+    .tx-table tr.clickable-row:hover td { background: #F0F7FF; }
 
-    .col-zona     { color: var(--text-primary); font-weight: 400; }
-    .col-asking   { color: var(--asking); font-family: 'DM Mono', monospace; font-size: 12px; }
-    .col-notarial { color: var(--notarial); font-family: 'DM Mono', monospace; font-size: 12px; }
-    .col-m2       { color: var(--text-secondary); font-family: 'DM Mono', monospace; font-size: 11px; }
-    .col-fecha    { color: var(--text-muted); font-size: 11px; }
+    .col-zona     { color: #0F172A; font-weight: 500; }
+    .col-asking   { color: #0052FF; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .col-notarial { color: #00B5A3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .col-m2       { color: #64748B; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .col-fecha    { color: #94A3B8; font-size: 11px; }
 
     .col-tipo { white-space: nowrap; }
     .tipo-badge {
       font-size: 11.5px;
-      color: var(--text-primary);
+      color: #0F172A;
       font-weight: 500;
     }
     .hab-info {
       font-size: 10px;
-      color: var(--text-muted);
+      color: #94A3B8;
       margin-left: 4px;
     }
 
@@ -164,18 +178,18 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
       font-size: 10.5px;
       font-weight: 500;
       text-decoration: none;
-      transition: opacity .2s;
+      transition: opacity 0.2s;
     }
-    .portal-badge:hover { opacity: 0.8; }
+    .portal-badge:hover { opacity: 0.75; }
     .portal-badge.idealista {
-      background: rgba(110, 196, 69, 0.12);
+      background: rgba(110, 196, 69, 0.10);
       color: #6ec445;
-      border: 1px solid rgba(110, 196, 69, 0.25);
+      border: 1px solid rgba(110, 196, 69, 0.22);
     }
     .portal-badge.fotocasa {
-      background: rgba(233, 85, 55, 0.12);
+      background: rgba(233, 85, 55, 0.10);
       color: #e95537;
-      border: 1px solid rgba(233, 85, 55, 0.25);
+      border: 1px solid rgba(233, 85, 55, 0.22);
     }
     .link-icon { font-size: 9px; }
 
@@ -184,38 +198,42 @@ import { InmobiliarioService } from '../../core/services/inmobiliario.service';
       padding: 2px 8px;
       border-radius: 10px;
       font-size: 11px;
-      font-family: 'DM Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-weight: 500;
     }
-    .gap-high { background: rgba(248,113,113,0.15); color: #f87171; }
-    .gap-med  { background: rgba(232,197,71,0.12); color: #e8c547; }
-    .gap-low  { background: rgba(79,209,165,0.12); color: #4fd1a5; }
+    .gap-high { background: rgba(248,113,113,0.12); color: #f87171; }
+    .gap-med  { background: rgba(245,158,11,0.10);  color: #F59E0B; }
+    .gap-low  { background: rgba(79,209,165,0.10);  color: #4fd1a5; }
 
     .table-footer {
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 0.5px solid rgba(0, 52, 255, 0.06);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 11px;
-      color: var(--text-muted);
+      color: #94A3B8;
     }
     .btn-link {
       background: none;
       border: none;
-      color: var(--accent);
+      color: #0052FF;
       font-size: 12px;
       cursor: pointer;
       font-family: inherit;
       padding: 0;
+      font-weight: 600;
     }
     .btn-link:hover { text-decoration: underline; }
 
     .empty-state {
-      text-align: center; padding: 32px 16px; color: var(--text-secondary); font-size: 13px;
+      text-align: center;
+      padding: 40px 16px;
+      color: #64748B;
+      font-size: 13px;
     }
-    .empty-state .hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .empty-state .hint { font-size: 11px; color: #94A3B8; margin-top: 6px; }
   `]
 })
 export class TransaccionesTableComponent {

@@ -42,33 +42,109 @@ interface Servicio {
     </div>
   `,
   styles: [`
-    .card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:22px 24px; }
-    .card-header { margin-bottom:20px; }
-    .card-title  { font-size:13.5px; font-weight:500; color:var(--text-primary); }
-    .card-sub    { font-size:11.5px; color:var(--text-secondary); margin-top:3px; font-weight:300; }
-    .services-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 52, 255, 0.06);
+      border-radius: 16px;
+      padding: 28px 32px;
+      box-shadow: 0 10px 30px -10px rgba(0, 52, 255, 0.05);
+    }
+    .card-header { margin-bottom: 24px; }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0F172A;
+      letter-spacing: -0.03em;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 4px;
+      font-weight: 400;
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
     .service-card {
-      background:var(--bg3); border:1px solid var(--border); border-radius:10px;
-      padding:18px; position:relative; transition:all .2s;
-      display:flex; flex-direction:column; gap:6px; cursor:pointer;
+      background: #F8FAFC;
+      border: 1px solid rgba(0, 52, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
     }
-    .service-card:hover { border-color:rgba(167,139,250,0.35); transform:translateY(-2px); }
+    .service-card:hover {
+      border-color: rgba(0, 82, 255, 0.15);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -10px rgba(0, 52, 255, 0.08);
+      background: #FFFFFF;
+    }
     .service-tag {
-      position:absolute; top:12px; right:12px; font-size:9px;
-      letter-spacing:1px; text-transform:uppercase; padding:2px 7px;
-      border-radius:10px; font-weight:500;
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
     }
-    .service-icon { font-size:24px; margin-bottom:4px; }
-    .service-name { font-size:13px; font-weight:500; color:var(--text-primary); }
-    .service-desc { font-size:11.5px; color:var(--text-secondary); font-weight:300; line-height:1.5; flex:1; }
-    .service-price { font-family:'DM Mono',monospace; font-size:12px; color:#a78bfa; margin-top:4px; }
+    .service-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 52, 255, 0.06);
+    }
+    .service-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #0F172A;
+      letter-spacing: -0.01em;
+    }
+    .service-desc {
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 400;
+      line-height: 1.6;
+      flex: 1;
+    }
+    .service-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #00B5A3;
+      margin-top: 4px;
+      font-weight: 500;
+    }
     .btn-service {
-      background:none; border:1px solid rgba(167,139,250,0.25); color:#a78bfa;
-      padding:6px 10px; border-radius:6px; font-size:11.5px; cursor:pointer;
-      font-family:inherit; margin-top:8px; transition:all .15s;
+      background: none;
+      border: none;
+      color: #0052FF;
+      padding: 4px 0;
+      font-size: 12.5px;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      margin-top: 6px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-align: left;
+      letter-spacing: -0.01em;
     }
-    .btn-service:hover { background:rgba(167,139,250,0.1); border-color:#a78bfa; }
+    .btn-service:hover { color: #0041CC; letter-spacing: 0.01em; }
     @media(max-width:1200px){ .services-grid{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:640px){ .services-grid{grid-template-columns:1fr} }
   `]
 })
 export class ServiciosPanelComponent {

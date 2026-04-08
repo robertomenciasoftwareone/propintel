@@ -212,6 +212,79 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
   tags: tags
 }
 
+// ── Container App Job (scraper diario) ───────────────────────────────────────
+var scraperImage string = 'urbiaacr2026.azurecr.io/urbia-scraper:latest'
+
+resource scraperJob 'Microsoft.App/jobs@2023-05-01' = {
+  name: '${projectName}-${suffix}-scraper'
+  location: location
+  properties: {
+    environmentId: containerEnvironment.id
+    configuration: {
+      triggerType: 'Schedule'
+      replicaTimeout: 3600        // 1 hora máximo
+      replicaRetryLimit: 1
+      scheduleTriggerConfig: {
+        cronExpression: '0 3 * * *'   // cada día a las 3:00 UTC
+        parallelism: 1
+        replicaCompletionCount: 1
+      }
+      registries: [
+        {
+          server: 'urbiaacr2026.azurecr.io'
+          username: 'urbiaacr2026'
+          passwordSecretRef: 'acr-password'
+        }
+      ]
+      secrets: [
+        {
+          name: 'db-password'
+          value: dbPassword
+        }
+        {
+          name: 'acr-password'
+          value: acrPassword
+        }
+      ]
+    }
+    template: {
+      containers: [
+        {
+          name: 'scraper'
+          image: scraperImage
+          resources: {
+            cpu: json('0.5')
+            memory: '1Gi'
+          }
+          env: [
+            {
+              name: 'DB_HOST'
+              value: postgresServer.properties.fullyQualifiedDomainName
+            }
+            {
+              name: 'DB_PORT'
+              value: '5432'
+            }
+            {
+              name: 'DB_NAME'
+              value: dbName
+            }
+            {
+              name: 'DB_USER'
+              value: dbUser
+            }
+            {
+              name: 'DB_PASSWORD'
+              secretRef: 'db-password'
+            }
+          ]
+        }
+      ]
+    }
+  }
+  tags: tags
+}
+
 // ── Outputs ───────────────────────────────────────────────────────────────────
 output resourceGroupName string = resourceGroup().name
 output staticWebAppName string = staticWebApp.name

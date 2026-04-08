@@ -34,6 +34,10 @@ type Vista = 'pins' | 'cp';
               Por C.Postal
             </button>
           </div>
+          <!-- Toggle capa Metro -->
+          <button class="catastro-btn metro-btn" [class.active]="metroVisible()" (click)="toggleMetro()">
+            🚇 Metro
+          </button>
           <!-- Toggle capa Catastro -->
           <button class="catastro-btn" [class.active]="catastroVisible()" (click)="toggleCatastro()">
             Parcelas Catastro
@@ -254,6 +258,28 @@ type Vista = 'pins' | 'cp';
       border-color: #ccc !important;
     }
     :host ::ng-deep .leaflet-control-zoom a:hover { background: #f5f5f5 !important; }
+
+    /* Metro pins */
+    :host ::ng-deep .metro-pin {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #003087;
+      color: #fff;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    :host ::ng-deep .metro-tooltip {
+      background: #003087 !important;
+      color: #fff !important;
+      border: none !important;
+      border-radius: 6px !important;
+      font-size: 11px !important;
+      padding: 4px 8px !important;
+    }
+    :host ::ng-deep .metro-tooltip::before { display: none; }
+    .metro-btn.active { background: #003087 !important; color: #fff !important; border-color: #001a5c !important; }
   `]
 })
 export class MapaComponent implements AfterViewInit, OnDestroy {
@@ -266,12 +292,14 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   private clusterGroup: any = null;
   private cpLayer: any = null;
   private catastroLayer: any = null;
+  private metroLayer: any = null;
 
   readonly loading        = signal(true);
   readonly totalPins      = signal(0);
   readonly totalCp        = signal(0);
   readonly vistaActiva    = signal<Vista>('pins');
   readonly catastroVisible = signal(false);
+  readonly metroVisible    = signal(false);
 
   private readonly headers = { 'X-Api-Key': environment.apiKey };
   private readonly cities  = ['madrid'];
@@ -319,6 +347,49 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       this.catastroLayer.addTo(this.map);
       this.catastroVisible.set(true);
       if (this.map.getZoom() < 14) this.map.setZoom(14);
+    }
+  }
+
+  async toggleMetro(): Promise<void> {
+    if (!this.L) return;
+    if (this.metroVisible()) {
+      this.metroLayer && this.map.removeLayer(this.metroLayer);
+      this.metroLayer = null;
+      this.metroVisible.set(false);
+      return;
+    }
+
+    // Cargar paradas de metro de Madrid vía Overpass API
+    const query = `[out:json][timeout:15];
+      node["station"="subway"]["network"="Metro de Madrid"](40.30,-3.85,40.56,-3.55);
+      out body;`;
+    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
+    try {
+      const data: any = await this.http.get(url).toPromise();
+      this.metroLayer = this.L.layerGroup();
+
+      const metroIcon = this.L.divIcon({
+        className: '',
+        html: `<div class="metro-pin">M</div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+
+      for (const node of data.elements ?? []) {
+        const name = node.tags?.name ?? node.tags?.['name:es'] ?? 'Metro';
+        const lines = node.tags?.['ref'] ?? '';
+        this.L.marker([node.lat, node.lon], { icon: metroIcon })
+          .bindTooltip(`<b>${name}</b>${lines ? '<br>L' + lines : ''}`, {
+            direction: 'top', offset: [0, -12], className: 'metro-tooltip'
+          })
+          .addTo(this.metroLayer);
+      }
+
+      this.metroLayer.addTo(this.map);
+      this.metroVisible.set(true);
+    } catch {
+      console.error('Error cargando paradas de metro');
     }
   }
 

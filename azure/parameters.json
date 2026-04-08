@@ -9,7 +9,7 @@
       "value": "centralus"
     },
     "apiKey": {
-      "value": "CAMBIAR_API_KEY_AQUI_PRODUCCION"
+      "value": "UrbIA-Prod-Temp-Key-2026"
     },
     "apiContainerImage": {
       "value": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"

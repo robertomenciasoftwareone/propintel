@@ -83,8 +83,8 @@ interface MacroKpi {
             <polyline
               [attr.points]="sparklinePath()"
               fill="none"
-              stroke="#2563EB"
-              stroke-width="2"
+              stroke="#1A6EFF"
+              stroke-width="1.5"
               stroke-linejoin="round"
               stroke-linecap="round"
             />
@@ -93,8 +93,8 @@ interface MacroKpi {
               *ngIf="sparklinePoints().length"
               [attr.cx]="sparklinePoints()[sparklinePoints().length - 1].x"
               [attr.cy]="sparklinePoints()[sparklinePoints().length - 1].y"
-              r="4"
-              fill="#2563EB"
+              r="3.5"
+              fill="#1A6EFF"
             />
           </svg>
           <div class="sparkline-labels">
@@ -116,34 +116,35 @@ interface MacroKpi {
   `,
   styles: [`
     .macro-card {
-      background: #fff;
-      border: 1px solid #E5E7EB;
-      border-radius: 16px;
-      padding: 20px 24px;
+      background: #F4F7FB;
+      border: 1px solid rgba(0, 40, 100, 0.07);
+      border-left: 3px solid #1A6EFF;
+      border-radius: 20px;
+      padding: 22px 26px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
     /* Header */
     .macro-header { display: flex; flex-direction: column; gap: 4px; }
     .macro-title-row { display: flex; align-items: center; gap: 10px; }
     .macro-title {
-      font-size: 15px; font-weight: 700; color: #1A1A1A; letter-spacing: -0.02em;
+      font-size: 15px; font-weight: 700; color: #0E1E35; letter-spacing: -0.02em;
     }
     .macro-badge {
-      font-size: 10px; font-weight: 700; letter-spacing: .08em;
-      text-transform: uppercase; color: #2563EB; background: #EFF6FF;
-      border-radius: 6px; padding: 2px 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: #1A6EFF; background: #EEF4FF;
+      border-radius: 6px; padding: 3px 9px;
     }
-    .macro-sub { font-size: 12px; color: #6B7280; margin: 0; }
+    .macro-sub { font-size: 12px; color: #4A6080; margin: 0; }
 
     /* Loading skeleton */
     .macro-loading { padding: 8px 0; }
     .skeleton-row { display: flex; gap: 12px; }
     .skeleton-kpi {
-      flex: 1; height: 80px; background: #F3F4F6; border-radius: 12px;
+      flex: 1; height: 80px; background: #E8EDF4; border-radius: 14px;
       animation: shimmer 1.4s ease-in-out infinite;
     }
     @keyframes shimmer {
@@ -153,7 +154,7 @@ interface MacroKpi {
 
     /* Error */
     .macro-error {
-      font-size: 13px; color: #EF4444; display: flex; align-items: center;
+      font-size: 13px; color: #F59E0B; display: flex; align-items: center;
       gap: 6px; padding: 8px 0;
     }
 
@@ -161,48 +162,49 @@ interface MacroKpi {
     .macro-kpis { display: flex; gap: 12px; flex-wrap: wrap; }
     .kpi-tile {
       flex: 1; min-width: 140px;
-      border-radius: 12px; padding: 14px 16px;
+      border-radius: 14px; padding: 14px 16px;
       display: flex; flex-direction: column; gap: 4px;
     }
-    .kpi-blue   { background: #EFF6FF; }
-    .kpi-green  { background: #F0FDF4; }
+    .kpi-blue   { background: #EEF4FF; }
+    .kpi-green  { background: #ECFDF5; }
     .kpi-amber  { background: #FFFBEB; }
-    .kpi-gray   { background: #F9FAFB; }
+    .kpi-gray   { background: #F4F7FB; }
 
-    .kpi-label { font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi-label { font-size: 11px; font-weight: 600; color: #8FA3BE; text-transform: uppercase; letter-spacing: .06em; }
     .kpi-value-row { display: flex; align-items: baseline; gap: 4px; margin-top: 4px; }
     .kpi-value {
-      font-size: 24px; font-weight: 800; letter-spacing: -0.04em;
-      color: #1A1A1A;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px; font-weight: 700; letter-spacing: -0.03em;
+      color: #0E1E35;
     }
-    .kpi-na { color: #9CA3AF; }
-    .kpi-unit { font-size: 13px; font-weight: 500; color: #6B7280; }
-    .kpi-arrow { font-size: 13px; color: #22C55E; font-weight: 700; }
-    .kpi-arrow-down { color: #EF4444; }
+    .kpi-na { color: #8FA3BE; }
+    .kpi-unit { font-size: 13px; font-weight: 500; color: #4A6080; }
+    .kpi-arrow { font-size: 13px; color: #00B5A3; font-weight: 700; }
+    .kpi-arrow-down { color: #F59E0B; }
     .kpi-meta { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-    .kpi-period { font-size: 11px; color: #9CA3AF; }
-    .kpi-dot    { font-size: 11px; color: #D1D5DB; }
-    .kpi-source { font-size: 11px; color: #9CA3AF; }
+    .kpi-period { font-size: 11px; color: #8FA3BE; }
+    .kpi-dot    { font-size: 11px; color: #C5D0DE; }
+    .kpi-source { font-size: 11px; color: #8FA3BE; }
 
     /* Sparkline */
     .macro-sparkline { display: flex; flex-direction: column; gap: 6px; }
-    .sparkline-label { font-size: 11px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; }
+    .sparkline-label { font-size: 11px; font-weight: 600; color: #8FA3BE; text-transform: uppercase; letter-spacing: .06em; }
     .sparkline-wrap { display: flex; flex-direction: column; gap: 4px; }
     .sparkline-svg { width: 100%; height: 48px; display: block; }
     .sparkline-labels {
       display: flex; justify-content: space-between;
-      font-size: 10px; color: #9CA3AF;
+      font-size: 10px; color: #8FA3BE;
     }
 
     /* Footer */
     .macro-footer {
       display: flex; align-items: center; flex-wrap: wrap;
-      font-size: 11px; color: #9CA3AF; gap: 2px;
-      border-top: 1px solid #F3F4F6; padding-top: 12px; margin-top: -4px;
+      font-size: 11px; color: #8FA3BE; gap: 2px;
+      border-top: 1px solid rgba(0,40,100,0.07); padding-top: 12px; margin-top: -4px;
     }
-    .footer-text { font-weight: 500; }
-    .footer-link { color: #6B7280; text-decoration: none; }
-    .footer-link:hover { color: #2563EB; text-decoration: underline; }
+    .footer-text { font-weight: 600; }
+    .footer-link { color: #4A6080; text-decoration: none; }
+    .footer-link:hover { color: #1A6EFF; text-decoration: underline; }
   `]
 })
 export class MacroContextoComponent implements OnInit {

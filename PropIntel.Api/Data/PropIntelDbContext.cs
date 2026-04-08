@@ -65,10 +65,11 @@ public class PropIntelDbContext(DbContextOptions<PropIntelDbContext> options)
             e.Property(p => p.TipoInmueble).HasColumnName("tipo_inmueble");
             e.Property(p => p.Activo).HasColumnName("activo");
             e.Property(p => p.FechaScraping).HasColumnName("fecha_scraping");
-            e.Property(p => p.Cp).HasColumnName("cp");
+            e.Property(p => p.Cp).HasColumnName("codigo_postal");
             e.Property(p => p.Lat).HasColumnName("lat");
             e.Property(p => p.Lon).HasColumnName("lon");
             e.Property(p => p.CanonicalKey).HasColumnName("canonical_key");
+            e.Property(p => p.FotoPrincipal).HasColumnName("foto_principal");
         });
 
         mb.Entity<AnalyticsEvento>(e =>
