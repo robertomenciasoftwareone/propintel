@@ -149,7 +149,9 @@
       "Read(//c/Users/ROBERT~1.MEN/AppData/Local/Temp/claude/c--Proyectos-PropIntel/634b5b61-6572-4088-b694-56691e953685/tasks/**)",
       "Bash(grep -v \"^$\")",
       "Bash(python -c \"import sys,json; d=sys.stdin.read\\(\\).split\\('\\\\n'\\); print\\(d[-1]\\); r=json.loads\\(d[0]\\); print\\(f'{len\\(r\\)} gaps'\\)\")",
-      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"nombre\":\"Test\"}' \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/auth/login\")"
+      "Bash(curl -s -w \"\\\\nHTTP:%{http_code}\" -X POST -H \"Content-Type: application/json\" -d '{\"email\":\"test@test.com\",\"nombre\":\"Test\"}' \"https://urbia-febcserwrovii-api.kindbush-ba8050c6.centralus.azurecontainerapps.io/api/auth/login\")",
+      "Bash(npx @azure/static-web-apps-cli deploy ./dist/propintel/browser --deployment-token \"9a6fb74cd39b936e9eeb23ecd77a2cd02462fe95588485c0f74b86b2494c3b5b02-53ef134c-ce96-45d9-b071-5779382e1892010240807ca1ce10\" --env production)",
+      "Bash(powershell -Command \".\\\\deploy.ps1 -Target api\")"
     ]
   }
 }
