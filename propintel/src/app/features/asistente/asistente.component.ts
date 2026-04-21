@@ -340,45 +340,46 @@ export class AsistenteComponent implements AfterViewChecked {
   }
 
   private async llamarGemini(pregunta: string): Promise<string> {
-    const systemPrompt = `Eres un asistente experto en el mercado inmobiliario español. Tu nombre es UrbIA.
-Tienes profundo conocimiento sobre:
-- Precios de vivienda por ciudad, distrito y barrio (Madrid, Barcelona, Valencia, Sevilla, etc.)
-- El mercado hipotecario español: bancos, Euríbor, TAE, condiciones 2026
-- Análisis GAP: diferencia entre precio pedido (Idealista/Fotocasa) y precio real notarial
-- Inversión inmobiliaria: rentabilidad, ROI, zonas de oportunidad
-- Gastos de compra: ITP (6-10% según CCAA), AJD, notaría, registro, gestoría
-- Seguros de hogar: coberturas, franquicias, precios
-- Aspectos legales básicos de compraventa en España
-- Barrios y calidad de vida en ciudades españolas
+    const systemPrompt = `Eres UrbIA, un asistente experto en el mercado inmobiliario español.
+Conoces en profundidad: precios por ciudad/distrito/barrio, hipotecas y Euríbor, análisis GAP asking vs notarial, inversión inmobiliaria, gastos de compra (ITP 6-10% por CCAA, AJD, notaría, registro), seguros de hogar, aspectos legales de compraventa en España, y calidad de vida por barrios.
+Responde siempre en español. Sé conciso pero útil. Usa **negrita** y listas con - para legibilidad. Si no tienes datos exactos, da estimaciones razonables indicándolo.`;
 
-Responde siempre en español. Sé conciso pero completo. Usa datos reales de 2025-2026 cuando los tengas.
-Usa markdown básico: **negrita**, listas con -, etc. para mejor legibilidad.
-Si no tienes datos exactos, da estimaciones razonables indicando que son aproximadas.`;
+    // Historial previo (sin el mensaje actual ni mensajes en carga)
+    const prevMsgs = this.mensajes()
+      .filter(m => !m.loading && m.content)
+      .slice(-8);
 
-    const historial = this.mensajes()
-      .filter(m => !m.loading)
-      .slice(-10)
-      .map(m => ({
+    // contents: system como primer turno user+model, luego historial, luego pregunta actual
+    const contents: { role: string; parts: { text: string }[] }[] = [
+      { role: 'user',  parts: [{ text: systemPrompt }] },
+      { role: 'model', parts: [{ text: 'Entendido. Soy UrbIA, tu asistente inmobiliario. ¿En qué puedo ayudarte?' }] },
+      ...prevMsgs.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
-      }));
-
-    const contents = [
-      ...historial.slice(0, -1),
+      })),
       { role: 'user', parts: [{ text: pregunta }] },
     ];
 
     const body = {
-      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
     };
 
     const apiKey = environment.geminiApiKey;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // gemini-2.0-flash-lite es el modelo más barato y disponible con claves de AI Studio
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
 
-    const res: any = await this.http.post(url, body).toPromise();
-    return res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No se pudo obtener respuesta.';
+    try {
+      const res: any = await this.http.post(url, body).toPromise();
+      const text = res?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+      throw new Error('empty');
+    } catch {
+      // fallback al modelo 1.5
+      const url15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+      const res: any = await this.http.post(url15, body).toPromise();
+      return res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No se pudo obtener respuesta del asistente.';
+    }
   }
 
   formatMensaje(texto: string): string {
