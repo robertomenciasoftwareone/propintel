@@ -124,11 +124,12 @@ public class BusquedaController(PropIntelDbContext db) : ControllerBase
                 : "amarillo";
 
             // Coordenadas: usar las del registro si existen, si no usar centroide del distrito
+            bool tieneCoordsPropias = a.Lat.HasValue && a.Lat.Value != 0 && a.Lon.HasValue && a.Lon.Value != 0;
             double baseLat, baseLon;
-            if (a.Lat.HasValue && a.Lat.Value != 0 && a.Lon.HasValue && a.Lon.Value != 0)
+            if (tieneCoordsPropias)
             {
-                baseLat = a.Lat.Value;
-                baseLon = a.Lon.Value;
+                baseLat = a.Lat!.Value;
+                baseLon = a.Lon!.Value;
             }
             else
             {
@@ -136,10 +137,27 @@ public class BusquedaController(PropIntelDbContext db) : ControllerBase
                 baseLat = centroide.lat;
                 baseLon = centroide.lon;
             }
-            // Ofuscar coordenadas para usuarios no autenticados (+/- ~200m) y añadir
-            // dispersión para que no se solapen los markers en el mismo punto
-            double latAprox = baseLat + (Rng.NextDouble() - 0.5) * 0.006;
-            double lonAprox = baseLon + (Rng.NextDouble() - 0.5) * 0.008;
+
+            // Dispersión de coordenadas:
+            //   - Autenticado + coords exactas → mínima dispersión visual (~20 m) para evitar solapamiento
+            //   - Autenticado + sin coords (centroide) → dispersión moderada (~150 m)
+            //   - Anónimo → dispersión mayor (~350 m) para ofuscar la dirección real
+            double latAprox, lonAprox;
+            if (isAuthenticated && tieneCoordsPropias)
+            {
+                latAprox = baseLat + (Rng.NextDouble() - 0.5) * 0.0004;   // ±~22 m
+                lonAprox = baseLon + (Rng.NextDouble() - 0.5) * 0.0005;
+            }
+            else if (isAuthenticated)
+            {
+                latAprox = baseLat + (Rng.NextDouble() - 0.5) * 0.002;    // ±~110 m
+                lonAprox = baseLon + (Rng.NextDouble() - 0.5) * 0.003;
+            }
+            else
+            {
+                latAprox = baseLat + (Rng.NextDouble() - 0.5) * 0.006;    // ±~330 m (ofuscado)
+                lonAprox = baseLon + (Rng.NextDouble() - 0.5) * 0.008;
+            }
 
             return new BusquedaResultadoDto(
                 Id: a.Id,
@@ -172,6 +190,12 @@ public class BusquedaController(PropIntelDbContext db) : ControllerBase
         ["arganzuela"]          = (40.3997, -3.6983),
         ["retiro"]              = (40.4090, -3.6817),
         ["salamanca"]           = (40.4320, -3.6784),
+        ["barrio de salamanca"] = (40.4320, -3.6784),
+        ["castellana"]          = (40.4395, -3.6779),  // barrio dentro de Salamanca/Chamartín
+        ["recoletos"]           = (40.4256, -3.6877),
+        ["jerónimos"]           = (40.4118, -3.6870),
+        ["goya"]                = (40.4270, -3.6700),
+        ["lista"]               = (40.4357, -3.6728),
         ["chamartin"]           = (40.4600, -3.6770),
         ["chamartín"]           = (40.4600, -3.6770),
         ["tetuan"]              = (40.4620, -3.7060),

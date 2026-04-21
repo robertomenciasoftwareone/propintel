@@ -152,7 +152,7 @@ export class ServiciosPanelComponent {
 
   servicios: Servicio[] = [
     {
-      icon: '🏠', nombre: 'Tasación Automática (AVM)',
+      icon: '🏠', nombre: 'Valoración automática',
       desc: 'Estimación de valor basada en comparables reales del vecindario, datos notariales y Catastro.',
       precio: 'Gratis · Resultado inmediato',
       tag: 'Nuevo', tagColor: '#4fd1a5',

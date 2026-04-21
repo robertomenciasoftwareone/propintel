@@ -238,7 +238,7 @@ interface ValorReferencia {
                 </div>
               </div>
               <a routerLink="/tasacion" class="btn-avm">
-                Ir a Tasación Automática →
+                Ir a Valoración automática →
               </a>
             </div>
           }

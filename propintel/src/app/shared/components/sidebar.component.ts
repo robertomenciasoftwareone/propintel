@@ -41,7 +41,7 @@ import { AuthService } from '../../core/services/auth.service';
       </a>
       <a class="nav-item" routerLink="/tasacion" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M3 5h10M5 3v4M11 3v4M4 8h8v5H4V8z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Tasación AVM
+        Valoración automática
       </a>
 
       <div class="nav-section-label" style="margin-top:16px">Negocio</div>

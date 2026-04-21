@@ -47,6 +47,14 @@ ZONAS_FOTOCASA: dict[str, list[dict]] = {
         {"slug": "madrid/hortaleza",            "ciudad": "madrid",    "zona": "Hortaleza"},
         {"slug": "madrid/usera",                "ciudad": "madrid",    "zona": "Usera"},
         {"slug": "madrid/puente-de-vallecas",   "ciudad": "madrid",    "zona": "Puente de Vallecas"},
+        {"slug": "madrid/salamanca",              "ciudad": "madrid",    "zona": "Salamanca"},
+        {"slug": "madrid/chamartin",              "ciudad": "madrid",    "zona": "Chamartín"},
+        {"slug": "madrid/san-blas-canillejas",    "ciudad": "madrid",    "zona": "San Blas"},
+        {"slug": "madrid/villaverde",             "ciudad": "madrid",    "zona": "Villaverde"},
+        {"slug": "madrid/villa-de-vallecas",      "ciudad": "madrid",    "zona": "Villa de Vallecas"},
+        {"slug": "madrid/vicalvaro",              "ciudad": "madrid",    "zona": "Vicálvaro"},
+        {"slug": "madrid/barajas",                "ciudad": "madrid",    "zona": "Barajas"},
+        {"slug": "madrid/moratalaz",              "ciudad": "madrid",    "zona": "Moratalaz"},
     ],
     "barcelona": [
         {"slug": "barcelona",                   "ciudad": "barcelona", "zona": "Barcelona"},
@@ -274,8 +282,10 @@ class FotocasaScraper:
                     logger.debug(f"Sin resultados reales Fotocasa en página {num_pag} de {zona}")
                     break
 
+                coords_lookup = await self._extraer_coordenadas_pagina(page)
+
                 for item in items:
-                    anuncio = await self._parsear_item(item, ciudad, zona)
+                    anuncio = await self._parsear_item(item, ciudad, zona, coords_lookup)
                     if anuncio:
                         anuncios.append(anuncio)
 
@@ -292,8 +302,54 @@ class FotocasaScraper:
 
         return anuncios
 
+    async def _extraer_coordenadas_pagina(self, page) -> dict:
+        """Extrae lat/lon y dirección de los anuncios desde el JSON embebido en la página.
+        Fotocasa incluye coordinates:{latitude,longitude,accuracy} por cada inmueble.
+        accuracy=0 → centroide de zona; accuracy=1 → coordenadas exactas.
+        """
+        try:
+            return await page.evaluate("""
+            () => {
+                const result = {};
+                for (const script of document.querySelectorAll('script:not([src])')) {
+                    const t = script.textContent || '';
+                    if (t.length < 500 || !t.includes('"latitude"') || !t.includes('"detailUrl"')) continue;
+                    try {
+                        const json = JSON.parse(t);
+                        function collect(obj, depth) {
+                            if (depth > 12 || !obj || typeof obj !== 'object') return;
+                            if (Array.isArray(obj)) {
+                                for (const item of obj) {
+                                    if (item && item.detailUrl && item.coordinates) {
+                                        const m = String(item.detailUrl).match(/\/(\d+)\/d$/);
+                                        if (m) result[m[1]] = {
+                                            lat: item.coordinates.latitude ?? null,
+                                            lon: item.coordinates.longitude ?? null,
+                                            accuracy: item.coordinates.accuracy ?? 0,
+                                            district: (item.address || {}).district || null,
+                                            neighborhood: (item.address || {}).neighborhood || null,
+                                            zipCode: (item.address || {}).zipCode || null,
+                                        };
+                                    }
+                                    collect(item, depth + 1);
+                                }
+                            } else {
+                                for (const v of Object.values(obj)) collect(v, depth + 1);
+                            }
+                        }
+                        collect(json, 0);
+                        if (Object.keys(result).length > 0) return result;
+                    } catch(e) {}
+                }
+                return result;
+            }
+            """) or {}
+        except Exception as e:
+            logger.debug(f"Error extrayendo coordenadas de página Fotocasa: {e}")
+            return {}
+
     async def _parsear_item(
-        self, item, ciudad: str, zona: str
+        self, item, ciudad: str, zona: str, coords_lookup: dict | None = None
     ) -> Optional[AnuncioPortal]:
         try:
             # ── Full text for fallback extraction ────────────────────────
@@ -382,6 +438,23 @@ class FotocasaScraper:
             if not item_id:
                 item_id = re.sub(r"[^\w]", "", url[-20:])
 
+            # ── Coordenadas y dirección desde JSON embebido ──────────────
+            lat: Optional[float] = None
+            lon: Optional[float] = None
+            codigo_postal: Optional[str] = None
+            distrito_final = zona  # fallback al slug de zona
+            if coords_lookup and item_id and item_id in coords_lookup:
+                entry = coords_lookup[item_id]
+                lat = entry.get("lat")
+                lon = entry.get("lon")
+                codigo_postal = entry.get("zipCode")
+                # Usar el district de Fotocasa si es más específico que el slug de búsqueda
+                raw_district = entry.get("district") or entry.get("neighborhood")
+                if raw_district:
+                    distrito_final = raw_district
+                lat = float(lat) if lat is not None else None
+                lon = float(lon) if lon is not None else None
+
             # ── Foto principal ───────────────────────────────────────────
             foto_principal = None
             img_elem = await item.query_selector("picture img, img.re-Card-figure-image, img[data-src]")
@@ -404,10 +477,10 @@ class FotocasaScraper:
                 habitaciones=habitaciones,
                 planta=None,
                 ciudad=ciudad,
-                distrito=zona,
-                codigo_postal=None,
-                lat=None,
-                lon=None,
+                distrito=distrito_final,
+                codigo_postal=codigo_postal,
+                lat=lat,
+                lon=lon,
                 tipo=self._detectar_tipo(titulo),
                 foto_principal=foto_principal,
             )

@@ -804,8 +804,8 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
     const markers: any[] = [];
 
     resultados.forEach((r) => {
-      const lat = r.latAprox;
-      const lon = r.lonAprox;
+      const lat = r.latExacta ?? r.latAprox;
+      const lon = r.lonExacta ?? r.lonAprox;
       if (!lat || !lon) return;
 
       const color = this.getColor(r.semaforoColor);
@@ -854,8 +854,10 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
 
   centrarInmueble(item: ResultadoBusqueda): void {
     if (!this.map) return;
-    if (!item.latAprox || !item.lonAprox) return;
-    this.map.flyTo([item.latAprox, item.lonAprox], Math.max(this.map.getZoom(), 14), {
+    const lat = item.latExacta ?? item.latAprox;
+    const lon = item.lonExacta ?? item.lonAprox;
+    if (!lat || !lon) return;
+    this.map.flyTo([lat, lon], Math.max(this.map.getZoom(), 14), {
       duration: 0.8
     });
   }

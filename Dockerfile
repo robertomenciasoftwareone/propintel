@@ -31,14 +31,16 @@ COPY --from=build /app/publish .
 
 # Variables de entorno por defecto
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
+# Railway inyecta PORT dinámicamente; si no existe, usamos 8080
+ENV PORT=8080
+ENV ASPNETCORE_URLS=http://+:${PORT}
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl --fail http://localhost:8080/swagger/index.html || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl --fail http://localhost:${PORT}/health || exit 1
 
-# Exponer puerto
-EXPOSE 8080
+# Exponer puerto (Railway lo sobreescribe con PORT)
+EXPOSE ${PORT}
 
 # Entrypoint
 ENTRYPOINT ["dotnet", "PropIntel.Api.dll"]

@@ -53,7 +53,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ── CORS — permite Angular local y cualquier dominio de Azure Static Web Apps ──
+// ── CORS — permite Angular local, Vercel y Railway ───────────────────────────
 builder.Services.AddCors(opts =>
     opts.AddPolicy("dev", p =>
         p.SetIsOriginAllowed(origin =>
@@ -64,9 +64,12 @@ builder.Services.AddCors(opts =>
             if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
                 return false;
 
-            return string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
-                && (uri.Host.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(uri.Host, "nice-desert-07ca1ce10.2.azurestaticapps.net", StringComparison.OrdinalIgnoreCase));
+            if (!string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith(".railway.app", StringComparison.OrdinalIgnoreCase)
+                || uri.Host.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase);
         })
          .AllowAnyHeader()
          .AllowAnyMethod()
@@ -155,6 +158,7 @@ app.UseCors("dev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 app.Run();
 
 static async Task SeedInMemoryFromJsonAsync(PropIntelDbContext db, ILogger logger)

@@ -21,12 +21,19 @@ class GapCalculator:
         self,
         anuncios: list[AnuncioPortal],
         datos_notariales: list[DatoNotarial],
+        idealista_city_avgs: Optional[dict[str, float]] = None,
     ) -> list[GapAnalisis]:
         """
         Para cada zona con datos suficientes, calcula el gap entre el precio
         de asking (combinado) y el precio notarial. Desglosa por fuente:
         asking_idealista_m2, asking_fotocasa_m2.
         Mínimo 3 anuncios por fuente para considerarla estadísticamente válida.
+
+        Args:
+            idealista_city_avgs: dict {ciudad → avgPriceByArea €/m²} devuelto
+                directamente por Idealista. Cuando está disponible se usa como
+                asking_idealista_m2 para la ciudad en lugar de la mediana de muestra,
+                ya que Idealista lo calcula sobre su dataset completo.
         """
         MIN_ANUNCIOS = 1
 
@@ -75,15 +82,30 @@ class GapCalculator:
             # Mediana combinada (robusta a outliers de una fuente sola)
             asking_medio = statistics.median(precios_todos)
 
-            # Mediana por fuente — None si no hay suficientes anuncios
-            asking_idealista = (
+            # Mediana por fuente — None si no hay suficientes anuncios.
+            # Si Idealista proporcionó avgPriceByArea para esta ciudad, usarlo
+            # como asking_idealista_m2 (más fiable que nuestra muestra).
+            idealista_city_avg = (idealista_city_avgs or {}).get(ciudad)
+            asking_idealista = idealista_city_avg or (
                 statistics.median(precios_idealista)
                 if len(precios_idealista) >= MIN_ANUNCIOS else None
             )
+            if idealista_city_avg:
+                logger.debug(
+                    f"  {ciudad}/{zona}: usando avgPriceByArea de Idealista "
+                    f"{idealista_city_avg:.0f} €/m² (muestra: {len(precios_idealista)} anuncios)"
+                )
             asking_fotocasa = (
                 statistics.median(precios_fotocasa)
                 if len(precios_fotocasa) >= MIN_ANUNCIOS else None
             )
+
+            # Recalcular asking_medio incorporando el precio oficial de Idealista
+            if idealista_city_avg and precios_fotocasa:
+                # Media ponderada: Idealista (oficial) + mediana Fotocasa
+                asking_medio = (idealista_city_avg + statistics.median(precios_fotocasa)) / 2
+            elif idealista_city_avg:
+                asking_medio = idealista_city_avg
 
             # Buscar dato notarial correspondiente
             notarial = self._buscar_notarial(ciudad, zona, notarial_idx)

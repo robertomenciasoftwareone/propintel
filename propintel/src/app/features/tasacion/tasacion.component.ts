@@ -56,7 +56,7 @@ interface ValorReferencia {
   template: `
     <div class="tasacion-page">
       <div class="page-header">
-        <h1>Tasación Automática (AVM)</h1>
+        <h1>Valoración automática</h1>
         <p class="subtitle">
           Estimación de valor basada en datos reales del mercado, Catastro e INE.
           No sustituye una tasación oficial homologada.

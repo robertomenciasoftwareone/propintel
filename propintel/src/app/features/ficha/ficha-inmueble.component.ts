@@ -263,86 +263,6 @@ interface GeminiPhotoAnalysis {
           </div>
         }
 
-        <!-- Catastro -->
-        <div class="expert-card">
-          <div class="expert-header">
-            <div class="expert-title">
-              <span class="section-icon">🏛️</span>
-              Catastro
-            </div>
-            @if (catastroFicha()?.urlFicha) {
-              <a [href]="catastroFicha()!.urlFicha" target="_blank" rel="noopener noreferrer" class="btn-secondary">
-                Ver ficha completa ↗
-              </a>
-            }
-          </div>
-          @if (catastroLoading()) {
-            <div class="loading-inline"><div class="spinner-sm"></div> Consultando Catastro…</div>
-          } @else {
-            @if (catastroFicha(); as f) {
-              <div class="data-grid">
-                @if (f.direccion) {
-                  <div class="dato dato-wide">
-                    <div class="dato-label">DIRECCIÓN CATASTRAL</div>
-                    <div class="dato-value">{{ f.direccion }}</div>
-                  </div>
-                }
-                @if (f.uso) {
-                  <div class="dato"><div class="dato-label">USO</div><div class="dato-value">{{ f.uso }}</div></div>
-                }
-                @if (f.tipoInmueble) {
-                  <div class="dato"><div class="dato-label">TIPO</div><div class="dato-value">{{ f.tipoInmueble }}</div></div>
-                }
-                @if (f.superficieTotal) {
-                  <div class="dato"><div class="dato-label">SUPERFICIE CATASTRAL</div><div class="dato-value">{{ f.superficieTotal | number:'1.0-0':'es-ES' }} m²</div></div>
-                }
-                @if (f.annoConstruccion) {
-                  <div class="dato"><div class="dato-label">AÑO CONSTRUCCIÓN</div><div class="dato-value">{{ f.annoConstruccion }}</div></div>
-                }
-                @if (f.valorCatastral) {
-                  <div class="dato"><div class="dato-label">VALOR CATASTRAL</div><div class="dato-value purple-val">{{ f.valorCatastral }} €</div></div>
-                }
-                @if (f.numPlantasSobre) {
-                  <div class="dato"><div class="dato-label">PLANTAS S/RASANTE</div><div class="dato-value">{{ f.numPlantasSobre }}</div></div>
-                }
-                @if (f.codigoPostal) {
-                  <div class="dato"><div class="dato-label">C. POSTAL</div><div class="dato-value">{{ f.codigoPostal }}</div></div>
-                }
-              </div>
-            } @else if (catastro(); as c) {
-              @if (!c.encontrado || c.inmuebles.length === 0) {
-                <p class="no-data">
-                  No se encontraron datos catastrales para esta dirección.
-                  @if (c.error) { <br><small>{{ c.error }}</small> }
-                </p>
-              } @else {
-                @for (inm of c.inmuebles; track inm.referenciaCatastral) {
-                  <div class="catastro-item">
-                    <div class="data-grid">
-                      <div class="dato">
-                        <div class="dato-label">REF. CATASTRAL</div>
-                        <div class="dato-value mono">{{ inm.referenciaCatastral }}</div>
-                      </div>
-                      <div class="dato"><div class="dato-label">USO</div><div class="dato-value">{{ inm.uso }}</div></div>
-                      <div class="dato"><div class="dato-label">SUPERFICIE</div><div class="dato-value">{{ inm.superficieM2 | number:'1.0-0':'es-ES' }} m²</div></div>
-                      <div class="dato"><div class="dato-label">AÑO</div><div class="dato-value">{{ inm.anoConstruccion ?? '—' }}</div></div>
-                      <div class="dato dato-wide">
-                        <div class="dato-label">DIRECCIÓN</div>
-                        <div class="dato-value">{{ inm.direccion ?? '—' }}</div>
-                      </div>
-                    </div>
-                    @if (inm.urlCatastro) {
-                      <a [href]="inm.urlCatastro" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="margin-top:12px">Ver en Catastro ↗</a>
-                    }
-                  </div>
-                }
-              }
-            } @else {
-              <p class="no-data">No hay datos catastrales disponibles.</p>
-            }
-          }
-        </div>
-
         <!-- Valor referencia AEAT -->
         @if (valorRef()) {
           <div class="expert-card">
@@ -384,7 +304,7 @@ interface GeminiPhotoAnalysis {
           <div class="expert-header">
             <div class="expert-title">
               <span class="section-icon">🤖</span>
-              Tasación Automática (AVM)
+              Valoración automática
             </div>
             @if (!avmLoading() && !avm()) {
               <button class="btn-calcular" (click)="calcularAvm(d)">Calcular estimación</button>

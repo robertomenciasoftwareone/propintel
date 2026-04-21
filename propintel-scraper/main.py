@@ -75,13 +75,14 @@ async def run_ciclo_completo(
 
         # ── 2. Asking prices — Idealista ────────────────────────────────
         anuncios_idealista: list = []
+        idealista_city_avgs: dict[str, float] = {}
         if not sin_idealista:
             # Preferir API oficial si hay credenciales configuradas
             api_key_ok = bool(settings.idealista_api_key and settings.idealista_api_secret)
             if api_key_ok and not forzar_playwright:
                 logger.info("🏠 [2/6] Idealista vía API oficial...")
                 try:
-                    anuncios_idealista = await run_idealista_api_scraper(ciudades, max(1, max_paginas - 1))
+                    anuncios_idealista, idealista_city_avgs = await run_idealista_api_scraper(ciudades, max(1, max_paginas - 1))
                     resumen["anuncios_idealista"] = len(anuncios_idealista)
                     if anuncios_idealista:
                         db.guardar_anuncios(anuncios_idealista)
@@ -136,7 +137,7 @@ async def run_ciclo_completo(
         # ── 4. Gaps ─────────────────────────────────────────────────────
         logger.info("📊 [4/6] Calculando gaps...")
         calc = GapCalculator()
-        gaps = calc.calcular_gaps(anuncios, datos_notariales)
+        gaps = calc.calcular_gaps(anuncios, datos_notariales, idealista_city_avgs or None)
         resumen["gaps_calculados"] = len(gaps)
         if gaps:
             db.guardar_gaps(gaps)

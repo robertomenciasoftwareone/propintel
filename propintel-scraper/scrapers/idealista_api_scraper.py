@@ -295,7 +295,7 @@ async def run_idealista_api_scraper(
     ciudades: Optional[list[str]] = None,
     max_paginas: int = 2,
     operation: str = "sale",
-) -> list[AnuncioPortal]:
+) -> tuple[list[AnuncioPortal], dict[str, float]]:
     """
     Descarga anuncios de Idealista vía API oficial.
 
@@ -305,16 +305,19 @@ async def run_idealista_api_scraper(
         operation:   'sale' o 'rent'
 
     Returns:
-        Lista de AnuncioPortal lista para guardar en BD.
+        Tupla (anuncios, city_avg_prices):
+          - anuncios: lista de AnuncioPortal lista para guardar en BD.
+          - city_avg_prices: dict {ciudad → avgPriceByArea €/m²} devuelto por Idealista
+            para cada ciudad. Más fiable que calcular la mediana de la muestra.
     """
     if not settings.idealista_api_key or not settings.idealista_api_secret:
         logger.warning("idealista_api_key / idealista_api_secret no configurados — saltando API scraper")
-        return []
+        return [], {}
 
     remaining = _quota_remaining()
     if remaining <= 0:
         logger.warning("Quota mensual de Idealista API agotada — saltando")
-        return []
+        return [], {}
 
     # Expandir grupos (ej: 'comunidad_madrid' → 5 claves)
     claves_expandidas: list[str] | None = None
@@ -343,6 +346,9 @@ async def run_idealista_api_scraper(
 
     client_api = IdealistaApiClient()
     todos_anuncios: list[AnuncioPortal] = []
+    # Precio medio €/m² por ciudad devuelto por Idealista al nivel de zona de búsqueda
+    # key: nombre de ciudad (cfg["ciudad"]), value: último avgPriceByArea recibido
+    city_avg_prices: dict[str, float] = {}
 
     async with httpx.AsyncClient() as http:
         for clave, cfg in zonas_seleccionadas.items():
@@ -372,6 +378,16 @@ async def run_idealista_api_scraper(
                 items = data.get("elementList", [])
                 total_pages = data.get("totalPages", 1)
 
+                # Capturar precio medio €/m² de la zona que Idealista calcula sobre su
+                # conjunto completo de datos (más fiable que nuestra mediana de muestra)
+                avg_pba = data.get("avgPriceByArea")
+                if avg_pba and float(avg_pba) > 0:
+                    city_avg_prices[ciudad] = float(avg_pba)
+                    logger.debug(
+                        f"  [Idealista API] avgPriceByArea {clave}/{ciudad} "
+                        f"pág {pagina}: {avg_pba:.0f} €/m²"
+                    )
+
                 nuevos = [a for a in (_item_to_anuncio(it, ciudad) for it in items) if a]
                 todos_anuncios.extend(nuevos)
 
@@ -394,4 +410,6 @@ async def run_idealista_api_scraper(
         f"{len(zonas_seleccionadas)} ciudad(es). "
         f"Quota restante este mes: {_quota_remaining()}"
     )
-    return todos_anuncios
+    if city_avg_prices:
+        logger.info(f"[Idealista API] Precios medios zona: { {k: f'{v:.0f} €/m²' for k, v in city_avg_prices.items()} }")
+    return todos_anuncios, city_avg_prices
