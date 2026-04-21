@@ -942,7 +942,6 @@ export class FichaInmuebleComponent implements OnInit {
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   private analizarZona(d: AnuncioDetalle): void {
-    if (!environment.geminiApiKey) return;
     this.geminiLoading.set(true);
 
     const prompt = `Analiza la zona para un inmueble en España con estas características:
@@ -970,7 +969,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
     };
 
     this.http.post<{ candidates: { content: { parts: { text: string }[] } }[] }>(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${environment.geminiApiKey}`,
+      `${environment.apiUrl}/gemini/generate`,
       body
     ).subscribe({
       next: (res) => {
@@ -1000,7 +999,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
   }
 
   private analizarFotos(d: AnuncioDetalle): void {
-    if (!environment.geminiApiKey || !d.fotoPrincipal) return;
+    if (!d.fotoPrincipal) return;
     this.geminiPhotoLoading.set(true);
 
     // Fetch image as base64 through our server-side proxy (avoids CORS)
@@ -1031,7 +1030,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
       };
 
       this.http.post<{ candidates: { content: { parts: { text: string }[] } }[] }>(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${environment.geminiApiKey}`,
+        `${environment.apiUrl}/gemini/vision`,
         body
       ).subscribe({
         next: (res) => {
