@@ -121,7 +121,7 @@ interface SeguroHogar {
                 <div class="rating-row">
                   <span class="stars">{{ '★'.repeat(Math.round(s.rating)) }}</span>
                   <span class="rating-val">{{ s.rating | number:'1.1-1' }}</span>
-                  <span class="reseñas">({{ s.reseñas | number }} reseñas)</span>
+                  <span class="resenas">({{ s.resenas | number }} resenas)</span>
                 </div>
               </div>
             </div>
@@ -281,7 +281,7 @@ interface SeguroHogar {
     .rating-row { display: flex; align-items: center; gap: 4px; margin-top: 3px; }
     .stars { color: #F59E0B; font-size: 12px; }
     .rating-val { font-size: 12px; font-weight: 600; color: #0F172A; }
-    .reseñas { font-size: 11px; color: #94A3B8; }
+    .resenas { font-size: 11px; color: #94A3B8; }
     .card-right { text-align: right; }
     .precio-anual { font-size: 24px; font-weight: 800; color: #0F172A; letter-spacing: -0.04em; }
     .precio-periodo { font-size: 14px; font-weight: 500; color: #64748B; }
