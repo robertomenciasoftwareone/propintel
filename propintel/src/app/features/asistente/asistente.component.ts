@@ -279,8 +279,9 @@ export class AsistenteComponent implements AfterViewChecked {
     this._lastMsgCount = 0;
   }
 
-  onEnter(e: KeyboardEvent): void {
-    if (!e.shiftKey) {
+  onEnter(e: Event): void {
+    const ke = e as KeyboardEvent;
+    if (!ke.shiftKey) {
       e.preventDefault();
       this.enviar();
     }
