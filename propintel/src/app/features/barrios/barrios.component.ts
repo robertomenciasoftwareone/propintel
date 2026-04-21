@@ -432,7 +432,7 @@ export class BarriosComponent {
     return lista;
   });
 
-  barrioTop = computed(() => this.barriosFiltrados()[0]);
+  barrioTop = computed((): Barrio | undefined => this.barriosFiltrados()[0]);
 
   getScoreItems(b: Barrio) {
     return [

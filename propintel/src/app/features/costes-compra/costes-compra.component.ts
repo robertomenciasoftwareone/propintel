@@ -1,6 +1,6 @@
 import { Component, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgFor, NgIf, CurrencyPipe, DecimalPipe, PercentPipe } from '@angular/common';
+import { NgFor, NgIf, CurrencyPipe, DecimalPipe } from '@angular/common';
 
 interface ConceptoGasto {
   nombre: string;
@@ -14,7 +14,7 @@ interface ConceptoGasto {
 @Component({
   selector: 'app-costes-compra',
   standalone: true,
-  imports: [RouterLink, NgFor, NgIf, CurrencyPipe, DecimalPipe, PercentPipe],
+  imports: [RouterLink, NgFor, NgIf, CurrencyPipe, DecimalPipe],
   template: `
 <div class="page">
 
