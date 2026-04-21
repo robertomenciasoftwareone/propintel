@@ -20,7 +20,7 @@ interface SeguroHogar {
   popular: boolean;
   link: string;
   rating: number;
-  reseñas: number;
+  resenas: number;
   descuento?: string;
 }
 
@@ -373,7 +373,7 @@ export class SegurosComponent {
       popular: false,
       link: 'https://www.mutua.es/seguros/hogar/',
       rating: 4.6,
-      reseñas: 12400,
+      resenas: 12400,
       descuento: '20% primer año',
     },
     {
@@ -394,7 +394,7 @@ export class SegurosComponent {
       popular: true,
       link: 'https://www.mapfre.es/seguros/hogar/',
       rating: 4.4,
-      reseñas: 23800,
+      resenas: 23800,
     },
     {
       id: 'generali',
@@ -414,7 +414,7 @@ export class SegurosComponent {
       popular: false,
       link: 'https://www.generali.es/seguros-hogar/',
       rating: 4.1,
-      reseñas: 7200,
+      resenas: 7200,
       descuento: '15% online',
     },
     {
@@ -435,7 +435,7 @@ export class SegurosComponent {
       popular: false,
       link: 'https://www.allianz.es/seguros-hogar.html',
       rating: 4.5,
-      reseñas: 18600,
+      resenas: 18600,
     },
     {
       id: 'verti',
@@ -455,7 +455,7 @@ export class SegurosComponent {
       popular: false,
       link: 'https://www.verti.es/seguro-hogar/',
       rating: 3.9,
-      reseñas: 4500,
+      resenas: 4500,
       descuento: '10% sin papeles',
     },
     {
@@ -476,7 +476,7 @@ export class SegurosComponent {
       popular: false,
       link: 'https://www.axa.es/seguros/hogar',
       rating: 4.3,
-      reseñas: 15200,
+      resenas: 15200,
     },
   ];
 
