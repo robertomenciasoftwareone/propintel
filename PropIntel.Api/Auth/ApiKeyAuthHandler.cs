@@ -21,7 +21,9 @@ public class ApiKeyAuthHandler(
         if (!Request.Headers.TryGetValue(HeaderName, out var key))
             return Task.FromResult(AuthenticateResult.Fail("Missing X-Api-Key header"));
 
-        var validKey = config["PropIntel:ApiKey"] ?? config["ApiKey"];
+        var validKey = config["API_KEY"]
+                    ?? config["PropIntel:ApiKey"]
+                    ?? config["ApiKey"];
         if (string.IsNullOrEmpty(validKey) || key != validKey)
             return Task.FromResult(AuthenticateResult.Fail("Invalid API key"));
 
