@@ -316,14 +316,16 @@ export class AsistenteComponent implements AfterViewChecked {
       const respuesta = await this.llamarGemini(texto);
       this.mensajes.update(msgs => {
         const copia = [...msgs];
-        const idx = copia.findLastIndex(m => m.loading);
+        let idx = -1;
+        for (let i = copia.length - 1; i >= 0; i--) { if ((copia[i] as any).loading) { idx = i; break; } }
         if (idx >= 0) copia[idx] = { role: 'assistant', content: respuesta, timestamp: new Date() };
         return copia;
       });
     } catch {
       this.mensajes.update(msgs => {
         const copia = [...msgs];
-        const idx = copia.findLastIndex(m => m.loading);
+        let idx = -1;
+        for (let i = copia.length - 1; i >= 0; i--) { if ((copia[i] as any).loading) { idx = i; break; } }
         if (idx >= 0) copia[idx] = {
           role: 'assistant',
           content: 'Lo siento, no he podido conectar con el servicio de IA ahora mismo. Por favor inténtalo de nuevo en unos momentos.',
