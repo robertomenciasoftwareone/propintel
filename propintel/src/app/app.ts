@@ -4,7 +4,7 @@ import { filter } from 'rxjs/operators';
 import { SidebarComponent } from './shared/components/sidebar.component';
 import { TopbarComponent } from './shared/components/topbar.component';
 
-const PUBLIC_PREFIXES = ['/', '/mapa-resultados', '/login', '/registro'];
+const PUBLIC_PREFIXES = ['/', '/mapa-resultados', '/login', '/registro', '/hipotecas', '/estadisticas', '/catastro'];
 
 @Component({
   selector: 'app-root',

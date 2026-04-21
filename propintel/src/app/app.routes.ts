@@ -101,5 +101,27 @@ export const routes: Routes = [
       import('./features/catastro/catastro.component').then(m => m.CatastroComponent),
   },
 
+  // ── Nuevas funcionalidades ──────────────────────────────────────────
+  {
+    path: 'asistente',
+    loadComponent: () =>
+      import('./features/asistente/asistente.component').then(m => m.AsistenteComponent),
+  },
+  {
+    path: 'seguros',
+    loadComponent: () =>
+      import('./features/seguros/seguros.component').then(m => m.SegurosComponent),
+  },
+  {
+    path: 'costes-compra',
+    loadComponent: () =>
+      import('./features/costes-compra/costes-compra.component').then(m => m.CostesCompraComponent),
+  },
+  {
+    path: 'barrios',
+    loadComponent: () =>
+      import('./features/barrios/barrios.component').then(m => m.BarriosComponent),
+  },
+
   { path: '**', redirectTo: '' },
 ];

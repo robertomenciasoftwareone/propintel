@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BusquedaService } from '../../../core/services/busqueda.service';
 import { BusquedaFiltros } from '../../../core/models/auth.model';
@@ -17,7 +17,7 @@ const MUNICIPIOS = [
 @Component({
   selector: 'app-landing-hero',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
 
 <!-- ═══════ HERO ═══════ -->
@@ -176,11 +176,27 @@ const MUNICIPIOS = [
       <div class="sdot"></div>
       <div class="stat"><strong>32</strong><span>municipios</span></div>
       <div class="sdot"></div>
-      <div class="stat"><strong>3</strong><span>fuentes de datos</span></div>
+      <div class="stat"><strong>IA</strong><span>Gemini integrado</span></div>
       <div class="sdot"></div>
       <div class="stat"><strong>Gratis</strong><span>para empezar</span></div>
     </div>
 
+  </div>
+</section>
+
+<!-- ═══════ TOOLS STRIP ═══════ -->
+<section class="tools-strip">
+  <div class="tools-inner">
+    <div class="tools-label">Todas las herramientas incluidas</div>
+    <div class="tools-row">
+      @for (tool of tools; track tool.path) {
+        <a [routerLink]="tool.path" class="tool-chip">
+          <span class="tool-chip-icon">{{ tool.icon }}</span>
+          <span>{{ tool.label }}</span>
+          @if (tool.badge) { <span class="tool-chip-badge">{{ tool.badge }}</span> }
+        </a>
+      }
+    </div>
   </div>
 </section>
 
@@ -976,6 +992,29 @@ const MUNICIPIOS = [
 .gdpr button:hover { opacity: .85; }
 
 /* ════════════════════════════════════════
+   TOOLS STRIP
+════════════════════════════════════════ */
+.tools-strip {
+  background: #F8FAFF;
+  border-top: 1px solid rgba(0,82,255,.07);
+  border-bottom: 1px solid rgba(0,82,255,.07);
+  padding: 20px 24px;
+}
+.tools-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.tools-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #94A3B8; }
+.tools-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.tool-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(0,82,255,.12); background: #fff;
+  color: #374151; font-size: 12px; font-weight: 500;
+  text-decoration: none; transition: all .2s; cursor: pointer;
+}
+.tool-chip:hover { border-color: #0052FF; color: #0052FF; background: #EEF4FF; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,82,255,.1); }
+.tool-chip-icon { font-size: 14px; }
+.tool-chip-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; background: rgba(0,82,255,.1); color: #0052FF; border-radius: 20px; }
+
+/* ════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════ */
 @media (max-width: 960px) {
@@ -1020,13 +1059,24 @@ export class LandingHeroComponent implements OnInit, OnDestroy {
     ascensor:     [false],
   });
 
+  readonly tools = [
+    { icon: '🤖', label: 'Asistente IA', path: '/asistente', badge: 'Nuevo' },
+    { icon: '🗺️', label: 'Mapa de pisos', path: '/mapa-resultados', badge: null },
+    { icon: '🏘️', label: 'Ranking barrios', path: '/barrios', badge: 'IA' },
+    { icon: '🏦', label: 'Hipotecas', path: '/hipotecas', badge: null },
+    { icon: '🛡️', label: 'Seguros hogar', path: '/seguros', badge: 'Nuevo' },
+    { icon: '🧾', label: 'Gastos compra', path: '/costes-compra', badge: 'Nuevo' },
+    { icon: '📊', label: 'Estadísticas', path: '/estadisticas', badge: null },
+    { icon: '🏛️', label: 'Catastro', path: '/catastro', badge: null },
+  ];
+
   readonly feats = [
     { e:'🚦', t:'Semáforo de precios',   d:'Compara el precio pedido con la transacción notarial real de la zona. Verde, amarillo o rojo al instante.' },
-    { e:'🗺️', t:'Mapa inteligente',      d:'Todos los inmuebles en un mapa con pines de colores que muestran el % de desviación respecto al mercado.' },
-    { e:'🏛️', t:'Datos de catastro',     d:'Superficie real, año de construcción, referencia catastral y valor fiscal de cada inmueble.' },
+    { e:'🤖', t:'Asistente IA 24/7',     d:'Pregunta cualquier cosa sobre barrios, hipotecas o precios en lenguaje natural. Respuestas instantáneas.' },
+    { e:'🏘️', t:'Ranking de barrios',    d:'Scoring IA de calidad de vida, seguridad, colegios y transporte para cada barrio. Encuentra el tuyo.' },
     { e:'🔔', t:'Alertas de precio',     d:'Configura alertas y recibe notificaciones cuando un inmueble infravalorado aparezca en tu zona.' },
-    { e:'📊', t:'AVM Valoración',         d:'Modelo de valoración automática que estima el precio real basándose en comparables y datos de mercado.' },
-    { e:'🤝', t:'Asesor de compra',      d:'Hipoteca, negociación y firma: te acompañamos en cada paso del proceso de compra.' },
+    { e:'🛡️', t:'Seguros de hogar',      d:'Compara las mejores pólizas del mercado. Precios, coberturas y franquicias lado a lado.' },
+    { e:'🧾', t:'Calculadora de gastos', d:'ITP, AJD, notaría, registro y gestoría calculados automáticamente por CCAA. Sin sorpresas al firmar.' },
   ];
 
   private timer: ReturnType<typeof setTimeout> | null = null;
