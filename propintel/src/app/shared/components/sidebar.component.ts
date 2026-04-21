@@ -117,6 +117,7 @@ import { AuthService } from '../../core/services/auth.service';
       flex-direction: column;
       gap: 2px;
       height: 100%;
+      overflow-y: auto;
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .logo-img {

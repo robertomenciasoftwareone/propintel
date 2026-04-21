@@ -424,8 +424,18 @@ interface GeminiPhotoAnalysis {
             </div>
             <p class="data-note gemini-note">Análisis generativo basado en conocimiento general. Verifica siempre in situ.</p>
           </div>
-        } @else if (geminiEnabled) {
-          <!-- geminiEnabled but failed silently — do not show anything -->
+        } @else if (geminiError()) {
+          <div class="expert-card gemini-card gemini-error-card">
+            <div class="expert-header">
+              <div class="expert-title">
+                <span class="section-icon">✨</span>
+                Análisis de Zona IA
+                <span class="gemini-badge">Gemini</span>
+              </div>
+            </div>
+            <p class="gemini-error-msg">⚠️ No se pudo obtener el análisis: <em>{{ geminiError() }}</em></p>
+            <button class="gemini-retry-btn" (click)="reintentarGemini()">Reintentar</button>
+          </div>
         }
 
         <!-- ══════════════════════════════════════════════════════════════════
@@ -757,6 +767,14 @@ interface GeminiPhotoAnalysis {
 
     /* ── Gemini Zone Analysis ──── */
     .gemini-card { border-color: #EDE9FE; background: linear-gradient(135deg, #FAFAFF 0%, #F5F3FF 100%); }
+    .gemini-error-card { border-color: #FCA5A5; background: #FFF5F5; }
+    .gemini-error-msg { font-size: 13px; color: #B91C1C; margin: 8px 0 12px; }
+    .gemini-retry-btn {
+      font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 8px;
+      border: 1px solid #7C3AED; background: transparent; color: #7C3AED;
+      cursor: pointer;
+    }
+    .gemini-retry-btn:hover { background: #7C3AED; color: #fff; }
     .gemini-badge {
       padding: 2px 7px; border-radius: 999px; font-size: 9px; font-weight: 700;
       letter-spacing: .06em; text-transform: uppercase;
@@ -832,6 +850,7 @@ export class FichaInmuebleComponent implements OnInit {
   avmLoading     = signal(false);
   geminiAnalysis      = signal<GeminiZoneAnalysis | null>(null);
   geminiLoading       = signal(false);
+  geminiError         = signal<string | null>(null);
   geminiPhotoAnalysis = signal<GeminiPhotoAnalysis | null>(null);
   geminiPhotoLoading  = signal(false);
   readonly geminiEnabled = !!environment.geminiApiKey;
@@ -960,12 +979,24 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
           const data: GeminiZoneAnalysis = JSON.parse(text);
           this.geminiAnalysis.set(data);
         } catch {
-          // silently fail — no panel shown
+          this.geminiError.set('Error al procesar la respuesta de Gemini.');
         }
         this.geminiLoading.set(false);
       },
-      error: () => this.geminiLoading.set(false)
+      error: (err) => {
+        const msg = err?.error?.error?.message ?? err?.message ?? 'Error desconocido';
+        this.geminiError.set(msg);
+        this.geminiLoading.set(false);
+      }
     });
+  }
+
+  reintentarGemini(): void {
+    const d = this.detalle();
+    if (!d) return;
+    this.geminiError.set(null);
+    this.geminiAnalysis.set(null);
+    this.analizarZona(d);
   }
 
   private analizarFotos(d: AnuncioDetalle): void {
