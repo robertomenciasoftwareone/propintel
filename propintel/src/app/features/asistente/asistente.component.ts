@@ -362,7 +362,7 @@ Responde siempre en español. Sé conciso pero útil. Usa **negrita** y listas c
 
     const body = {
       contents,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } },
     };
 
     const apiKey = environment.geminiApiKey;
