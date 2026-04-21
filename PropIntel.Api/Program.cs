@@ -6,8 +6,30 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var pgConn = builder.Configuration.GetConnectionString("UrbIA")
-          ?? builder.Configuration.GetConnectionString("PropIntel");
+// Construir connection string desde variables individuales para evitar
+// problemas de parseo con Npgsql cuando hay variables de entorno con nombres
+// que coinciden con parámetros de conexión (ej: ApiKey)
+string pgConn;
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+if (!string.IsNullOrWhiteSpace(dbHost))
+{
+    var csb = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host     = dbHost,
+        Port     = int.TryParse(Environment.GetEnvironmentVariable("DB_PORT"), out var p) ? p : 5432,
+        Database = Environment.GetEnvironmentVariable("DB_NAME") ?? "railway",
+        Username = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres",
+        Password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "",
+    };
+    pgConn = csb.ConnectionString;
+}
+else
+{
+    pgConn = builder.Configuration.GetConnectionString("UrbIA")
+          ?? builder.Configuration.GetConnectionString("PropIntel")
+          ?? "";
+}
+
 var useInMemory = string.IsNullOrWhiteSpace(pgConn)
     || pgConn.Contains("tu-servidor.postgres.database.azure.com", StringComparison.OrdinalIgnoreCase);
 
