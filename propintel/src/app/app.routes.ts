@@ -50,7 +50,6 @@ export const routes: Routes = [
   },
   {
     path: 'ficha/:id',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/ficha/ficha-inmueble.component').then(m => m.FichaInmuebleComponent),
   },
