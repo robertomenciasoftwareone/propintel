@@ -366,20 +366,10 @@ Responde siempre en español. Sé conciso pero útil. Usa **negrita** y listas c
     };
 
     const apiKey = environment.geminiApiKey;
-    // gemini-2.0-flash-lite es el modelo más barato y disponible con claves de AI Studio
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    try {
-      const res: any = await this.http.post(url, body).toPromise();
-      const text = res?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-      throw new Error('empty');
-    } catch {
-      // fallback al modelo 1.5
-      const url15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-      const res: any = await this.http.post(url15, body).toPromise();
-      return res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No se pudo obtener respuesta del asistente.';
-    }
+    const res: any = await this.http.post(url, body).toPromise();
+    return res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No se pudo obtener respuesta del asistente.';
   }
 
   formatMensaje(texto: string): string {

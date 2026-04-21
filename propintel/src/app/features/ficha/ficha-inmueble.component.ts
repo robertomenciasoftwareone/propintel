@@ -968,7 +968,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
       generationConfig: { temperature: 0.3, maxOutputTokens: 512 }
     };
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${environment.geminiApiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${environment.geminiApiKey}`;
     this.http.post<{ candidates: { content: { parts: { text: string }[] } }[] }>(
       geminiUrl,
       body
