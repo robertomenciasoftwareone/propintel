@@ -7,6 +7,7 @@ from enum import Enum
 class FuentePrecio(str, Enum):
     IDEALISTA  = "idealista"
     FOTOCASA   = "fotocasa"
+    PISOS_COM  = "pisos.com"
     NOTARIAL   = "notarial"   # Portal Estadístico del Notariado
 
 

@@ -240,6 +240,29 @@ import { CompararService } from '../../core/services/comparar.service';
       <div class="map-area">
         <div id="mapa-resultados-map" class="leaflet-map"></div>
 
+        <!-- Map controls overlay -->
+        <div class="map-controls" *ngIf="!loading() && resultados().length > 0">
+          <button class="map-ctrl-btn" [class.active]="showHeatmap()" (click)="toggleHeatmap()" title="Mapa de calor €/m²">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="3" fill="currentColor" opacity=".4"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/></svg>
+            Calor €/m²
+          </button>
+          <button class="map-ctrl-btn" [class.active]="!showHeatmap()" (click)="toggleHeatmap()" title="Marcadores semáforo">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="7" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 14s4.5-3.5 4.5-7a4.5 4.5 0 00-9 0c0 3.5 4.5 7 4.5 7z" stroke="currentColor" stroke-width="1.3"/></svg>
+            Semáforo
+          </button>
+        </div>
+
+        <!-- Heatmap legend -->
+        <div class="heatmap-legend" *ngIf="showHeatmap() && !loading()">
+          <div class="hl-title">€/m² — intensidad de precio</div>
+          <div class="hl-bar"></div>
+          <div class="hl-labels">
+            <span>Bajo</span>
+            <span>Medio</span>
+            <span>Alto</span>
+          </div>
+        </div>
+
         <!-- Loading overlay -->
         <div class="map-overlay" *ngIf="loading()">
           <div class="overlay-card">
@@ -638,6 +661,38 @@ import { CompararService } from '../../core/services/comparar.service';
     }
     .overlay-btn:hover { background: #1D4ED8; }
 
+    /* ── MAP CONTROLS ── */
+    .map-controls {
+      position: absolute; top: 12px; right: 12px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .map-ctrl-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; border-radius: 10px;
+      background: #fff; border: 1px solid #E5E7EB;
+      font-size: 12px; font-weight: 600; color: #374151;
+      cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.1);
+      transition: all .15s; white-space: nowrap;
+    }
+    .map-ctrl-btn:hover { background: #F9FAFB; }
+    .map-ctrl-btn.active { background: #1A1A1A; color: #fff; border-color: #1A1A1A; }
+    .map-ctrl-btn.active svg { stroke: #fff; }
+
+    /* ── HEATMAP LEGEND ── */
+    .heatmap-legend {
+      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
+      border: 1px solid #E5E7EB; border-radius: 12px; padding: 10px 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.1); min-width: 220px;
+    }
+    .hl-title { font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 6px; text-align: center; }
+    .hl-bar {
+      height: 10px; border-radius: 999px;
+      background: linear-gradient(to right, #3B82F6, #22C55E, #EAB308, #EF4444);
+      margin-bottom: 4px;
+    }
+    .hl-labels { display: flex; justify-content: space-between; font-size: 10px; color: #9CA3AF; font-weight: 600; }
+
     /* ── RIGHT PANEL ── */
     .panel-right { overflow: hidden; }
 
@@ -683,9 +738,12 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
     return { verde, amarillo, rojo, avgGap, best };
   });
 
+  readonly showHeatmap = signal(false);
+
   private map: any = null;
   private markersLayer: any = null;
   private clusterGroup: any = null;
+  private heatLayer: any = null;
   private L: any = null;
   private mapReady = false;
 
@@ -850,6 +908,84 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     if (bounds.length > 0) this.map.fitBounds(bounds, { padding: [40, 40] });
+  }
+
+  toggleHeatmap(): void {
+    this.showHeatmap.update(v => !v);
+    if (this.showHeatmap()) {
+      this.renderHeatmap();
+      if (this.clusterGroup) this.map?.removeLayer(this.clusterGroup);
+    } else {
+      if (this.heatLayer) this.map?.removeLayer(this.heatLayer);
+      if (this.clusterGroup) this.clusterGroup.addTo(this.map);
+    }
+  }
+
+  private renderHeatmap(): void {
+    if (!this.map || !this.L) return;
+    if (this.heatLayer) this.map.removeLayer(this.heatLayer);
+
+    const resultados = this.resultados();
+    const puntos = resultados
+      .filter(r => r.precioM2 && (r.latExacta ?? r.latAprox) && (r.lonExacta ?? r.lonAprox))
+      .map(r => {
+        const lat = r.latExacta ?? r.latAprox!;
+        const lon = r.lonExacta ?? r.lonAprox!;
+        // Normalizar intensidad: €/m² entre 1000 y 10000 → 0.1 a 1.0
+        const intensidad = Math.min(1, Math.max(0.1, (r.precioM2! - 1000) / 9000));
+        return [lat, lon, intensidad] as [number, number, number];
+      });
+
+    if (puntos.length === 0) return;
+
+    // Implementación de heatmap manual con círculos canvas (sin plugin externo)
+    // Usamos CircleMarkers con color basado en €/m²
+    const preciosM2 = resultados.filter(r => r.precioM2).map(r => r.precioM2!);
+    const minM2 = Math.min(...preciosM2);
+    const maxM2 = Math.max(...preciosM2);
+
+    const heatGroup = this.L.layerGroup();
+
+    resultados.forEach(r => {
+      const lat = r.latExacta ?? r.latAprox;
+      const lon = r.lonExacta ?? r.lonAprox;
+      if (!lat || !lon || !r.precioM2) return;
+
+      const t = maxM2 > minM2 ? (r.precioM2 - minM2) / (maxM2 - minM2) : 0.5;
+      const color = this.interpolateColor(t);
+
+      this.L.circleMarker([lat, lon], {
+        radius: 22,
+        fillColor: color,
+        fillOpacity: 0.55,
+        color: color,
+        weight: 0,
+      }).bindPopup(
+        `<div style="font-family:'Inter',sans-serif;padding:4px">
+          <b style="font-size:14px">${r.precioM2.toLocaleString('es-ES')} €/m²</b>
+          <br><span style="font-size:11px;color:#6B7280">${r.precioTotal?.toLocaleString('es-ES')} €</span>
+        </div>`
+      ).addTo(heatGroup);
+    });
+
+    this.heatLayer = heatGroup;
+    heatGroup.addTo(this.map);
+  }
+
+  private interpolateColor(t: number): string {
+    // Azul (barato) → Verde → Amarillo → Rojo (caro)
+    const stops = [
+      { t: 0,    r: 59,  g: 130, b: 246 }, // azul
+      { t: 0.33, r: 34,  g: 197, b: 94  }, // verde
+      { t: 0.66, r: 234, g: 179, b: 8   }, // amarillo
+      { t: 1,    r: 239, g: 68,  b: 68  }, // rojo
+    ];
+    let i = 0;
+    while (i < stops.length - 2 && t > stops[i + 1].t) i++;
+    const a = stops[i], b = stops[i + 1];
+    const local = (t - a.t) / (b.t - a.t);
+    const lerp = (x: number, y: number) => Math.round(x + (y - x) * local);
+    return `rgb(${lerp(a.r, b.r)},${lerp(a.g, b.g)},${lerp(a.b, b.b)})`;
   }
 
   centrarInmueble(item: ResultadoBusqueda): void {
