@@ -109,11 +109,6 @@ import { PwaService } from '../../core/services/pwa.service';
         Documentos
         <span class="badge new">Nuevo</span>
       </a>
-      <a class="nav-item" routerLink="/reviews" routerLinkActive="active">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M8 1l2 4 4.5.5-3.25 3L12 14 8 11.5 4 14l.75-5.5L1.5 5.5 6 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-        Reviews agentes
-        <span class="badge new">Nuevo</span>
-      </a>
       <a class="nav-item" routerLink="/apis-fuentes" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 5h12M2 8h12M2 11h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         APIs y fuentes
@@ -139,10 +134,12 @@ import { PwaService } from '../../core/services/pwa.service';
         <span>Datos actualizados hoy</span>
       </div>
 
-      <div class="user-section" *ngIf="auth.isAuthenticated()">
-        <div class="user-email">{{ auth.currentUser()?.nombre }}</div>
-        <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
-      </div>
+      @if (auth.isAuthenticated()) {
+        <div class="user-section">
+          <div class="user-email">{{ auth.currentUser()?.nombre }}</div>
+          <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+        </div>
+      }
     </nav>
   `,
   styles: [`

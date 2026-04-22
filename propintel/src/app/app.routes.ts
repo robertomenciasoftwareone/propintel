@@ -144,11 +144,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/documentos/documentos.component').then(m => m.DocumentosComponent),
   },
-  {
-    path: 'reviews',
-    loadComponent: () =>
-      import('./features/reviews/reviews.component').then(m => m.ReviewsComponent),
-  },
+  // HIDDEN — reviews de agentes (pendiente de contenido real)
+  // {
+  //   path: 'reviews',
+  //   loadComponent: () =>
+  //     import('./features/reviews/reviews.component').then(m => m.ReviewsComponent),
+  // },
 
   { path: '**', redirectTo: '' },
 ];
