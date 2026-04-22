@@ -1,0 +1,50 @@
+{
+  "name": "UrbIA — Inteligencia inmobiliaria",
+  "short_name": "UrbIA",
+  "description": "Análisis de precios, gap asking/notarial y herramientas de inversión inmobiliaria",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0052FF",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "assets/logo_urbia.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/logo_urbia_v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Ver el análisis de mercado",
+      "url": "/dashboard",
+      "icons": [{ "src": "assets/logo_urbia.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Mapa de pisos",
+      "short_name": "Mapa",
+      "description": "Explorar pisos en el mapa",
+      "url": "/mapa-resultados",
+      "icons": [{ "src": "assets/logo_urbia.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Alertas precio",
+      "short_name": "Alertas",
+      "description": "Ver mis alertas de precio",
+      "url": "/alertas",
+      "icons": [{ "src": "assets/logo_urbia.png", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["finance", "lifestyle"],
+  "screenshots": []
+}

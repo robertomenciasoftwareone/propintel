@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { AlertasService } from '../../core/services/alertas.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PwaService } from '../../core/services/pwa.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -89,6 +90,12 @@ import { AuthService } from '../../core/services/auth.service';
         Valoración AVM
       </a>
 
+      <a class="nav-item" routerLink="/precalificacion" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 13l3-4 3 2 3-5 3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="5" r="2" fill="currentColor"/></svg>
+        Pre-calificación
+        <span class="badge new">Nuevo</span>
+      </a>
+
       <div class="nav-section-label" style="margin-top:12px">Gestión</div>
       <a class="nav-item" routerLink="/alertas" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M8 2a4 4 0 014 4v3l1 2H3l1-2V6a4 4 0 014-4z" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 13a1.5 1.5 0 003 0" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -96,6 +103,16 @@ import { AuthService } from '../../core/services/auth.service';
         <span class="badge warn" *ngIf="alertas.totalNoLeidos() > 0">
           {{ alertas.totalNoLeidos() }}
         </span>
+      </a>
+      <a class="nav-item" routerLink="/documentos" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Documentos
+        <span class="badge new">Nuevo</span>
+      </a>
+      <a class="nav-item" routerLink="/reviews" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 1l2 4 4.5.5-3.25 3L12 14 8 11.5 4 14l.75-5.5L1.5 5.5 6 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Reviews agentes
+        <span class="badge new">Nuevo</span>
       </a>
       <a class="nav-item" routerLink="/apis-fuentes" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 5h12M2 8h12M2 11h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -105,6 +122,17 @@ import { AuthService } from '../../core/services/auth.service';
         <svg viewBox="0 0 16 16" fill="none"><path d="M1 4l5-2 4 2 5-2v10l-5 2-4-2-5 2V4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
         Mapa analítico
       </a>
+
+      <!-- PWA install banner -->
+      @if (pwa.installable()) {
+        <div class="pwa-banner" (click)="installPwa()">
+          <div class="pwa-icon">📲</div>
+          <div class="pwa-text">
+            <div class="pwa-title">Instalar app</div>
+            <div class="pwa-sub">Acceso offline y notificaciones</div>
+          </div>
+        </div>
+      }
 
       <div class="sidebar-footer">
         <div class="data-live-dot"></div>
@@ -247,15 +275,31 @@ import { AuthService } from '../../core/services/auth.service';
       font-weight: 500;
     }
     .btn-logout:hover { border-color: #F59E0B; color: #F59E0B; }
+    .pwa-banner {
+      margin-top: 8px; padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+      border: 1px solid rgba(16,185,129,.2);
+      display: flex; align-items: center; gap: 10px;
+      transition: all .2s;
+    }
+    .pwa-banner:hover { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); }
+    .pwa-icon { font-size: 18px; flex-shrink: 0; }
+    .pwa-title { font-size: 12px; font-weight: 700; color: #065F46; }
+    .pwa-sub { font-size: 10px; color: #059669; }
   `]
 })
 export class SidebarComponent {
   alertas = inject(AlertasService);
   auth = inject(AuthService);
+  pwa = inject(PwaService);
   private router = inject(Router);
 
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/']);
+  }
+
+  installPwa(): void {
+    this.pwa.promptInstall();
   }
 }

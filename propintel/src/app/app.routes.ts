@@ -134,5 +134,21 @@ export const routes: Routes = [
       import('./features/barrios/barrios.component').then(m => m.BarriosComponent),
   },
 
+  {
+    path: 'precalificacion',
+    loadComponent: () =>
+      import('./features/precalificacion/precalificacion.component').then(m => m.PrecalificacionComponent),
+  },
+  {
+    path: 'documentos',
+    loadComponent: () =>
+      import('./features/documentos/documentos.component').then(m => m.DocumentosComponent),
+  },
+  {
+    path: 'reviews',
+    loadComponent: () =>
+      import('./features/reviews/reviews.component').then(m => m.ReviewsComponent),
+  },
+
   { path: '**', redirectTo: '' },
 ];
