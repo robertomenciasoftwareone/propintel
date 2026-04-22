@@ -23,7 +23,7 @@ interface Agente {
   foto: string;
   telefono: string;
   email: string;
-  añosExperiencia: number;
+  anosExperiencia: number;
   operaciones: number;
   valoracion: number;
   reviews: Review[];
@@ -40,7 +40,7 @@ const AGENTES: Agente[] = [
     foto: '',
     telefono: '+34 610 234 567',
     email: 'maria.gonzalez@engelvoelkers.com',
-    añosExperiencia: 12,
+    anosExperiencia: 12,
     operaciones: 284,
     valoracion: 4.8,
     verificado: true,
@@ -59,7 +59,7 @@ const AGENTES: Agente[] = [
     foto: '',
     telefono: '+34 622 345 678',
     email: 'javier.martinez@remax.es',
-    añosExperiencia: 8,
+    anosExperiencia: 8,
     operaciones: 156,
     valoracion: 4.6,
     verificado: true,
@@ -77,7 +77,7 @@ const AGENTES: Agente[] = [
     foto: '',
     telefono: '+34 633 456 789',
     email: 'carmen.rodriguez@solvia.es',
-    añosExperiencia: 15,
+    anosExperiencia: 15,
     operaciones: 412,
     valoracion: 4.9,
     verificado: true,
@@ -140,7 +140,7 @@ const AGENTES: Agente[] = [
 
           <!-- Stats -->
           <div class="agente-stats">
-            <div class="agente-stat"><span class="s-val">{{ a.añosExperiencia }}</span><span class="s-lbl">años</span></div>
+            <div class="agente-stat"><span class="s-val">{{ a.anosExperiencia }}</span><span class="s-lbl">años</span></div>
             <div class="agente-stat"><span class="s-val">{{ a.operaciones }}</span><span class="s-lbl">operaciones</span></div>
             <div class="agente-stat">
               <span class="s-val" *ngFor="let e of a.especialidad.slice(0,2)">
@@ -155,7 +155,7 @@ const AGENTES: Agente[] = [
               <svg viewBox="0 0 16 16" fill="none"><path d="M3 2h3l1 3-1.5 1.5A10 10 0 009 10l1.5-1.5 3 1V13c0 .5-1 2-4 1C5 13 1 8.5 1 5c0-2.5 1.5-3 2-3z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
               Llamar
             </a>
-            <a [href]="'https://wa.me/' + a.telefono.replace(/[^0-9]/g,'')" target="_blank" rel="noopener" class="contact-btn wa" (click)="$event.stopPropagation()">
+            <a [href]="waUrl(a.telefono)" target="_blank" rel="noopener" class="contact-btn wa" (click)="$event.stopPropagation()">
               <svg viewBox="0 0 16 16" fill="none"><path d="M8 1.5A6.5 6.5 0 1014.5 8c0-3.59-2.91-6.5-6.5-6.5zM2.5 14l.9-2.6A6 6 0 012 8 6 6 0 118 14a6 6 0 01-2.9-.75L2.5 14z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
               WhatsApp
             </a>
@@ -292,9 +292,13 @@ export class ReviewsComponent {
     }
     if (this.sortBy === 'valoracion') a.sort((x, y) => y.valoracion - x.valoracion);
     else if (this.sortBy === 'operaciones') a.sort((x, y) => y.operaciones - x.operaciones);
-    else if (this.sortBy === 'experiencia') a.sort((x, y) => y.añosExperiencia - x.añosExperiencia);
+    else if (this.sortBy === 'experiencia') a.sort((x, y) => y.anosExperiencia - x.anosExperiencia);
     return a;
   });
+
+  waUrl(tel: string) {
+    return 'https://wa.me/' + tel.replace(/\D/g, '');
+  }
 
   iniciales(nombre: string) {
     return nombre.split(' ').slice(0, 2).map(p => p[0]).join('');
