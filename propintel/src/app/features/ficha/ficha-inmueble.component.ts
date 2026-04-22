@@ -497,6 +497,24 @@ interface GeminiPhotoAnalysis {
         }
 
         <!-- ══════════════════════════════════════════════════════════════════
+             WHATSAPP + ACCIONES RÁPIDAS
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="actions-bar">
+          <a [href]="whatsappUrl(d)" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.12.553 4.107 1.523 5.833L.057 23.884a.5.5 0 00.608.625l6.266-1.641A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.793 9.793 0 01-5.004-1.374l-.36-.213-3.724.977.995-3.63-.234-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+            Contactar por WhatsApp
+          </a>
+          @if (d.url) {
+            <a [href]="d.url" target="_blank" rel="noopener noreferrer" class="btn-portal-action">
+              Ver en {{ d.fuente }} ↗
+            </a>
+          }
+          <a [routerLink]="['/roi']" class="btn-roi-action">
+            Calcular ROI inversión
+          </a>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════
              CONTEXTO MACRO — IPV / Hipotecas / Tipo interés
         ══════════════════════════════════════════════════════════════════ -->
         <app-macro-contexto />
@@ -823,12 +841,40 @@ interface GeminiPhotoAnalysis {
     .photo-meta-label { font-size: 11px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
     .photo-meta-value { font-size: 13px; color: #111827; font-weight: 600; }
 
+    /* ── ACTIONS BAR ────────────────── */
+    .actions-bar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .btn-whatsapp {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      background: #25D366; color: #fff; text-decoration: none;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .btn-whatsapp:hover { background: #1EBE57; }
+    .btn-portal-action {
+      display: inline-flex; align-items: center;
+      padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      background: #F9FAFB; color: #374151; border: 1px solid #E5E7EB;
+      text-decoration: none; transition: background .15s;
+    }
+    .btn-portal-action:hover { background: #F3F4F6; }
+    .btn-roi-action {
+      display: inline-flex; align-items: center;
+      padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      background: #EEF4FF; color: #2563EB; border: 1px solid #BFDBFE;
+      text-decoration: none; transition: background .15s;
+    }
+    .btn-roi-action:hover { background: #DBEAFE; }
+
     @media (max-width: 700px) {
       .page { padding: 16px; }
       .l2-grid { flex-direction: column; }
       .avm-hero { grid-template-columns: 1fr; }
       .verdict-hero { flex-direction: column; text-align: center; }
       .verdict-right { text-align: center; }
+      .actions-bar { flex-direction: column; }
     }
   `]
 })
@@ -1045,6 +1091,17 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
         error: () => this.geminiPhotoLoading.set(false)
       });
     });
+  }
+
+  whatsappUrl(d: AnuncioDetalle): string {
+    const texto = encodeURIComponent(
+      `Hola, me interesa el inmueble "${d.titulo ?? 'sin título'}" en ${d.ciudad}` +
+      (d.distrito ? `, ${d.distrito}` : '') +
+      ` por ${d.precioTotal?.toLocaleString('es-ES')} €` +
+      (d.superficieM2 ? `, ${d.superficieM2} m²` : '') +
+      `. Lo vi en PropIntel. ¿Sigue disponible?`
+    );
+    return `https://wa.me/?text=${texto}`;
   }
 
   geminiScoreClass(score: number): string {

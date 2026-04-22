@@ -100,6 +100,18 @@ export const routes: Routes = [
       import('./features/catastro/catastro.component').then(m => m.CatastroComponent),
   },
 
+  // ── Herramientas de inversión ───────────────────────────────────────
+  {
+    path: 'roi',
+    loadComponent: () =>
+      import('./features/roi/roi.component').then(m => m.RoiComponent),
+  },
+  {
+    path: 'historial-precios',
+    loadComponent: () =>
+      import('./features/historial-precios/historial-precios.component').then(m => m.HistorialPreciosComponent),
+  },
+
   // ── Nuevas funcionalidades ──────────────────────────────────────────
   {
     path: 'asistente',

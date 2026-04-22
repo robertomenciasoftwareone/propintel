@@ -60,6 +60,16 @@ import { AuthService } from '../../core/services/auth.service';
       </a>
 
       <div class="nav-section-label" style="margin-top:12px">Finanzas</div>
+      <a class="nav-item" routerLink="/roi" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 12l3-4 3 2 3-6 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="7" r="1.5" fill="currentColor"/></svg>
+        Calculadora ROI
+        <span class="badge new">Nuevo</span>
+      </a>
+      <a class="nav-item" routerLink="/historial-precios" routerLinkActive="active">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 11l3-5 3 3 3-4 3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Historial precios
+        <span class="badge new">Nuevo</span>
+      </a>
       <a class="nav-item" routerLink="/hipotecas" routerLinkActive="active">
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 14V8l6-5 6 5v6H2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6 14v-4h4v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         Hipotecas
