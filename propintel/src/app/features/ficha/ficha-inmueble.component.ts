@@ -1021,7 +1021,8 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
     ).subscribe({
       next: (res) => {
         try {
-          const text = res.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+          const raw = res.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+          const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
           const data: GeminiZoneAnalysis = JSON.parse(text);
           this.geminiAnalysis.set(data);
         } catch {
