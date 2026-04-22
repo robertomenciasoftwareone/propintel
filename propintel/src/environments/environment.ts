@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5050/api',   // .NET API en local
+  apiUrl: 'http://localhost:5050/api',
   apiKey: 'dev-urbia-key-2026',
-  geminiApiKey: 'AIzaSyCq68k9zEglgejSllQWLuvZTAtp4r6FP90',  // Añade tu clave en https://aistudio.google.com/apikey
+  geminiApiKey: '',  // Define GEMINI_API_KEY en tu entorno local (ver README)
 };
