@@ -68,9 +68,11 @@ export class PwaService {
     }
   }
 
-  private _urlBase64ToUint8(base64: string): Uint8Array {
+  private _urlBase64ToUint8(base64: string): Uint8Array<ArrayBuffer> {
     const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
     const binary = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));
-    return Uint8Array.from(binary, c => c.charCodeAt(0));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
   }
 }
