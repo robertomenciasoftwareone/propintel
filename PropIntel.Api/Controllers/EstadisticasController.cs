@@ -21,19 +21,19 @@ public class EstadisticasController : ControllerBase
     };
 
     // ── Códigos verificados de series INE ───────────────────────────────────
-    // IPV: Índice de Precios de Vivienda (Base 2007 = 100, trimestral, Nacional)
-    // Verificados contra API: IPV1=Nacional.General.Índice, IPV3=Nacional.General.Var.anual
-    private const string IpvIndiceGeneral     = "IPV1";   // Índice general nacional
-    private const string IpvVarAnualGeneral   = "IPV3";   // Variación anual general  ← KPI principal
-    private const string IpvIndiceNueva       = "IPV5";   // Índice nueva vivienda
-    private const string IpvVarAnualNueva     = "IPV7";   // Variación anual nueva
-    private const string IpvIndiceSegundaMano = "IPV9";   // Índice segunda mano
-    private const string IpvVarAnualSegMano   = "IPV11";  // Variación anual segunda mano
+    // IPV: Índice de Precios de Vivienda — tabla 25171, Base 2015=100, trimestral, Nacional
+    // Verificados en producción: series reales con datos hasta 2025T2
+    private const string IpvIndiceGeneral     = "IPV769";  // Nacional. General. Índice
+    private const string IpvVarAnualGeneral   = "IPV948";  // Nacional. General. Variación anual  ← KPI principal
+    private const string IpvIndiceNueva       = "IPV768";  // Nacional. Vivienda nueva. Índice
+    private const string IpvVarAnualNueva     = "IPV945";  // Nacional. Vivienda nueva. Variación anual
+    private const string IpvIndiceSegundaMano = "IPV767";  // Nacional. Vivienda segunda mano. Índice
+    private const string IpvVarAnualSegMano   = "IPV942";  // Nacional. Vivienda segunda mano. Variación anual
 
-    // HPT: Estadística de Hipotecas Total (mensual, Total Nacional)
-    // Verificados: HPT10176=Número total nacional, HPT10123=Importe total nacional
-    private const string HptNumeroNacional  = "HPT10176";
-    private const string HptImporteNacional = "HPT10123";
+    // HPT: Estadística de Hipotecas — tabla 13896, Base nueva, mensual, Total Nacional
+    // Verificados en producción: datos hasta 2025M11
+    private const string HptNumeroNacional  = "HPT34936"; // Número de hipotecas. Total Nacional. Base nueva. Mensual
+    private const string HptImporteNacional = "HPT34883"; // Importe de hipotecas. Total Nacional. Base nueva. Mensual
 
     private const string IneBaseUrl = "https://servicios.ine.es/wstempus/js/ES";
 
@@ -46,6 +46,7 @@ public class EstadisticasController : ControllerBase
     [HttpGet("ine/ipv")]
     public async Task<IActionResult> GetIpv([FromQuery] int periodos = 8)
     {
+        // periodos is the number of recent data points to return; we fetch 200 and take the last N
         periodos = Math.Clamp(periodos, 2, 40);
 
         try
@@ -62,12 +63,13 @@ public class EstadisticasController : ControllerBase
 
             var tareas = series.Select(async s =>
             {
-                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=2";
+                // Fetch 200 points (INE nult counts from series start), then take the last N with valid values
+                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult=200&det=2";
                 try
                 {
                     var json = await _http.GetStringAsync(url);
                     using var doc = JsonDocument.Parse(json);
-                    var datos = doc.RootElement
+                    var todos = doc.RootElement
                         .GetProperty("Data")
                         .EnumerateArray()
                         .Select(d => new IneDataPointDto(
@@ -76,8 +78,10 @@ public class EstadisticasController : ControllerBase
                             Valor:   d.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null
                                      ? v.GetDouble() : null
                         ))
+                        .Where(d => d.Valor != null)
                         .ToList();
 
+                    var datos = todos.TakeLast(periodos).ToList();
                     return new IneIpvDto(Serie: s.Item1, Descripcion: s.Item2, Datos: datos);
                 }
                 catch
@@ -112,12 +116,12 @@ public class EstadisticasController : ControllerBase
                 (HptImporteNacional, "Importe de hipotecas — Total Nacional (€)"),
             }.Select(async s =>
             {
-                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult={periodos}&det=2";
+                var url = $"{IneBaseUrl}/DATOS_SERIE/{s.Item1}?nult=200&det=2";
                 try
                 {
                     var json = await _http.GetStringAsync(url);
                     using var doc = JsonDocument.Parse(json);
-                    var datos = doc.RootElement
+                    var todos = doc.RootElement
                         .GetProperty("Data")
                         .EnumerateArray()
                         .Select(d => new IneDataPointDto(
@@ -126,8 +130,10 @@ public class EstadisticasController : ControllerBase
                             Valor:   d.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null
                                      ? v.GetDouble() : null
                         ))
+                        .Where(d => d.Valor != null)
                         .ToList();
 
+                    var datos = todos.TakeLast(periodos).ToList();
                     return new IneIpvDto(Serie: s.Item1, Descripcion: s.Item2, Datos: datos);
                 }
                 catch
@@ -221,15 +227,21 @@ public class EstadisticasController : ControllerBase
     {
         try
         {
-            var tareaIpv     = FetchLastValue(IpvVarAnualGeneral,  $"{IneBaseUrl}/DATOS_SERIE/{IpvVarAnualGeneral}?nult=2&det=2");
-            var tareaHipNum  = FetchLastValue(HptNumeroNacional,   $"{IneBaseUrl}/DATOS_SERIE/{HptNumeroNacional}?nult=2&det=2");
-            var tareaHipImp  = FetchLastValue(HptImporteNacional,  $"{IneBaseUrl}/DATOS_SERIE/{HptImporteNacional}?nult=2&det=2");
+            // nult=6 fetches 6 data points from the start of the series; we walk backwards to find the last non-null
+            var tareaIpv     = FetchLastValue(IpvVarAnualGeneral,  $"{IneBaseUrl}/DATOS_SERIE/{IpvVarAnualGeneral}?nult=200&det=2");
+            var tareaHipNum  = FetchLastValue(HptNumeroNacional,   $"{IneBaseUrl}/DATOS_SERIE/{HptNumeroNacional}?nult=200&det=2");
+            var tareaHipImp  = FetchLastValue(HptImporteNacional,  $"{IneBaseUrl}/DATOS_SERIE/{HptImporteNacional}?nult=200&det=2");
 
             await Task.WhenAll(tareaIpv, tareaHipNum, tareaHipImp);
 
             var (ipvValor, ipvPeriodo) = tareaIpv.Result;
             var (hipNumValor, hipNumPeriodo) = tareaHipNum.Result;
             var (hipImpValor, _) = tareaHipImp.Result;
+
+            // Compute importe medio: total € / número hipotecas → convert to k€
+            double? importeMedioKe = (hipImpValor.HasValue && hipNumValor.HasValue && hipNumValor > 0)
+                ? Math.Round(hipImpValor.Value / hipNumValor.Value / 1000, 1)
+                : null;
 
             return Ok(new
             {
@@ -238,7 +250,7 @@ public class EstadisticasController : ControllerBase
                     valor   = ipvValor,
                     periodo = ipvPeriodo,
                     unidad  = "%",
-                    fuente  = "INE — IPV Base 2007"
+                    fuente  = "INE — IPV Base 2015"
                 },
                 hipotecasNumero = new
                 {
@@ -249,8 +261,8 @@ public class EstadisticasController : ControllerBase
                 },
                 hipotecasImporte = new
                 {
-                    valor  = hipImpValor,
-                    unidad = "miles € medio",
+                    valor  = importeMedioKe,
+                    unidad = "k€ medio",
                     fuente = "INE — Estadística Hipotecas"
                 },
                 fuentes = new[]
@@ -275,16 +287,20 @@ public class EstadisticasController : ControllerBase
         {
             var json = await _http.GetStringAsync(url);
             using var doc = JsonDocument.Parse(json);
-            var last = doc.RootElement.GetProperty("Data").EnumerateArray().LastOrDefault();
-            if (last.ValueKind == JsonValueKind.Undefined) return (null, "");
+            // Walk backwards to find the last data point with a non-null value
+            var data = doc.RootElement.GetProperty("Data").EnumerateArray().ToList();
+            for (int i = data.Count - 1; i >= 0; i--)
+            {
+                var point = data[i];
+                if (!point.TryGetProperty("Valor", out var v) || v.ValueKind == JsonValueKind.Null)
+                    continue;
 
-            double? val = null;
-            if (last.TryGetProperty("Valor", out var v) && v.ValueKind != JsonValueKind.Null)
-                val = v.GetDouble();
-
-            string periodo = last.TryGetProperty("NombrePeriodo", out var np) && np.ValueKind == JsonValueKind.String
-                            ? (np.GetString() ?? "") : "";
-            return (val, periodo);
+                double val = v.GetDouble();
+                string periodo = point.TryGetProperty("NombrePeriodo", out var np) && np.ValueKind == JsonValueKind.String
+                                ? (np.GetString() ?? "") : "";
+                return (val, periodo);
+            }
+            return (null, "");
         }
         catch { return (null, ""); }
     }

@@ -11,7 +11,7 @@ interface Documento {
   categoria: CategoriaDoc;
   inmueble: string;
   fecha: Date;
-  tamaño: string;
+  tamano: string;
   url: string;
   notas?: string;
 }
@@ -27,12 +27,12 @@ const CAT_LABELS: Record<CategoriaDoc, { label: string; icon: string; color: str
 };
 
 const DEMO_DOCS: Documento[] = [
-  { id: '1', nombre: 'Contrato_arras_Salamanca_42.pdf', categoria: 'contrato', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-10'), tamaño: '2.3 MB', url: '#', notas: 'Firmado el 10/11/2024' },
-  { id: '2', nombre: 'Nota_simple_Registral.pdf',       categoria: 'nota_simple', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-05'), tamaño: '450 KB', url: '#' },
-  { id: '3', nombre: 'CEE_Salamanca42.pdf',              categoria: 'cee',     inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-10-20'), tamaño: '1.1 MB', url: '#', notas: 'Calificación D' },
-  { id: '4', nombre: 'Tasacion_BBVA.pdf',                categoria: 'tasacion', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-15'), tamaño: '5.8 MB', url: '#' },
-  { id: '5', nombre: 'Poliza_hogar_Mutua.pdf',           categoria: 'seguro', inmueble: 'Av. Diagonal 100, Barcelona', fecha: new Date('2024-09-01'), tamaño: '980 KB', url: '#', notas: 'Vence 01/09/2025' },
-  { id: '6', nombre: 'Escritura_publica.pdf',            categoria: 'escritura', inmueble: 'Av. Diagonal 100, Barcelona', fecha: new Date('2023-03-15'), tamaño: '12 MB', url: '#' },
+  { id: '1', nombre: 'Contrato_arras_Salamanca_42.pdf', categoria: 'contrato', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-10'), tamano: '2.3 MB', url: '#', notas: 'Firmado el 10/11/2024' },
+  { id: '2', nombre: 'Nota_simple_Registral.pdf',       categoria: 'nota_simple', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-05'), tamano: '450 KB', url: '#' },
+  { id: '3', nombre: 'CEE_Salamanca42.pdf',              categoria: 'cee',     inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-10-20'), tamano: '1.1 MB', url: '#', notas: 'Calificación D' },
+  { id: '4', nombre: 'Tasacion_BBVA.pdf',                categoria: 'tasacion', inmueble: 'Calle Serrano 42, Madrid', fecha: new Date('2024-11-15'), tamano: '5.8 MB', url: '#' },
+  { id: '5', nombre: 'Poliza_hogar_Mutua.pdf',           categoria: 'seguro', inmueble: 'Av. Diagonal 100, Barcelona', fecha: new Date('2024-09-01'), tamano: '980 KB', url: '#', notas: 'Vence 01/09/2025' },
+  { id: '6', nombre: 'Escritura_publica.pdf',            categoria: 'escritura', inmueble: 'Av. Diagonal 100, Barcelona', fecha: new Date('2023-03-15'), tamano: '12 MB', url: '#' },
 ];
 
 @Component({
@@ -94,7 +94,7 @@ const DEMO_DOCS: Documento[] = [
                 {{ catMeta(doc.categoria).label }}
               </span>
               <span class="doc-fecha">{{ doc.fecha | date:'dd/MM/yyyy' }}</span>
-              <span class="doc-size">{{ doc.tamaño }}</span>
+              <span class="doc-size">{{ doc.tamano }}</span>
             </div>
             <div class="doc-notas" *ngIf="doc.notas">💬 {{ doc.notas }}</div>
           </div>
@@ -113,7 +113,7 @@ const DEMO_DOCS: Documento[] = [
 
         <div class="empty" *ngIf="docsFiltrados().length === 0">
           <div class="empty-icon">📂</div>
-          <div class="empty-text">No hay documentos{{ filtroCategoria() ? ' en esta categoría' : '' }}</div>
+          <div class="empty-text">No hay documentos en esta categoria</div>
           <div class="empty-sub">Sube tu primer documento usando el botón de arriba</div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export class DocumentosComponent {
         categoria: 'otro',
         inmueble: 'Sin asignar',
         fecha: new Date(),
-        tamaño: this._formatSize(f.size),
+        tamano: this._formatSize(f.size),
         url: URL.createObjectURL(f),
       });
     }

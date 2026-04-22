@@ -295,9 +295,7 @@ export class MacroContextoComponent implements OnInit {
           },
           {
             label:  'Importe medio',
-            value:  r.hipotecasImporte?.valor != null
-                      ? Math.round((r.hipotecasImporte.valor as number) / 1000)
-                      : null,
+            value:  r.hipotecasImporte?.valor ?? null,
             unit:   'k€',
             period: '',
             source: 'INE',
