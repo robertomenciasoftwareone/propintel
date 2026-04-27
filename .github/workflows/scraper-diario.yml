@@ -29,11 +29,29 @@ jobs:
         working-directory: propintel-scraper
         run: playwright install chromium --with-deps
 
+      - name: Validar secrets de base de datos
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          missing=()
+          [ -z "$DB_HOST" ]     && missing+=("DB_HOST")
+          [ -z "$DB_NAME" ]     && missing+=("DB_NAME")
+          [ -z "$DB_USER" ]     && missing+=("DB_USER")
+          [ -z "$DB_PASSWORD" ] && missing+=("DB_PASSWORD")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "❌ Secrets de BD no configurados: ${missing[*]}"
+            echo "   Configúralos en Settings → Secrets → Actions del repositorio."
+            exit 1
+          fi
+          echo "✅ Secrets de BD presentes"
+
       - name: Ejecutar scraper
         working-directory: propintel-scraper
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

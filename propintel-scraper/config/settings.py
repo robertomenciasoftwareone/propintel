@@ -54,5 +54,13 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        missing = [f for f in ("db_host", "db_name", "db_user", "db_password") if not getattr(self, f)]
+        if missing:
+            raise ValueError(
+                f"Variables de entorno de BD requeridas no configuradas: {', '.join(f.upper() for f in missing)}"
+            )
+
 
 settings = Settings()

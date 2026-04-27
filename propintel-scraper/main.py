@@ -20,6 +20,7 @@ Uso:
 import asyncio
 import argparse
 import random
+import sys
 from datetime import datetime
 from loguru import logger
 
@@ -70,7 +71,8 @@ async def run_ciclo_completo(
             db.guardar_datos_notariales(datos_notariales)
 
         if not datos_notariales:
-            logger.error("Sin datos notariales — abortando")
+            logger.error("Sin datos notariales — abortando ciclo")
+            resumen["errores"].append("notarial: sin datos del INE")
             return resumen
 
         # ── 2. Asking prices — Idealista ────────────────────────────────
@@ -295,6 +297,15 @@ def main():
         print("\n─── RESUMEN ───")
         for k, v in resumen.items():
             print(f"  {k}: {v}")
+        # Fallar con exit 1 si el ciclo terminó sin ningún dato útil
+        sin_datos = resumen["datos_notariales"] == 0 and resumen["anuncios_total"] == 0
+        errores_criticos = any(
+            e for e in resumen["errores"]
+            if not e.startswith(("idealista_playwright:", "fotocasa:", "dedup:"))
+        )
+        if sin_datos or errores_criticos:
+            logger.error(f"Ciclo fallido — sin datos o errores críticos: {resumen['errores']}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
