@@ -551,12 +551,12 @@ interface VerdictRazon {
           <div class="cee-layout">
             <div class="cee-scale">
               @for (letra of ceeLetras; track letra.letra) {
-                <div class="cee-row" [class.cee-active]="letra.letra === ceeEstimada(d)">
+                <div class="cee-row" [class.cee-active]="ceeEstimada(d) !== '?' && letra.letra === ceeEstimada(d)">
                   <div class="cee-arrow" [style.background]="letra.color" [style.width]="letra.width">
                     <span class="cee-letra">{{ letra.letra }}</span>
                   </div>
                   <div class="cee-rango">{{ letra.rango }}</div>
-                  @if (letra.letra === ceeEstimada(d)) {
+                  @if (ceeEstimada(d) !== '?' && letra.letra === ceeEstimada(d)) {
                     <span class="cee-this-tag">Este inmueble</span>
                   }
                 </div>
@@ -564,8 +564,8 @@ interface VerdictRazon {
             </div>
             <div class="cee-info">
               <div class="cee-info-card" [style.border-color]="ceeColor(d)" [style.background]="ceeBg(d)">
-                <div class="cee-info-letra" [style.color]="ceeColor(d)">{{ ceeEstimada(d) }}</div>
-                <div class="cee-info-label">Calificación estimada</div>
+                <div class="cee-info-letra" [style.color]="ceeColor(d)">{{ ceeEstimada(d) === '?' ? '–' : ceeEstimada(d) }}</div>
+                <div class="cee-info-label">{{ ceeEstimada(d) === '?' ? 'Sin datos catastrales' : 'Calificación estimada' }}</div>
                 <div class="cee-info-desc">{{ ceeDesc(d) }}</div>
               </div>
               <p class="cee-aviso">
@@ -1419,23 +1419,26 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
     { letra: 'G', color: '#D32F2F', width: '97%', rango: '> 175 kWh/m²·año' },
   ];
 
-  ceeEstimada(d: AnuncioDetalle): string {
-    // Estimación basada en fecha de scraping como proxy de antigüedad del inmueble
-    // En producción vendría del campo real del portal o catastro
-    const precio = d.precioM2 ?? 0;
-    // Pisos muy caros suelen ser nuevos o reformados → mejor letra
-    // Estimación heurística conservadora
-    if (precio > 6000) return 'C';
-    if (precio > 4500) return 'D';
-    if (precio > 3000) return 'E';
-    if (precio > 2000) return 'F';
-    return 'G';
+  ceeEstimada(_d: AnuncioDetalle): string {
+    // Usar año de construcción del Catastro si está disponible (mucho más preciso que el precio)
+    const anno = this.catastroFicha()?.annoConstruccion ?? null;
+    if (anno !== null) {
+      if (anno >= 2021) return 'A';
+      if (anno >= 2013) return 'B';
+      if (anno >= 2007) return 'C';
+      if (anno >= 2000) return 'D';
+      if (anno >= 1980) return 'E';
+      if (anno >= 1960) return 'F';
+      return 'G';
+    }
+    // Fallback si no hay dato catastral: letra desconocida
+    return '?';
   }
 
   ceeColor(d: AnuncioDetalle): string {
     const map: Record<string, string> = {
       A: '#1A7C3E', B: '#4CAF50', C: '#8BC34A',
-      D: '#CDDC39', E: '#FFC107', F: '#FF5722', G: '#D32F2F'
+      D: '#CDDC39', E: '#FFC107', F: '#FF5722', G: '#D32F2F', '?': '#9CA3AF'
     };
     return map[this.ceeEstimada(d)] ?? '#9CA3AF';
   }
@@ -1443,7 +1446,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
   ceeBg(d: AnuncioDetalle): string {
     const map: Record<string, string> = {
       A: '#F0FDF4', B: '#F0FDF4', C: '#F7FEE7',
-      D: '#FEFCE8', E: '#FFFBEB', F: '#FFF7ED', G: '#FEF2F2'
+      D: '#FEFCE8', E: '#FFFBEB', F: '#FFF7ED', G: '#FEF2F2', '?': '#F9FAFB'
     };
     return map[this.ceeEstimada(d)] ?? '#F9FAFB';
   }
@@ -1457,6 +1460,7 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
       E: 'Por debajo de la media. Puede requerir mejoras de aislamiento.',
       F: 'Poco eficiente. Edificio antiguo sin rehabilitación energética.',
       G: 'Muy poco eficiente. Consumo elevado, posibles sanciones futuras.',
+      '?': 'No hay datos catastrales disponibles para estimar la calificación.',
     };
     return map[this.ceeEstimada(d)] ?? '';
   }

@@ -100,9 +100,17 @@ public class TasacionController : ControllerBase
         }
         else
         {
-            // Sin coordenadas: tomamos muestra aleatoria de la ciudad
+            // Sin coordenadas: usamos los anuncios más recientes, descartando outliers (p10–p90)
+            var precios = comparablesRaw.Select(a => a.PrecioM2!.Value).OrderBy(p => p).ToList();
+            double p10 = 0, p90 = double.MaxValue;
+            if (precios.Count >= 10)
+            {
+                p10 = precios[(int)Math.Floor(0.10 * (precios.Count - 1))];
+                p90 = precios[(int)Math.Floor(0.90 * (precios.Count - 1))];
+            }
             comparables = comparablesRaw
-                .OrderBy(_ => Guid.NewGuid())
+                .Where(a => a.PrecioM2!.Value >= p10 && a.PrecioM2!.Value <= p90)
+                .OrderByDescending(a => a.Id)
                 .Take(20)
                 .Select(a => new ComparableDto(
                     Id:           a.Id,
