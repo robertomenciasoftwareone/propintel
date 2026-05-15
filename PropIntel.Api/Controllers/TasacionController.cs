@@ -101,12 +101,12 @@ public class TasacionController : ControllerBase
         else
         {
             // Sin coordenadas: usamos los anuncios más recientes, descartando outliers (p10–p90)
-            var precios = comparablesRaw.Select(a => a.PrecioM2!.Value).OrderBy(p => p).ToList();
+            var todosPrecios = comparablesRaw.Select(a => a.PrecioM2!.Value).OrderBy(p => p).ToList();
             double p10 = 0, p90 = double.MaxValue;
-            if (precios.Count >= 10)
+            if (todosPrecios.Count >= 10)
             {
-                p10 = precios[(int)Math.Floor(0.10 * (precios.Count - 1))];
-                p90 = precios[(int)Math.Floor(0.90 * (precios.Count - 1))];
+                p10 = todosPrecios[(int)Math.Floor(0.10 * (todosPrecios.Count - 1))];
+                p90 = todosPrecios[(int)Math.Floor(0.90 * (todosPrecios.Count - 1))];
             }
             comparables = comparablesRaw
                 .Where(a => a.PrecioM2!.Value >= p10 && a.PrecioM2!.Value <= p90)
