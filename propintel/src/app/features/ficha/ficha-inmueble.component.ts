@@ -38,7 +38,7 @@ interface VerdictRazon {
 @Component({
   selector: 'app-ficha-inmueble',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, NgClass, RouterLink, MacroContextoComponent],
+  imports: [DecimalPipe, DatePipe, NgClass, RouterLink, MacroContextoComponent, UpperCasePipe],
   template: `
     <div class="page">
 
