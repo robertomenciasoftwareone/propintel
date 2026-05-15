@@ -268,11 +268,20 @@ def main():
     if args.scheduler:
         from apscheduler.schedulers.blocking import BlockingScheduler
         from config.settings import settings
+        from scrapers.idealista_api_scraper import CIUDADES_API, GRUPOS_CIUDADES
         scheduler = BlockingScheduler(timezone="Europe/Madrid")
         hora, minuto = settings.scraper_hora_ejecucion.split(":")
         sin_fc = getattr(args, "sin_fotocasa", False)
-        # Ciudades activas — ampliar cuando se quiera cubrir más mercados
-        ciudades_activas = args.ciudad or ["madrid"]
+        # Si no se especifica ciudad, usar todas las configuradas en CIUDADES_API
+        # Expandir grupos para que el ciclo sepa qué zonas cubrir
+        if args.ciudad:
+            ciudades_activas = args.ciudad
+        else:
+            # Deduplicar ciudades únicas (no zonas): madrid, barcelona, valencia, etc.
+            ciudades_activas = list(
+                dict.fromkeys(cfg["ciudad"] for cfg in CIUDADES_API.values())
+            )
+        logger.info(f"⏰ Scheduler configurado — ciudades: {ciudades_activas}")
         scheduler.add_job(
             lambda: asyncio.run(run_ciclo_completo(ciudades_activas, args.paginas, sin_fc)),
             trigger="cron", hour=int(hora), minute=int(minuto),

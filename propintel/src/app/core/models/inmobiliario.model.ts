@@ -1,3 +1,23 @@
+// ── Favorito guardado con snapshot de precio ─────────────────────────────
+
+export interface FavoritoSnapshot {
+  id: number;
+  titulo: string | null;
+  precioTotal: number;
+  precioM2: number | null;
+  gapPct: number | null;
+  notarialM2?: number | null;
+  semaforoColor?: 'rojo' | 'amarillo' | 'verde' | null;
+  distrito: string | null;
+  ciudad: string;
+  url: string;
+  fuente: string;
+  snapshotAt: string;              // ISO date
+  alertarBajadaPrecio: boolean;
+  alertarCambioSemaforo: boolean;
+  umbralBajada: number;            // %, default 5
+}
+
 export interface PrecioZona {
   zona: string;
   askingPrecio: number;   // €/m² de Idealista/Fotocasa

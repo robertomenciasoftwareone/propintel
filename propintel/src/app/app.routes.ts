@@ -144,6 +144,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/documentos/documentos.component').then(m => m.DocumentosComponent),
   },
+  {
+    path: 'checklist',
+    loadComponent: () =>
+      import('./features/checklist/checklist-compra.component').then(m => m.ChecklistCompraComponent),
+  },
   // HIDDEN — reviews de agentes (pendiente de contenido real)
   // {
   //   path: 'reviews',

@@ -29,6 +29,12 @@ interface GeminiPhotoAnalysis {
   caracteristicas: string[];
 }
 
+interface VerdictRazon {
+  icono: string;
+  texto: string;
+  tipo: 'positive' | 'neutral' | 'negative';
+}
+
 @Component({
   selector: 'app-ficha-inmueble',
   standalone: true,
@@ -92,6 +98,41 @@ interface GeminiPhotoAnalysis {
                 <span class="vkp-value not-v">{{ (d.notarialMedioM2 * d.superficieM2) | number:'1.0-0':'es-ES' }} €</span>
               </div>
             }
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             DIAGNÓSTICO DETALLADO — razones + score + siguiente paso
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="diagnostico-card" [ngClass]="verdictColor(d)">
+          <div class="diag-top">
+            <div class="diag-titulo">¿Por qué {{ verdictLabel(d) }}?</div>
+            <div class="score-pill" [ngClass]="scoreClass(d)">
+              <span class="score-num">{{ scoreCompra(d) }}</span><span class="score-den">/10</span>
+              <span class="score-label">Score de compra</span>
+            </div>
+          </div>
+
+          <ul class="razones-list">
+            @for (r of verdictRazones(d); track r.texto) {
+              <li class="razon-item" [ngClass]="r.tipo">
+                <span class="razon-icono">{{ r.icono }}</span>
+                <span class="razon-texto">{{ r.texto }}</span>
+              </li>
+            }
+          </ul>
+
+          <div class="next-step-box">
+            <span class="next-step-label">Siguiente paso</span>
+            <p class="next-step-text">{{ verdictNextStep(d) }}</p>
+            <div class="next-step-actions">
+              <button class="nstp-btn" (click)="mostrarSimuladores.set(!mostrarSimuladores())">
+                🧮 Calcular gastos y cuota
+              </button>
+              <a routerLink="/checklist" class="nstp-btn nstp-outline">
+                ✅ Checklist del comprador
+              </a>
+            </div>
           </div>
         </div>
 
@@ -563,6 +604,83 @@ interface GeminiPhotoAnalysis {
         </div>
 
         <!-- ══════════════════════════════════════════════════════════════════
+             MINI SIMULADORES — Coste total + Hipoteca (colapsable)
+        ══════════════════════════════════════════════════════════════════ -->
+        @if (mostrarSimuladores()) {
+          <div class="sim-wrapper">
+
+            <!-- Coste total de compra -->
+            <div class="sim-card">
+              <div class="sim-header">
+                <span class="sim-title">🧾 Gastos adicionales de compra</span>
+                <span class="sim-sub">Estimación para {{ d.ciudad | uppercase }}</span>
+              </div>
+              <div class="sim-grid">
+                <div class="sim-row">
+                  <span>ITP / IVA ({{ d.ciudad === 'madrid' ? '6' : '8' }}%)</span>
+                  <strong>{{ costesCompra(d).itp | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+                <div class="sim-row">
+                  <span>Notaría + Registro</span>
+                  <strong>{{ costesCompra(d).notaria | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+                <div class="sim-row">
+                  <span>Gestoría + otros</span>
+                  <strong>{{ costesCompra(d).gestoria | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+                <div class="sim-row sim-total">
+                  <span>TOTAL NECESARIO</span>
+                  <strong>{{ costesCompra(d).total | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+              </div>
+              <div class="sim-note">
+                Precio anuncio ({{ d.precioTotal | number:'1.0-0':'es-ES' }} €) +
+                gastos ({{ costesCompra(d).gastos | number:'1.0-0':'es-ES' }} €) =
+                <strong>{{ costesCompra(d).total | number:'1.0-0':'es-ES' }} €</strong>
+              </div>
+              <a routerLink="/costes-compra" class="sim-link">Ver calculadora detallada →</a>
+            </div>
+
+            <!-- Hipoteca + Affordability -->
+            <div class="sim-card">
+              <div class="sim-header">
+                <span class="sim-title">🏦 Hipoteca estimada</span>
+                <span class="sim-sub">80% financiación · 30 años · TAE 3.2%</span>
+              </div>
+              <div class="sim-grid">
+                <div class="sim-row">
+                  <span>Entrada necesaria (20%)</span>
+                  <strong>{{ hipotecaEstimada(d).entrada | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+                <div class="sim-row">
+                  <span>Capital hipotecado (80%)</span>
+                  <strong>{{ hipotecaEstimada(d).capital | number:'1.0-0':'es-ES' }} €</strong>
+                </div>
+                <div class="sim-row sim-destaca">
+                  <span>Cuota mensual est.</span>
+                  <strong>{{ hipotecaEstimada(d).cuota | number:'1.0-0':'es-ES' }} €/mes</strong>
+                </div>
+                <div class="sim-row">
+                  <span>Ingresos mínimos recomendados</span>
+                  <strong>{{ hipotecaEstimada(d).ingresosMin | number:'1.0-0':'es-ES' }} €/mes</strong>
+                </div>
+              </div>
+              <div class="affordability-bar-wrap">
+                <div class="afford-label">Esfuerzo financiero</div>
+                <div class="afford-track">
+                  <div class="afford-fill" [style.width.%]="hipotecaEstimada(d).esfuerzo" [ngClass]="hipotecaEstimada(d).esfuerzoClass"></div>
+                </div>
+                <div class="afford-pct" [ngClass]="hipotecaEstimada(d).esfuerzoClass">
+                  {{ hipotecaEstimada(d).esfuerzo.toFixed(0) }}% de ingresos brutos
+                </div>
+              </div>
+              <a routerLink="/hipotecas" class="sim-link">Ver comparador de hipotecas →</a>
+            </div>
+
+          </div>
+        }
+
+        <!-- ══════════════════════════════════════════════════════════════════
              CONTEXTO MACRO — IPV / Hipotecas / Tipo interés
         ══════════════════════════════════════════════════════════════════ -->
         <app-macro-contexto />
@@ -950,6 +1068,115 @@ interface GeminiPhotoAnalysis {
     }
     .btn-roi-action:hover { background: #DBEAFE; }
 
+    /* ── DIAGNÓSTICO DETALLADO ─────── */
+    .diagnostico-card {
+      border-radius: 14px; padding: 22px 24px;
+      margin-bottom: 14px;
+      border: 1.5px solid transparent;
+    }
+    .green-verdict.diagnostico-card  { background: #F0FDF4; border-color: #BBF7D0; }
+    .yellow-verdict.diagnostico-card { background: #FFFBEB; border-color: #FDE68A; }
+    .red-verdict.diagnostico-card    { background: #FEF2F2; border-color: #FECACA; }
+    .neutral-verdict.diagnostico-card{ background: #F9FAFB; border-color: #E5E7EB; }
+
+    .diag-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px; gap: 16px;
+    }
+    .diag-titulo { font-size: 15px; font-weight: 700; color: #1A1A1A; }
+
+    .score-pill {
+      display: flex; align-items: baseline; gap: 2px; flex-shrink: 0;
+      background: #fff; border-radius: 10px;
+      padding: 6px 12px; border: 1.5px solid #E5E7EB;
+      flex-direction: row; flex-wrap: wrap; justify-content: flex-end;
+    }
+    .score-num { font-size: 22px; font-weight: 900; letter-spacing: -0.04em; }
+    .score-den { font-size: 13px; font-weight: 600; color: #9CA3AF; margin-right: 6px; }
+    .score-label { font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: .06em; width: 100%; text-align: right; margin-top: -2px; }
+    .score-pill.score-alto .score-num  { color: #16A34A; }
+    .score-pill.score-medio .score-num { color: #D97706; }
+    .score-pill.score-bajo .score-num  { color: #DC2626; }
+
+    .razones-list {
+      list-style: none; padding: 0; margin: 0 0 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .razon-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 13px; line-height: 1.5; color: #374151;
+      background: rgba(255,255,255,.6); border-radius: 8px; padding: 10px 12px;
+    }
+    .razon-item.positive { border-left: 3px solid #16A34A; }
+    .razon-item.neutral  { border-left: 3px solid #F59E0B; }
+    .razon-item.negative { border-left: 3px solid #DC2626; }
+    .razon-icono { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .razon-texto { color: #374151; }
+
+    .next-step-box {
+      background: rgba(255,255,255,.7); border-radius: 10px; padding: 14px 16px;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+    .next-step-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: #9CA3AF; display: block; margin-bottom: 6px;
+    }
+    .next-step-text { font-size: 13px; color: #1A1A1A; line-height: 1.6; margin: 0 0 12px; font-weight: 500; }
+    .next-step-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nstp-btn {
+      padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      background: #111827; color: #fff; border: none; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+      transition: opacity .15s;
+    }
+    .nstp-btn:hover { opacity: .85; }
+    .nstp-btn.nstp-outline {
+      background: transparent; color: #374151; border: 1.5px solid #D1D5DB;
+    }
+    .nstp-btn.nstp-outline:hover { background: #F9FAFB; }
+
+    /* ── MINI SIMULADORES ──────────── */
+    .sim-wrapper {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;
+    }
+    .sim-card {
+      background: #fff; border: 1px solid #E5E7EB; border-radius: 14px;
+      padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .sim-header { display: flex; flex-direction: column; gap: 3px; }
+    .sim-title { font-size: 14px; font-weight: 700; color: #1A1A1A; }
+    .sim-sub { font-size: 11px; color: #9CA3AF; }
+    .sim-grid { display: flex; flex-direction: column; gap: 8px; }
+    .sim-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: #6B7280; padding: 6px 0; border-bottom: 1px solid #F3F4F6;
+    }
+    .sim-row strong { color: #1A1A1A; font-size: 13px; }
+    .sim-row.sim-total {
+      border-top: 2px solid #E5E7EB; border-bottom: none;
+      font-size: 13px; font-weight: 700; color: #1A1A1A; padding-top: 10px;
+    }
+    .sim-row.sim-total strong { font-size: 16px; color: #2563EB; }
+    .sim-row.sim-destaca strong { font-size: 16px; color: #2563EB; font-weight: 900; }
+    .sim-note { font-size: 11px; color: #9CA3AF; line-height: 1.6; }
+    .sim-link {
+      font-size: 12px; font-weight: 600; color: #2563EB; text-decoration: none;
+      margin-top: auto;
+    }
+    .sim-link:hover { text-decoration: underline; }
+
+    .affordability-bar-wrap { display: flex; flex-direction: column; gap: 5px; }
+    .afford-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #9CA3AF; }
+    .afford-track { height: 6px; background: #F3F4F6; border-radius: 999px; overflow: hidden; }
+    .afford-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+    .afford-fill.afford-ok   { background: #16A34A; }
+    .afford-fill.afford-med  { background: #F59E0B; }
+    .afford-fill.afford-alto { background: #DC2626; }
+    .afford-pct { font-size: 12px; font-weight: 700; }
+    .afford-pct.afford-ok   { color: #16A34A; }
+    .afford-pct.afford-med  { color: #D97706; }
+    .afford-pct.afford-alto { color: #DC2626; }
+
     @media (max-width: 700px) {
       .page { padding: 16px; }
       .l2-grid { flex-direction: column; }
@@ -957,6 +1184,9 @@ interface GeminiPhotoAnalysis {
       .verdict-hero { flex-direction: column; text-align: center; }
       .verdict-right { text-align: center; }
       .actions-bar { flex-direction: column; }
+      .sim-wrapper { grid-template-columns: 1fr; }
+      .diag-top { flex-direction: column; }
+      .next-step-actions { flex-direction: column; }
     }
   `]
 })
@@ -982,6 +1212,7 @@ export class FichaInmuebleComponent implements OnInit {
   geminiPhotoAnalysis = signal<GeminiPhotoAnalysis | null>(null);
   geminiPhotoLoading  = signal(false);
   readonly geminiEnabled = !!environment.geminiApiKey;
+  mostrarSimuladores = signal(false);
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -1314,5 +1545,204 @@ Devuelve ÚNICAMENTE un objeto JSON (sin markdown, sin explicaciones) con exacta
   }
   difAvmPct(precio: number, estimado: number): number {
     return estimado > 0 ? ((precio - estimado) / estimado) * 100 : 0;
+  }
+
+  // ─── Score de compra 0-10 ─────────────────────────────────────────────────
+
+  scoreCompra(d: AnuncioDetalle): number {
+    let score = 5.0;
+    const pct = this.verdictPct(d);
+    const zona = this.geminiAnalysis();
+
+    // Componente precio (40%): cuánto se aleja del valor real
+    if (pct != null) {
+      const s = pct <= -10 ? 10 : pct <= -5 ? 8.5 : pct <= 0 ? 7 : pct <= 5 ? 5.5 : pct <= 15 ? 3.5 : 2;
+      score = score * 0.6 + s * 0.4;
+    }
+
+    // Componente zona (30%): score Gemini o neutro
+    if (zona?.score != null) {
+      score = score * 0.7 + zona.score * 0.3;
+    }
+
+    // Componente CEE (15%)
+    const ceeScores: Record<string, number> = { A: 10, B: 8.5, C: 7, D: 5.5, E: 4, F: 3, G: 2 };
+    score = score * 0.85 + (ceeScores[this.ceeEstimada(d)] ?? 5) * 0.15;
+
+    // Bonus datos notariales con volumen suficiente (5%)
+    if (d.notarialMedioM2 && (d.numTransacciones ?? 0) >= 10) {
+      score = Math.min(10, score + 0.3);
+    }
+
+    return Math.min(10, Math.max(1, Math.round(score * 10) / 10));
+  }
+
+  scoreClass(d: AnuncioDetalle): string {
+    const s = this.scoreCompra(d);
+    if (s >= 7) return 'score-alto';
+    if (s >= 5) return 'score-medio';
+    return 'score-bajo';
+  }
+
+  // ─── Razones del veredicto ────────────────────────────────────────────────
+
+  verdictRazones(d: AnuncioDetalle): VerdictRazon[] {
+    const razones: VerdictRazon[] = [];
+    const est = this.avm();
+
+    // Razón 1: gap asking vs notarial
+    if (d.gapPct != null) {
+      const abs = Math.abs(d.gapPct).toFixed(1);
+      if (d.gapPct > 15) {
+        razones.push({
+          icono: '⚠️', tipo: 'negative',
+          texto: `El precio pedido está un ${abs}% por encima del precio real de transacciones notariales en la zona (${d.notarialMedioM2?.toLocaleString('es-ES') ?? '?'} €/m²).`
+        });
+      } else if (d.gapPct < -5) {
+        razones.push({
+          icono: '✅', tipo: 'positive',
+          texto: `El precio pedido está un ${abs}% por debajo del precio medio de transacciones notariales: una ventaja respecto a la media del mercado.`
+        });
+      } else {
+        razones.push({
+          icono: 'ℹ️', tipo: 'neutral',
+          texto: `El precio pedido está alineado con las transacciones notariales de la zona (diferencia ${d.gapPct > 0 ? '+' : ''}${d.gapPct.toFixed(1)}% — dentro del rango habitual).`
+        });
+      }
+    }
+
+    // Razón 2: AVM
+    if (est?.precioEstimado && d.precioTotal) {
+      const difPct = this.difAvmPct(d.precioTotal, est.precioEstimado);
+      const dif = Math.abs(d.precioTotal - est.precioEstimado).toLocaleString('es-ES');
+      if (difPct > 10) {
+        razones.push({
+          icono: '🤖', tipo: 'negative',
+          texto: `El modelo AVM (${est.comparablesUsados} comparables reales de la zona) estima un valor de ${est.precioEstimado.toLocaleString('es-ES')} €, unos ${dif} € menos de lo pedido.`
+        });
+      } else if (difPct < -8) {
+        razones.push({
+          icono: '🤖', tipo: 'positive',
+          texto: `El modelo AVM estima que vale ${dif} € más de lo que pide el vendedor — precio inusualmente bajo para la zona.`
+        });
+      } else {
+        razones.push({
+          icono: '🤖', tipo: 'neutral',
+          texto: `El modelo AVM (${est.comparablesUsados} comparables) confirma que el precio encaja con el mercado actual: diferencia de ${(difPct > 0 ? '+' : '') + difPct.toFixed(1)}%.`
+        });
+      }
+    }
+
+    // Razón 3: calidad de zona (Gemini)
+    const zona = this.geminiAnalysis();
+    if (zona?.score != null) {
+      if (zona.score >= 7.5) {
+        razones.push({
+          icono: '📍', tipo: 'positive',
+          texto: `Zona de alta calidad (${zona.score}/10 — ${zona.calidad_zona}). ${zona.pros[0] ?? ''}`
+        });
+      } else if (zona.score < 5) {
+        razones.push({
+          icono: '📍', tipo: 'negative',
+          texto: `Zona de calidad baja (${zona.score}/10 — ${zona.calidad_zona}). Esto puede limitar la revalorización futura y dificultar la venta.`
+        });
+      } else {
+        razones.push({
+          icono: '📍', tipo: 'neutral',
+          texto: `Zona de calidad media (${zona.score}/10 — ${zona.calidad_zona}). ${zona.pros[0] ?? ''}`
+        });
+      }
+    }
+
+    // Razón 4: precio €/m² frente al notarial
+    if (d.precioM2 && d.notarialMedioM2) {
+      const difM2 = d.precioM2 - d.notarialMedioM2;
+      const pctM2 = Math.abs((difM2 / d.notarialMedioM2) * 100).toFixed(0);
+      if (difM2 > 400) {
+        razones.push({
+          icono: '📊', tipo: 'negative',
+          texto: `A ${d.precioM2.toLocaleString('es-ES')} €/m² está un ${pctM2}% por encima del precio medio notarial de la zona (${d.notarialMedioM2.toLocaleString('es-ES')} €/m²). Margen de negociación potencial.`
+        });
+      } else if (difM2 < -300) {
+        razones.push({
+          icono: '📊', tipo: 'positive',
+          texto: `A ${d.precioM2.toLocaleString('es-ES')} €/m² está un ${pctM2}% por debajo del precio medio notarial (${d.notarialMedioM2.toLocaleString('es-ES')} €/m²). Posible oportunidad de compra.`
+        });
+      }
+    }
+
+    // Fallback sin datos
+    if (razones.length === 0) {
+      razones.push({
+        icono: 'ℹ️', tipo: 'neutral',
+        texto: 'Calcula el AVM para obtener un diagnóstico completo basado en comparables reales de la zona.'
+      });
+    }
+
+    return razones.slice(0, 4);
+  }
+
+  // ─── Siguiente paso ───────────────────────────────────────────────────────
+
+  verdictNextStep(d: AnuncioDetalle): string {
+    const pct = this.verdictPct(d);
+    const est = this.avm();
+
+    if (pct == null) {
+      return 'Calcula el AVM para obtener la estimación de valor real y definir una estrategia de oferta.';
+    }
+
+    if (pct <= -5) {
+      return 'El precio es una oportunidad: está por debajo del valor real estimado. Si cumple tus criterios, considera hacer una oferta esta semana —  los pisos bien posicionados se venden rápido.';
+    }
+
+    if (pct < 10) {
+      const pctOferta = Math.max(2, Math.round(pct / 2));
+      const oferta = d.precioTotal
+        ? Math.round(d.precioTotal * (1 - pctOferta / 100) / 1000) * 1000
+        : null;
+      return `Precio en línea con el mercado. Puedes intentar negociar un ${pctOferta}-5% de descuento${oferta ? ` (oferta sugerida: ${oferta.toLocaleString('es-ES')} €)` : ''}. Antes de hacer oferta: pide nota simple, verifica cargas y solicita el ITE si el edificio tiene más de 10 años.`;
+    }
+
+    // Precio elevado (>10%)
+    const rebaja = est?.precioEstimado && d.precioTotal
+      ? Math.round((d.precioTotal - est.precioEstimado) / 1000) * 1000
+      : d.precioTotal ? Math.round(d.precioTotal * (Math.min(pct, 25) / 100) / 1000) * 1000 : null;
+
+    return `Precio significativamente elevado respecto al mercado. ${rebaja ? `Negocia una rebaja de al menos ${rebaja.toLocaleString('es-ES')} € o busca alternativas equivalentes en la zona.` : 'Negocia una rebaja considerable antes de comprometerte.'} Usa los comparables del AVM como argumento.`;
+  }
+
+  // ─── Mini Simuladores ────────────────────────────────────────────────────
+
+  costesCompra(d: AnuncioDetalle): { itp: number; notaria: number; gestoria: number; gastos: number; total: number } {
+    const precio = d.precioTotal ?? 0;
+    // ITP según CCAA — Madrid 6%, resto 8% (aproximación)
+    const itpPct = d.ciudad?.toLowerCase() === 'madrid' ? 0.06 : 0.08;
+    const itp = Math.round(precio * itpPct);
+    const notaria = Math.round(Math.min(2400, Math.max(900, precio * 0.004)));  // 0.4% (notaría + registro)
+    const gestoria = 1200;
+    const gastos = itp + notaria + gestoria;
+    return { itp, notaria, gestoria, gastos, total: precio + gastos };
+  }
+
+  hipotecaEstimada(d: AnuncioDetalle): {
+    entrada: number; capital: number; cuota: number;
+    ingresosMin: number; esfuerzo: number; esfuerzoClass: string;
+  } {
+    const precio = d.precioTotal ?? 0;
+    const entrada = Math.round(precio * 0.20);
+    const capital = precio - entrada;
+    const taeAnual = 0.032;         // 3.2% TAE fija estimada
+    const meses = 360;              // 30 años
+    const r = taeAnual / 12;
+    const cuota = capital > 0
+      ? Math.round(capital * r * Math.pow(1 + r, meses) / (Math.pow(1 + r, meses) - 1))
+      : 0;
+    // Regla 30% DTI recomendado
+    const ingresosMin = Math.round(cuota / 0.30);
+    // Esfuerzo asumiendo ingreso bruto medio de 2 500 €/mes para ajustar la barra
+    const esfuerzo = Math.min(100, Math.round((cuota / 2500) * 100));
+    const esfuerzoClass = esfuerzo <= 30 ? 'afford-ok' : esfuerzo <= 40 ? 'afford-med' : 'afford-alto';
+    return { entrada, capital, cuota, ingresosMin, esfuerzo, esfuerzoClass };
   }
 }
