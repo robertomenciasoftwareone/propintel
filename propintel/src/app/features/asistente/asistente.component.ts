@@ -3,7 +3,7 @@ import {
   ViewChild, AfterViewChecked, NgZone
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgFor, NgIf, DecimalPipe } from '@angular/common';
+import { NgFor, NgIf, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -37,7 +37,7 @@ interface Mensaje {
 @Component({
   selector: 'app-asistente',
   standalone: true,
-  imports: [RouterLink, NgFor, NgIf, DecimalPipe, FormsModule],
+  imports: [RouterLink, NgFor, NgIf, DecimalPipe, DatePipe, FormsModule],
   template: `
 <div class="asis-shell">
 
