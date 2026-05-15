@@ -3,7 +3,13 @@
     "allow": [
       "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" config core.hookspath)",
       "Bash(rm \"c:\\\\Proyectos\\\\PropIntel\\\\.git\\\\hooks\\\\pre-push\")",
-      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" push origin main)"
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" push origin main)",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" status --short)",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" diff PropIntel.Api/Controllers/TasacionController.cs)",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" log --oneline -5)",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" push origin main --force-with-lease)",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" log --oneline origin/main -5)",
+      "WebFetch(domain:luci.aura-app.es)"
     ],
     "additionalDirectories": [
       "c:\\Proyectos\\PropIntel\\.git\\hooks"

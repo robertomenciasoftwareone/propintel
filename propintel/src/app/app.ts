@@ -3,13 +3,14 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SidebarComponent } from './shared/components/sidebar.component';
 import { TopbarComponent } from './shared/components/topbar.component';
+import { ChatFlotanteComponent } from './shared/components/chat-flotante.component';
 
 const PUBLIC_PREFIXES = ['/', '/mapa-resultados', '/login', '/registro'];
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, TopbarComponent],
+  imports: [RouterOutlet, SidebarComponent, TopbarComponent, ChatFlotanteComponent],
   template: `
     @if (!isPublicRoute()) {
       <div class="app-shell">
@@ -20,6 +21,10 @@ const PUBLIC_PREFIXES = ['/', '/mapa-resultados', '/login', '/registro'];
             <router-outlet />
           </main>
         </div>
+        <!-- Chat flotante global (excepto en /asistente) -->
+        @if (!isAsistenteRoute()) {
+          <app-chat-flotante />
+        }
       </div>
     } @else {
       <router-outlet />
@@ -34,12 +39,10 @@ const PUBLIC_PREFIXES = ['/', '/mapa-resultados', '/login', '/registro'];
 export class App implements OnInit {
   private router = inject(Router);
   readonly isPublicRoute = signal(true);
+  readonly isAsistenteRoute = signal(false);
 
   ngOnInit(): void {
-    // Detectar ruta inicial
     this.checkRoute(this.router.url);
-
-    // Detectar cambios de ruta
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)
     ).subscribe((e: any) => {
@@ -52,6 +55,7 @@ export class App implements OnInit {
       url === p || url.startsWith(p + '?') || (p !== '/' && url.startsWith(p))
     );
     this.isPublicRoute.set(isPublic);
+    this.isAsistenteRoute.set(url.startsWith('/asistente'));
     document.documentElement.setAttribute('data-theme', isPublic ? 'light' : 'dark');
   }
 }
