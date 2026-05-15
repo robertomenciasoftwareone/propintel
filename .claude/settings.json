@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" config core.hookspath)",
+      "Bash(rm \"c:\\\\Proyectos\\\\PropIntel\\\\.git\\\\hooks\\\\pre-push\")",
+      "Bash(git -C \"c:\\\\Proyectos\\\\PropIntel\" push origin main)"
+    ],
+    "additionalDirectories": [
+      "c:\\Proyectos\\PropIntel\\.git\\hooks"
+    ]
+  }
+}
