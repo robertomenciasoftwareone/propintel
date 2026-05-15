@@ -189,7 +189,7 @@ import { CompararService } from '../../core/services/comparar.service';
                   [style.color]="item.semaforoColor === 'verde' ? '#16A34A' : item.semaforoColor === 'amarillo' ? '#D97706' : '#DC2626'">
                   {{ item.semaforoPct > 0 ? '+' : '' }}{{ item.semaforoPct | number:'1.0-1' }}%
                 </span>
-                <span class="listing-fav" *ngIf="auth.isAuthenticated()" (click)="$event.stopPropagation(); toggleFavorito(item.id)">
+                <span class="listing-fav" *ngIf="auth.isAuthenticated()" (click)="$event.stopPropagation(); toggleFavorito(item)">
                   {{ esFavorito(item.id) ? '♥' : '♡' }}
                 </span>
               </div>
@@ -1002,9 +1002,19 @@ export class MapaResultadosComponent implements OnInit, AfterViewInit, OnDestroy
     return this.favoritosService.isFavorito(id);
   }
 
-  toggleFavorito(id: number): void {
+  toggleFavorito(item: ResultadoBusqueda): void {
     if (!this.auth.isAuthenticated()) return;
-    this.favoritosService.toggle(id);
+    this.favoritosService.toggle(item.id, {
+      titulo:        item.titulo        ?? null,
+      precioTotal:   item.precioTotal,
+      precioM2:      item.precioM2      ?? null,
+      gapPct:        item.semaforoPct   ?? null,
+      semaforoColor: item.semaforoColor ?? null,
+      distrito:      item.distrito      ?? null,
+      ciudad:        '',
+      url:           item.url           ?? '',
+      fuente:        item.fuente        ?? '',
+    });
   }
 
   private buildPopup(r: ResultadoBusqueda): string {

@@ -299,7 +299,8 @@ public record AnuncioResumenDto(
     string? Distrito,
     string? TipoInmueble,
     DateTime FechaScraping,
-    string Url
+    string Url,
+    string? FotoPrincipal = null
 );
 
 public record NotarialZonaDto(

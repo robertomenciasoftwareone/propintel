@@ -1,14 +1,16 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { NgFor, NgIf, DatePipe } from '@angular/common';
+import { NgFor, NgIf, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AlertasService } from '../../core/services/alertas.service';
 import { InmobiliarioService } from '../../core/services/inmobiliario.service';
-import { Alerta } from '../../core/models/inmobiliario.model';
+import { FavoritosService } from '../../core/services/favoritos.service';
+import { Alerta, FavoritoSnapshot } from '../../core/models/inmobiliario.model';
 
 @Component({
   selector: 'app-alertas',
   standalone: true,
-  imports: [NgFor, NgIf, DatePipe, FormsModule],
+  imports: [NgFor, NgIf, DatePipe, DecimalPipe, FormsModule, RouterLink],
   template: `
     <div class="page">
 
@@ -16,12 +18,26 @@ import { Alerta } from '../../core/models/inmobiliario.model';
       <div class="page-header">
         <div>
           <h1 class="page-title">ALERTAS</h1>
-          <p class="page-sub">Recibe una notificación cuando el asking de una zona se acerque al precio notarial</p>
+          <p class="page-sub">Monitoriza zonas y pisos guardados para detectar oportunidades</p>
         </div>
-        <button class="btn-accent" (click)="mostrarForm.set(true)">
+        <button class="btn-accent" *ngIf="tabActivo() === 'zona'" (click)="mostrarForm.set(true)">
           + Nueva alerta
         </button>
       </div>
+
+      <!-- Tabs -->
+      <div class="tabs-row">
+        <button class="tab-btn" [class.active]="tabActivo() === 'zona'" (click)="tabActivo.set('zona')">
+          Por zona
+        </button>
+        <button class="tab-btn" [class.active]="tabActivo() === 'favoritos'" (click)="tabActivo.set('favoritos')">
+          Mis favoritos
+          <span class="tab-badge" *ngIf="favSvc.snapshots().length > 0">{{ favSvc.snapshots().length }}</span>
+        </button>
+      </div>
+
+      <!-- ═══ TAB: POR ZONA ═══ -->
+      <ng-container *ngIf="tabActivo() === 'zona'">
 
       <!-- Notificaciones disparadas -->
       <div class="card" *ngIf="svc.disparos().length > 0">
@@ -155,6 +171,121 @@ import { Alerta } from '../../core/models/inmobiliario.model';
           </div>
         </div>
       </div>
+
+      </ng-container><!-- /tab zona -->
+
+
+      <!-- ═══ TAB: FAVORITOS ═══ -->
+      <ng-container *ngIf="tabActivo() === 'favoritos'">
+
+        <!-- Empty state -->
+        <div class="card" *ngIf="favSvc.snapshots().length === 0">
+          <div class="empty-state">
+            <div class="empty-icon">♡</div>
+            <div class="empty-titulo">Sin pisos guardados</div>
+            <div class="empty-sub">
+              Guarda pisos desde el buscador pulsando el corazón ♥ para activar alertas personalizadas por propiedad.
+            </div>
+            <a routerLink="/mapa-resultados" class="btn-accent" style="text-decoration:none">Ir al buscador</a>
+          </div>
+        </div>
+
+        <!-- Lista de favoritos -->
+        <div class="fav-list" *ngIf="favSvc.snapshots().length > 0">
+
+          <!-- Cabecera info -->
+          <div class="fav-info-bar">
+            <span>{{ favSvc.snapshots().length }} {{ favSvc.snapshots().length === 1 ? 'piso guardado' : 'pisos guardados' }}</span>
+            <span class="fav-info-hint">Configura qué cambios quieres que te avisemos</span>
+          </div>
+
+          <div class="fav-card" *ngFor="let f of favSvc.snapshots()">
+
+            <!-- Cabecera del piso -->
+            <div class="fav-card-header">
+              <div class="fav-card-main">
+                <div class="fav-titulo">
+                  <span class="fav-fuente-tag">{{ f.fuente || 'Portal' }}</span>
+                  {{ f.titulo || 'Piso #' + f.id }}
+                </div>
+                <div class="fav-meta">
+                  <span *ngIf="f.distrito" class="zona-pill">{{ f.distrito }}</span>
+                  <span class="fav-precio">{{ f.precioTotal | number:'1.0-0':'es-ES' }} €</span>
+                  <span *ngIf="f.precioM2" class="fav-m2">· {{ f.precioM2 | number:'1.0-0':'es-ES' }} €/m²</span>
+                  <span class="fav-snapshot-date">guardado {{ tiempoRelativoFav(f.snapshotAt) }}</span>
+                </div>
+              </div>
+
+              <div class="fav-card-right">
+                <!-- Semáforo pill -->
+                <span *ngIf="f.gapPct !== null" class="semaforo-pill"
+                  [class.verde]="(f.gapPct ?? 0) < 10"
+                  [class.amarillo]="(f.gapPct ?? 0) >= 10 && (f.gapPct ?? 0) < 20"
+                  [class.rojo]="(f.gapPct ?? 0) >= 20">
+                  {{ f.gapPct! > 0 ? '+' : '' }}{{ f.gapPct | number:'1.1-1':'es-ES' }}% gap
+                </span>
+                <a *ngIf="f.url" [href]="f.url" target="_blank" rel="noopener" class="btn-ghost-sm">Ver anuncio ↗</a>
+                <a [routerLink]="['/ficha', f.id]" class="btn-ghost-sm">Ficha →</a>
+              </div>
+            </div>
+
+            <!-- Alertas configurables -->
+            <div class="fav-alertas">
+
+              <!-- Bajada de precio -->
+              <div class="fav-alerta-row">
+                <div class="toggle-wrap" (click)="favSvc.updateAlertaBool(f.id, 'alertarBajadaPrecio', !f.alertarBajadaPrecio)">
+                  <div class="toggle" [class.on]="f.alertarBajadaPrecio">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </div>
+                <div class="fav-alerta-label">
+                  <span class="fav-alerta-titulo">Avisarme si baja el precio</span>
+                  <span class="fav-alerta-sub">Notificación cuando el precio caiga más del umbral configurado</span>
+                </div>
+                <div class="fav-umbral-wrap" *ngIf="f.alertarBajadaPrecio">
+                  <span class="umbral-label">≥</span>
+                  <input class="umbral-input" type="number" min="1" max="50" step="1"
+                    [value]="f.umbralBajada"
+                    (change)="favSvc.updateUmbral(f.id, +$any($event.target).value)">
+                  <span class="umbral-label">%</span>
+                </div>
+              </div>
+
+              <!-- Cambio de semáforo -->
+              <div class="fav-alerta-row">
+                <div class="toggle-wrap" (click)="favSvc.updateAlertaBool(f.id, 'alertarCambioSemaforo', !f.alertarCambioSemaforo)">
+                  <div class="toggle" [class.on]="f.alertarCambioSemaforo">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </div>
+                <div class="fav-alerta-label">
+                  <span class="fav-alerta-titulo">Avisarme si cambia el semáforo</span>
+                  <span class="fav-alerta-sub">Cuando el veredicto pase de rojo a amarillo o verde (mejor oportunidad)</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Footer: estado resumen + quitar -->
+            <div class="fav-card-footer">
+              <div class="fav-alertas-resumen" *ngIf="f.alertarBajadaPrecio || f.alertarCambioSemaforo; else sinAlertas">
+                <span class="resumen-activa">🔔 Alertas activas:</span>
+                <span *ngIf="f.alertarBajadaPrecio">bajada ≥{{ f.umbralBajada }}%</span>
+                <span *ngIf="f.alertarBajadaPrecio && f.alertarCambioSemaforo">·</span>
+                <span *ngIf="f.alertarCambioSemaforo">cambio de semáforo</span>
+              </div>
+              <ng-template #sinAlertas>
+                <span class="resumen-inactiva">Sin alertas configuradas</span>
+              </ng-template>
+              <button class="btn-danger-sm" (click)="favSvc.eliminar(f.id)">✕ Quitar</button>
+            </div>
+
+          </div><!-- /fav-card -->
+
+        </div><!-- /fav-list -->
+
+      </ng-container><!-- /tab favoritos -->
 
     </div>
 
@@ -402,12 +533,100 @@ import { Alerta } from '../../core/models/inmobiliario.model';
       .form-row{grid-template-columns:1fr}
       .alerta-row{grid-template-columns:44px 1fr}
     }
+
+    /* TABS */
+    .tabs-row { display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:4px; width:fit-content; }
+    .tab-btn {
+      background:none; border:none; color:var(--text-secondary); padding:8px 18px;
+      border-radius:7px; font-family:inherit; font-size:13px; cursor:pointer;
+      transition:all .15s; display:flex; align-items:center; gap:8px;
+    }
+    .tab-btn:hover  { color:var(--text-primary); }
+    .tab-btn.active { background:var(--bg3); color:var(--text-primary); font-weight:500; border:1px solid var(--border-bright); }
+    .tab-badge {
+      background:rgba(232,197,71,0.15); color:var(--asking);
+      border:1px solid rgba(232,197,71,0.25); font-size:11px;
+      padding:1px 7px; border-radius:8px; font-weight:500;
+    }
+
+    /* FAVORITOS */
+    .fav-list { display:flex; flex-direction:column; gap:14px; }
+    .fav-info-bar {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:12px; color:var(--text-muted); padding:0 2px;
+    }
+    .fav-info-hint { font-style:italic; }
+
+    .fav-card {
+      background:var(--bg2); border:1px solid var(--border); border-radius:12px;
+      overflow:hidden; transition:border-color .2s;
+    }
+    .fav-card:hover { border-color:var(--border-bright); }
+
+    .fav-card-header {
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap:16px; padding:18px 20px 14px; flex-wrap:wrap;
+    }
+    .fav-card-main { flex:1; min-width:0; }
+    .fav-titulo {
+      font-size:13.5px; font-weight:500; color:var(--text-primary);
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:7px;
+    }
+    .fav-fuente-tag {
+      font-size:10px; letter-spacing:.8px; text-transform:uppercase;
+      color:var(--text-muted); background:var(--bg3); border:1px solid var(--border);
+      padding:2px 7px; border-radius:8px; flex-shrink:0;
+    }
+    .fav-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .fav-precio { font-size:14px; font-weight:600; color:var(--asking); font-family:'DM Mono',monospace; }
+    .fav-m2     { font-size:12px; color:var(--text-muted); font-family:'DM Mono',monospace; }
+    .fav-snapshot-date { font-size:11px; color:var(--text-muted); }
+
+    .fav-card-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+
+    .semaforo-pill { font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:10px; font-family:'DM Mono',monospace; }
+    .semaforo-pill.verde    { background:rgba(79,209,165,0.12); color:#4fd1a5; }
+    .semaforo-pill.amarillo { background:rgba(232,197,71,0.12);  color:var(--asking); }
+    .semaforo-pill.rojo     { background:rgba(248,113,113,0.12); color:var(--gap); }
+
+    /* ALERTAS DE FAVORITO */
+    .fav-alertas {
+      border-top:1px solid var(--border);
+      padding:14px 20px; display:flex; flex-direction:column; gap:10px;
+      background:rgba(255,255,255,0.01);
+    }
+    .fav-alerta-row { display:flex; align-items:center; gap:14px; }
+    .fav-alerta-label { flex:1; display:flex; flex-direction:column; gap:2px; }
+    .fav-alerta-titulo { font-size:13px; color:var(--text-primary); }
+    .fav-alerta-sub    { font-size:11.5px; color:var(--text-muted); font-weight:300; }
+
+    .fav-umbral-wrap { display:flex; align-items:center; gap:6px; }
+    .umbral-label { font-size:12px; color:var(--text-muted); }
+    .umbral-input {
+      width:52px; background:var(--bg3); border:1px solid var(--border-bright);
+      color:var(--text-primary); padding:5px 8px; border-radius:6px;
+      font-family:'DM Mono',monospace; font-size:13px; text-align:center; outline:none;
+    }
+    .umbral-input:focus { border-color:var(--accent); }
+
+    /* FOOTER */
+    .fav-card-footer {
+      border-top:1px solid var(--border); padding:10px 20px;
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      font-size:12px;
+    }
+    .fav-alertas-resumen { display:flex; align-items:center; gap:6px; color:var(--text-secondary); flex-wrap:wrap; }
+    .resumen-activa  { color:var(--asking); font-weight:500; }
+    .resumen-inactiva { color:var(--text-muted); font-style:italic; }
   `]
 })
 export class AlertasComponent {
-  svc = inject(AlertasService);
+  svc     = inject(AlertasService);
+  favSvc  = inject(FavoritosService);
   private inmSvc = inject(InmobiliarioService);
 
+  tabActivo   = signal<'zona' | 'favoritos'>('zona');
   mostrarForm = signal(false);
   editando    = signal<string | null>(null);
 
@@ -469,5 +688,17 @@ export class AlertasComponent {
     if (gap >= 20) return 'gap-high';
     if (gap >= 13) return 'gap-med';
     return 'gap-low';
+  }
+
+  tiempoRelativoFav(isoDate: string): string {
+    const diff = Date.now() - new Date(isoDate).getTime();
+    const h = Math.floor(diff / 3_600_000);
+    const d = Math.floor(diff / 86_400_000);
+    if (h < 1)   return 'hace menos de 1h';
+    if (h < 24)  return `hace ${h}h`;
+    if (d === 1) return 'ayer';
+    if (d < 30)  return `hace ${d} días`;
+    const m = Math.floor(d / 30);
+    return `hace ${m} ${m === 1 ? 'mes' : 'meses'}`;
   }
 }

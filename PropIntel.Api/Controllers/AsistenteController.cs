@@ -85,7 +85,8 @@ public class AsistenteController(PropIntelDbContext db) : ControllerBase
             Distrito: a.Distrito,
             TipoInmueble: a.TipoInmueble,
             FechaScraping: a.FechaScraping,
-            Url: a.Url
+            Url: a.Url,
+            FotoPrincipal: a.FotoPrincipal
         )).ToList();
 
         string respuesta;
