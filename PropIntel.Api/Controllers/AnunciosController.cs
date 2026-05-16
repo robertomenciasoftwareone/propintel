@@ -269,7 +269,8 @@ public class AnunciosController(PropIntelDbContext db, IHttpClientFactory httpFa
                 a.Distrito,
                 a.TipoInmueble,
                 a.FechaScraping,
-                a.Url
+                a.Url,
+                a.FotoPrincipal
             ))
             .ToListAsync();
 

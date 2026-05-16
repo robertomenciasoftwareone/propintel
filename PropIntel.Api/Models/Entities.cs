@@ -300,7 +300,7 @@ public record AnuncioResumenDto(
     string? TipoInmueble,
     DateTime FechaScraping,
     string Url,
-    string? FotoPrincipal = null
+    string? FotoPrincipal
 );
 
 public record NotarialZonaDto(
