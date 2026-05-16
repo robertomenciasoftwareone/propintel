@@ -201,12 +201,12 @@ interface Mensaje {
                   <div class="card-info">
                     <div class="card-titulo">{{ p.titulo || 'Piso en ' + (p.distrito || 'Madrid') }}</div>
                     <div class="card-precio">
-                      {{ p.precioTotal | number:'1.0-0':'es' }} €
-                      <span class="card-m2" *ngIf="p.precioM2">· {{ p.precioM2 | number:'1.0-0':'es' }} €/m²</span>
+                      {{ p.precioTotal | number:'1.0-0' }} €
+                      <span class="card-m2" *ngIf="p.precioM2">· {{ p.precioM2 | number:'1.0-0' }} €/m²</span>
                     </div>
                     <div class="card-meta">
                       <span class="card-tag" *ngIf="p.habitaciones">🛏 {{ p.habitaciones }}h</span>
-                      <span class="card-tag" *ngIf="p.superficieM2">📐 {{ p.superficieM2 | number:'1.0-0':'es' }} m²</span>
+                      <span class="card-tag" *ngIf="p.superficieM2">📐 {{ p.superficieM2 | number:'1.0-0' }} m²</span>
                       <span class="card-tag distrito" *ngIf="p.distrito">📍 {{ p.distrito }}</span>
                     </div>
                     <div class="card-actions">

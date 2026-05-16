@@ -24,11 +24,13 @@ class Settings(BaseSettings):
     scraper_max_delay_seconds: float = 8.0
     scraper_zone_pause_min_seconds: float = 20.0
     scraper_zone_pause_max_seconds: float = 45.0
-    scraper_block_cooldown_seconds: int = 600
+    scraper_block_cooldown_seconds: int = 30   # era 600 — reducido para no bloquear CI
     scraper_consecutive_block_limit: int = 2
     scraper_cache_enabled: bool = True
     scraper_cache_ttl_seconds: int = 900
     scraper_user_agent: str = "UrbIABot/1.0 (+contacto@urbia.es)"
+    # En CI/GitHub Actions, saltar Playwright (IPs de datacenter siempre bloqueadas)
+    skip_playwright_in_ci: bool = True
 
     # Idealista API oficial (OAuth2 client credentials)
     idealista_api_key:    str = ""

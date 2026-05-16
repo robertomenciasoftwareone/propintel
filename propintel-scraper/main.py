@@ -19,10 +19,14 @@ Uso:
 """
 import asyncio
 import argparse
+import os
 import random
 import sys
 from datetime import datetime
 from loguru import logger
+
+# GitHub Actions pone CI=true automáticamente en todos los runners
+_EN_CI = os.environ.get("CI", "").lower() in ("true", "1", "yes")
 
 from scrapers.notarial_scraper import run_notarial_scraper
 from scrapers.idealista_scraper import run_idealista_scraper
@@ -81,7 +85,17 @@ async def run_ciclo_completo(
         if not sin_idealista:
             # Preferir API oficial si hay credenciales configuradas
             api_key_ok = bool(settings.idealista_api_key and settings.idealista_api_secret)
-            if api_key_ok and not forzar_playwright:
+
+            # En CI sin credenciales API: avisar y saltar — Playwright siempre bloqueado
+            if not api_key_ok and _EN_CI and settings.skip_playwright_in_ci:
+                logger.warning(
+                    "⚠️  IDEALISTA_API_KEY / IDEALISTA_API_SECRET no configurados en secrets.\n"
+                    "   Playwright es bloqueado en GitHub Actions (IP de datacenter).\n"
+                    "   Configura los secrets en: Repo → Settings → Secrets → Actions\n"
+                    "   Saltando Idealista para este ciclo."
+                )
+                resumen["errores"].append("idealista: sin API key — secrets no configurados en GitHub")
+            elif api_key_ok and not forzar_playwright:
                 logger.info("🏠 [2/6] Idealista vía API oficial...")
                 try:
                     anuncios_idealista, idealista_city_avgs = await run_idealista_api_scraper(ciudades, max(1, max_paginas - 1))
@@ -93,11 +107,13 @@ async def run_ciclo_completo(
                     resumen["errores"].append(f"idealista_api: {e}")
                     anuncios_idealista = []  # fuerza fallback abajo
 
-            # Fallback a Playwright SOLO si la API no está configurada o falló con excepción
-            # (lista vacía por quota agotada o ciudad no en CIUDADES_API NO activa el fallback)
+            # Fallback a Playwright: solo si no estamos en CI o se forzó explícitamente
             _api_intentada = api_key_ok and not forzar_playwright
             _api_fallo_excepcion = bool(resumen["errores"] and any("idealista_api" in e for e in resumen["errores"]))
-            if not _api_intentada or _api_fallo_excepcion:
+            _playwright_permitido = forzar_playwright or (
+                not (_EN_CI and settings.skip_playwright_in_ci)
+            )
+            if _playwright_permitido and (not _api_intentada or _api_fallo_excepcion):
                 logger.info("🏠 [2/6] Scraping Idealista (Playwright)...")
                 try:
                     anuncios_idealista = await run_idealista_scraper(ciudades, max_paginas)
@@ -107,8 +123,8 @@ async def run_ciclo_completo(
                 except Exception as e:
                     logger.warning(f"Idealista Playwright falló (continuando sin él): {e}")
                     resumen["errores"].append(f"idealista_playwright: {e}")
-            elif not anuncios_idealista:
-                logger.info("🏠 [2/6] API Idealista devolvió 0 anuncios (quota agotada o ciudad no configurada) — omitiendo Playwright")
+            elif not anuncios_idealista and _api_intentada and not _api_fallo_excepcion:
+                logger.info("🏠 [2/6] API Idealista devolvió 0 anuncios (quota agotada) — omitiendo Playwright")
         else:
             logger.info("🏠 [2/6] Idealista omitido (--sin-idealista)")
 

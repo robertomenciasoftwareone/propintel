@@ -29,24 +29,36 @@ jobs:
         working-directory: propintel-scraper
         run: playwright install chromium --with-deps
 
-      - name: Validar secrets de base de datos
+      - name: Validar secrets
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          IDEALISTA_API_KEY: ${{ secrets.IDEALISTA_API_KEY }}
+          IDEALISTA_API_SECRET: ${{ secrets.IDEALISTA_API_SECRET }}
         run: |
-          missing=()
-          [ -z "$DB_HOST" ]     && missing+=("DB_HOST")
-          [ -z "$DB_NAME" ]     && missing+=("DB_NAME")
-          [ -z "$DB_USER" ]     && missing+=("DB_USER")
-          [ -z "$DB_PASSWORD" ] && missing+=("DB_PASSWORD")
-          if [ ${#missing[@]} -gt 0 ]; then
-            echo "❌ Secrets de BD no configurados: ${missing[*]}"
+          missing_bd=()
+          [ -z "$DB_HOST" ]     && missing_bd+=("DB_HOST")
+          [ -z "$DB_NAME" ]     && missing_bd+=("DB_NAME")
+          [ -z "$DB_USER" ]     && missing_bd+=("DB_USER")
+          [ -z "$DB_PASSWORD" ] && missing_bd+=("DB_PASSWORD")
+          if [ ${#missing_bd[@]} -gt 0 ]; then
+            echo "❌ Secrets de BD no configurados: ${missing_bd[*]}"
             echo "   Configúralos en Settings → Secrets → Actions del repositorio."
             exit 1
           fi
           echo "✅ Secrets de BD presentes"
+
+          # Advertencia (no fatal) si falta la API de Idealista
+          if [ -z "$IDEALISTA_API_KEY" ] || [ -z "$IDEALISTA_API_SECRET" ]; then
+            echo "⚠️  IDEALISTA_API_KEY / IDEALISTA_API_SECRET no configurados."
+            echo "   El scraper de Idealista será omitido (Playwright bloqueado en CI)."
+            echo "   Consigue acceso en: https://developers.idealista.com/access-request"
+            echo "   y añade los secrets en: Repo → Settings → Secrets → Actions"
+          else
+            echo "✅ Secrets de Idealista API presentes"
+          fi
 
       - name: Ejecutar scraper
         working-directory: propintel-scraper
@@ -59,6 +71,8 @@ jobs:
           IDEALISTA_API_SECRET: ${{ secrets.IDEALISTA_API_SECRET }}
           HEADLESS_BROWSER: 'true'
           SCRAPER_DELAY_SECONDS: '3'
-          SCRAPER_MAX_RETRIES: '3'
-          SCRAPER_TIMEOUT_SECONDS: '30'
-        run: python main.py --ciudad madrid --paginas 3
+          SCRAPER_MAX_RETRIES: '2'
+          SCRAPER_TIMEOUT_SECONDS: '20'
+          SCRAPER_BLOCK_COOLDOWN_SECONDS: '15'
+          SKIP_PLAYWRIGHT_IN_CI: 'true'
+        run: python main.py --ciudad madrid --paginas 2
