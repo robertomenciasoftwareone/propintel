@@ -1,8 +1,8 @@
 import {
-  Component, inject, signal, computed, ElementRef,
-  ViewChild, AfterViewChecked, NgZone
+  Component, inject, signal, ElementRef,
+  ViewChild, AfterViewChecked, OnInit
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { NgFor, NgIf, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -20,8 +20,7 @@ interface PropCard {
   url: string;
   fuente: string;
   fotoPrincipal: string | null;
-  fotoBase64?: string | null;
-  fotoLoading: boolean;
+  imgError?: boolean;
 }
 
 interface Mensaje {
@@ -187,13 +186,13 @@ interface Mensaje {
                 <div class="prop-card" *ngFor="let p of m.propiedades">
                   <!-- Photo -->
                   <div class="card-photo">
-                    <div class="photo-skeleton" *ngIf="p.fotoLoading && !p.fotoBase64"></div>
-                    <img *ngIf="p.fotoBase64"
-                      [src]="'data:image/jpeg;base64,' + p.fotoBase64"
+                    <img *ngIf="p.fotoPrincipal && !p.imgError"
+                      [src]="p.fotoPrincipal"
                       [alt]="p.titulo || 'Propiedad'"
                       class="photo-img"
-                      loading="lazy">
-                    <div class="photo-placeholder" *ngIf="!p.fotoLoading && !p.fotoBase64">
+                      loading="lazy"
+                      (error)="p.imgError = true">
+                    <div class="photo-placeholder" *ngIf="!p.fotoPrincipal || p.imgError">
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
                     </div>
                     <div class="card-fuente-badge">{{ p.fuente }}</div>
@@ -452,8 +451,6 @@ interface Mensaje {
     .prop-card:hover { border-color:rgba(232,197,71,0.35); transform:translateY(-2px); box-shadow:0 10px 28px rgba(0,0,0,0.2); }
 
     .card-photo { width:100%; height:130px; position:relative; background:var(--bg3); overflow:hidden; }
-    .photo-skeleton { width:100%; height:100%; background:linear-gradient(90deg,var(--bg3) 25%,rgba(255,255,255,.05) 50%,var(--bg3) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     .photo-img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .3s; }
     .prop-card:hover .photo-img { transform:scale(1.04); }
     .photo-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:var(--bg3); }
@@ -523,10 +520,10 @@ interface Mensaje {
     }
   `]
 })
-export class AsistenteComponent implements AfterViewChecked {
+export class AsistenteComponent implements OnInit, AfterViewChecked {
   @ViewChild('scrollRef') private scrollRef!: ElementRef;
   private http  = inject(HttpClient);
-  private zone  = inject(NgZone);
+  private route = inject(ActivatedRoute);
   private api   = environment.apiUrl;
 
   mensajes  = signal<Mensaje[]>([]);
@@ -557,6 +554,14 @@ export class AsistenteComponent implements AfterViewChecked {
     { icon: '🏦', titulo: 'Hipotecas',           sub: 'Cuotas, TAE, capacidad de endeudamiento',   ejemplo: 'Calcula la hipoteca para un piso de 300.000€ a 25 años' },
     { icon: '📈', titulo: 'Inversión',           sub: 'ROI, rentabilidad, zonas con más potencial', ejemplo: '¿Dónde invertir en pisos en España ahora mismo?' },
   ];
+
+  ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap.get('q');
+    if (q?.trim()) {
+      // Pequeño delay para que el componente termine de inicializarse
+      setTimeout(() => this.enviarSugerencia(q.trim()), 150);
+    }
+  }
 
   ngAfterViewChecked(): void {
     if (this.mensajes().length !== this._lastCount) {
@@ -608,7 +613,7 @@ export class AsistenteComponent implements AfterViewChecked {
       // 2. Call Gemini for conversational response
       const geminiText = await this.llamarGemini(texto, searchResp);
 
-      // Build prop cards
+      // Build prop cards — foto se carga nativamente por el browser con <img src>
       const propCards: PropCard[] = (searchResp?.muestra ?? []).map((a: any) => ({
         id: a.id,
         titulo: a.titulo,
@@ -620,13 +625,12 @@ export class AsistenteComponent implements AfterViewChecked {
         url: a.url,
         fuente: a.fuente,
         fotoPrincipal: a.fotoPrincipal ?? null,
-        fotoBase64: null,
-        fotoLoading: !!(a.fotoPrincipal),
+        imgError: false,
       }));
 
       // Replace loading message
       this.mensajes.update(msgs => msgs.map((m, i) =>
-        i === loadingIdx - 1 + 1
+        i === loadingIdx
           ? {
               role: 'assistant' as const,
               content: geminiText,
@@ -638,11 +642,6 @@ export class AsistenteComponent implements AfterViewChecked {
             }
           : m
       ));
-
-      // Lazy load photos
-      if (propCards.length > 0) {
-        this.cargarFotos(loadingIdx, propCards);
-      }
 
     } catch (err) {
       this.mensajes.update(msgs => msgs.map((m, i) =>
@@ -695,35 +694,6 @@ Responde siempre en español, de forma concisa y útil. Usa markdown básico (ne
       if (searchCtx?.respuesta) return searchCtx.respuesta;
       return 'No he podido conectar con el servicio de IA en este momento. Por favor, inténtalo de nuevo en unos segundos.';
     }
-  }
-
-  private cargarFotos(msgIdx: number, propCards: PropCard[]): void {
-    propCards.forEach((card, ci) => {
-      if (!card.fotoPrincipal) { card.fotoLoading = false; return; }
-      firstValueFrom(
-        this.http.get<{ base64: string }>(`${this.api}/anuncios/${card.id}/foto-base64`)
-      ).then(resp => {
-        this.zone.run(() => {
-          this.mensajes.update(msgs => msgs.map((m, mi) => {
-            if (mi !== msgIdx) return m;
-            const props = (m.propiedades ?? []).map((p, pi) =>
-              pi === ci ? { ...p, fotoBase64: resp.base64, fotoLoading: false } : p
-            );
-            return { ...m, propiedades: props };
-          }));
-        });
-      }).catch(() => {
-        this.zone.run(() => {
-          this.mensajes.update(msgs => msgs.map((m, mi) => {
-            if (mi !== msgIdx) return m;
-            const props = (m.propiedades ?? []).map((p, pi) =>
-              pi === ci ? { ...p, fotoLoading: false } : p
-            );
-            return { ...m, propiedades: props };
-          }));
-        });
-      });
-    });
   }
 
   fmt(text: string): string {

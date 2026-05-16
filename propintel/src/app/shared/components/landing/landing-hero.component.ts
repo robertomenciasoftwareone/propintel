@@ -1,187 +1,160 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BusquedaService } from '../../../core/services/busqueda.service';
-import { BusquedaFiltros } from '../../../core/models/auth.model';
-
-const MUNICIPIOS = [
-  'Madrid','Alcalá de Henares','Alcobendas','Alcorcón','Algete','Aranjuez',
-  'Arganda del Rey','Boadilla del Monte','Brunete','Collado Villalba','Coslada',
-  'El Escorial','Fuenlabrada','Galapagar','Getafe','Las Rozas','Leganés',
-  'Majadahonda','Mejorada del Campo','Móstoles','Navalcarnero','Pinto',
-  'Pozuelo de Alarcón','Rivas-Vaciamadrid','San Fernando de Henares',
-  'San Sebastián de los Reyes','Torrejón de Ardoz','Tres Cantos','Valdemoro',
-  'Velilla de San Antonio','Villanueva de la Cañada','Villaviciosa de Odón'
-];
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-landing-hero',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [RouterLink, FormsModule, NgClass],
   template: `
 
 <!-- ═══════ HERO ═══════ -->
 <section class="hero">
 
-  <!-- Subtle gradient bg -->
   <div class="hero-bg">
     <div class="blob b1"></div>
     <div class="blob b2"></div>
+    <div class="blob b3"></div>
   </div>
 
-  <div class="hero-body">
+  <div class="hero-wrap">
 
-    <!-- Badge -->
-    <div class="pill" [class.in]="v">
-      <span class="live-dot"></span>
-      Datos notariales en tiempo real · Madrid
+    <!-- ── LEFT: Identity + Chat ── -->
+    <div class="hero-left" [class.in]="v">
+
+      <div class="pill">
+        <span class="live-dot"></span>
+        IA inmobiliaria · Madrid
+      </div>
+
+      <h1 class="h1">
+        Hola, soy <span class="h1-brand">UrbIA</span><br>
+        <span class="h1-accent">Tu copiloto</span><br>
+        para comprar piso
+      </h1>
+
+      <p class="sub">
+        Pregúntame sobre precios, barrios o hipotecas.<br>
+        Analizo datos reales del mercado y notaría.
+      </p>
+
+      <!-- Chat Input -->
+      <div class="chat-wrap" [class.focused]="chatFocused">
+        <div class="chat-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <input
+          type="text"
+          [(ngModel)]="chatQuery"
+          (keydown.enter)="enviarChat()"
+          (focus)="chatFocused = true"
+          (blur)="chatFocused = false"
+          placeholder="Busco piso de 3 hab en Salamanca hasta 400k…"
+          class="chat-input"
+          autocomplete="off"
+        />
+        <button class="chat-send" (click)="enviarChat()" [disabled]="!chatQuery.trim()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Free stripe -->
+      <div class="free-stripe">
+        <span class="fs-item">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Gratis para siempre
+        </span>
+        <span class="fs-dot">·</span>
+        <span class="fs-item">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Sin tarjeta
+        </span>
+        <span class="fs-dot">·</span>
+        <span class="fs-item">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Madrid y área metropolitana
+        </span>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <a routerLink="/mapa-resultados" class="qa">
+          <span class="qa-icon">🗺️</span>
+          <span>Mapa de pisos</span>
+        </a>
+        <a routerLink="/catastro" class="qa">
+          <span class="qa-icon">🏛️</span>
+          <span>Tasación AVM</span>
+        </a>
+        <a routerLink="/hipotecas" class="qa">
+          <span class="qa-icon">💰</span>
+          <span>Hipoteca</span>
+        </a>
+        <a routerLink="/estadisticas" class="qa">
+          <span class="qa-icon">📊</span>
+          <span>Estadísticas</span>
+        </a>
+      </div>
+
     </div>
 
-    <!-- Headlines -->
-    <h1 class="h1" [class.in]="v">
-      Descubre si un piso<br>
-      <span class="h1-accent">está caro o barato</span><br>
-      antes de comprar
-    </h1>
+    <!-- ── RIGHT: Ideas + Tendencias ── -->
+    <div class="hero-right" [class.in]="v">
 
-    <p class="sub" [class.in]="v">
-      Analizamos datos reales del mercado y notaría<br>
-      para ayudarte a <strong>decidir mejor</strong>
-    </p>
-
-    <!-- ── TRAFFIC LIGHT PREVIEWER ── -->
-    <div class="tl-cards" [class.in]="v">
-      <div class="tl-card tl-green">
-        <span class="tl-dot"></span>
-        <div>
-          <div class="tl-pct">−22%</div>
-          <div class="tl-label">Infravalorado</div>
+      <!-- Ideas para empezar -->
+      <div class="r-panel">
+        <div class="r-panel-header">
+          <span class="r-tag">IDEAS PARA EMPEZAR</span>
+        </div>
+        <div class="ideas-grid">
+          @for (idea of ideas; track idea.texto) {
+            <button class="idea-card" (click)="usarSugerencia(idea.texto)">
+              <span class="idea-icon">{{ idea.icon }}</span>
+              <span class="idea-body">
+                <span class="idea-cat">{{ idea.cat }}</span>
+                <span class="idea-text">{{ idea.texto }}</span>
+              </span>
+              <svg class="idea-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          }
         </div>
       </div>
-      <div class="tl-card tl-yellow">
-        <span class="tl-dot"></span>
-        <div>
-          <div class="tl-pct">±3%</div>
-          <div class="tl-label">Precio justo</div>
+
+      <!-- Tendencias -->
+      <div class="r-panel">
+        <div class="r-panel-header">
+          <span class="r-tag">TENDENCIAS</span>
+        </div>
+        <div class="tend-list">
+          @for (t of tendencias; track t.texto; let i = $index) {
+            <button class="tend-row" (click)="usarSugerencia(t.texto)">
+              <span class="tend-num">{{ (i + 1).toString().padStart(2, '0') }}</span>
+              <span class="tend-text">{{ t.texto }}</span>
+              <span class="tend-badge" [ngClass]="t.clase">{{ t.badge }}</span>
+            </button>
+          }
         </div>
       </div>
-      <div class="tl-card tl-red">
-        <span class="tl-dot"></span>
-        <div>
-          <div class="tl-pct">+18%</div>
-          <div class="tl-label">Caro</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ── SEARCH BOX ── -->
-    <div class="sbox" [class.in]="v">
-      <form [formGroup]="form" (ngSubmit)="buscar()">
-
-        <!-- Row 1: location + price -->
-        <div class="srow srow1">
-          <div class="sf">
-            <label class="slabel">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Municipio
-            </label>
-            <select formControlName="municipio" class="si">
-              @for (m of municipios; track m) {
-                <option [value]="m.toLowerCase()">{{ m }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="sdiv"></div>
-
-          <div class="sf">
-            <label class="slabel">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-              Barrio / Zona
-            </label>
-            <input type="text" formControlName="barrio" placeholder="ej. Salamanca, Retiro…" class="si" />
-          </div>
-
-          <div class="sdiv"></div>
-
-          <div class="sf">
-            <label class="slabel">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-              Precio máximo
-            </label>
-            <input type="number" formControlName="precioMaximo" placeholder="Sin límite" min="0" class="si" />
-          </div>
-        </div>
-
-        <!-- Row 2: filters + CTA -->
-        <div class="srow srow2">
-          <div class="sf">
-            <label class="slabel">m² mínimos</label>
-            <input type="number" formControlName="m2Min" placeholder="ej. 60" min="0" class="si" />
-          </div>
-
-          <div class="sdiv"></div>
-
-          <div class="sf">
-            <label class="slabel">Habitaciones</label>
-            <select formControlName="habitaciones" class="si">
-              <option [value]="null">Cualquiera</option>
-              <option [value]="1">1+</option>
-              <option [value]="2">2+</option>
-              <option [value]="3">3+</option>
-              <option [value]="4">4+</option>
-            </select>
-          </div>
-
-          <div class="sdiv"></div>
-
-          <div class="sf sf-checks">
-            <label class="slabel">Extras</label>
-            <div class="checks">
-              <label class="ck">
-                <input type="checkbox" formControlName="exterior" />
-                <span class="ck-box"></span>
-                Exterior
-              </label>
-              <label class="ck">
-                <input type="checkbox" formControlName="ascensor" />
-                <span class="ck-box"></span>
-                Ascensor
-              </label>
-            </div>
-          </div>
-
-          <div class="sdiv"></div>
-
-          <button type="submit" class="sbtn" [disabled]="cargando">
-            @if (cargando) {
-              <span class="spin"></span>
-            } @else {
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              Ver oportunidades
-            }
-          </button>
-        </div>
-
-      </form>
-
-      @if (errorMsg) {
-        <p class="errmsg">{{ errorMsg }}</p>
-      }
-    </div>
-
-    <!-- Stats -->
-    <div class="stats" [class.in]="v">
-      <div class="stat"><strong>+50k</strong><span>inmuebles</span></div>
-      <div class="sdot"></div>
-      <div class="stat"><strong>32</strong><span>municipios</span></div>
-      <div class="sdot"></div>
-      <div class="stat"><strong>IA</strong><span>Gemini integrado</span></div>
-      <div class="sdot"></div>
-      <div class="stat"><strong>Gratis</strong><span>para empezar</span></div>
     </div>
 
   </div>
+
+  <!-- Stats -->
+  <div class="stats" [class.in]="v">
+    <div class="stat"><strong>+50k</strong><span>inmuebles</span></div>
+    <div class="sdot"></div>
+    <div class="stat"><strong>32</strong><span>municipios</span></div>
+    <div class="sdot"></div>
+    <div class="stat"><strong>Gemini</strong><span>IA integrada</span></div>
+    <div class="sdot"></div>
+    <div class="stat"><strong>Gratis</strong><span>para empezar</span></div>
+  </div>
+
 </section>
 
 <!-- ═══════ TOOLS STRIP ═══════ -->
@@ -207,7 +180,6 @@ const MUNICIPIOS = [
       <span class="tag">Cómo funciona</span>
       <h2>Toma decisiones con datos reales,<br><em>no con intuición</em></h2>
     </div>
-
     <div class="steps">
       <div class="step">
         <div class="step-num">01</div>
@@ -238,7 +210,7 @@ const MUNICIPIOS = [
   <div class="container">
 
     <div class="sec-head">
-      <span class="tag">Por qué UrbIA</span>
+      <span class="tag tag-blue">Por qué UrbIA</span>
       <h2>Más inteligente que Idealista.<br><em>Más útil que Fotocasa.</em></h2>
     </div>
 
@@ -255,7 +227,7 @@ const MUNICIPIOS = [
     <!-- Semáforo explainer -->
     <div class="semaforo-card">
       <div class="sem-copy">
-        <span class="tag">Exclusivo UrbIA</span>
+        <span class="tag tag-blue">Exclusivo UrbIA</span>
         <h3>El semáforo que te dice si el precio es justo</h3>
         <p>Cruzamos el precio pedido con datos reales de transacciones notariales de la zona. Sin conjeturas, con datos oficiales.</p>
         <div class="sem-legend">
@@ -325,119 +297,127 @@ const MUNICIPIOS = [
   `,
   styles: [`
 /* ════════════════════════════════════════════════════════
-   HERO — "The View" — Dubai Luxury × Apple Precision
+   LANDING HERO — Chat-First · Dark · UrbIA
 ════════════════════════════════════════════════════════ */
 
-/* ── Design Tokens ── */
 :host {
   --brand:        #0052FF;
   --brand-deep:   #0041CC;
-  --brand-light:  #EEF4FF;
   --emerald:      #00B5A3;
   --gold:         #C59400;
   --gold-light:   #F0D060;
   --carmine:      #E11D48;
   --ink:          #0F172A;
-  --ink-mid:      #64748B;
-  --ink-pale:     #94A3B8;
-  --shadow-luxury: 0 20px 80px -16px rgba(0,52,255,0.12), 0 6px 24px -6px rgba(0,0,0,0.06);
-  --shadow-float:  0 40px 120px -20px rgba(0,52,255,0.14), 0 12px 40px -8px rgba(0,0,0,0.08);
-  --radius-card:   24px;
+  --bg-dark:      #070C1C;
+  --bg-card:      rgba(255,255,255,0.04);
+  --border-subtle: rgba(255,255,255,0.07);
+  --text-primary: #F0F4FF;
+  --text-muted:   rgba(255,255,255,0.50);
+  --text-dim:     rgba(255,255,255,0.28);
 }
 
 /* ── Hero wrapper ── */
 .hero {
   position: relative;
+  background: var(--bg-dark);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: radial-gradient(ellipse 120% 60% at 50% -8%, #EEF4FF 0%, #F4F7FF 35%, #FAFBFF 60%, #FFFFFF 80%);
-  padding-top: 68px;
+  padding-top: 72px;
 }
 
-/* Ambient blobs — imperceptible radial mood */
+/* Ambient blobs */
 .hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .blob {
   position: absolute; border-radius: 50%;
-  filter: blur(110px); opacity: 0.45;
-  will-change: transform;
+  filter: blur(120px); opacity: 0.5;
 }
 .b1 {
-  width: 1000px; height: 800px;
-  background: radial-gradient(circle, rgba(0,82,255,0.06) 0%, transparent 70%);
-  top: -280px; left: -300px;
-  animation: blobFloat 16s ease-in-out infinite;
+  width: 900px; height: 700px;
+  background: radial-gradient(circle, rgba(0,82,255,0.14) 0%, transparent 70%);
+  top: -200px; left: -300px;
+  animation: blobFloat 18s ease-in-out infinite;
 }
 .b2 {
-  width: 800px; height: 700px;
-  background: radial-gradient(circle, rgba(197,148,0,0.04) 0%, transparent 70%);
-  top: 60px; right: -250px;
-  animation: blobFloat 20s ease-in-out infinite reverse;
+  width: 700px; height: 600px;
+  background: radial-gradient(circle, rgba(197,148,0,0.08) 0%, transparent 70%);
+  top: 100px; right: -200px;
+  animation: blobFloat 22s ease-in-out infinite reverse;
+}
+.b3 {
+  width: 600px; height: 500px;
+  background: radial-gradient(circle, rgba(0,181,163,0.07) 0%, transparent 70%);
+  bottom: -100px; left: 40%;
+  animation: blobFloat 26s ease-in-out infinite;
 }
 @keyframes blobFloat {
   0%,100% { transform: translate(0,0) scale(1); }
-  33%      { transform: translate(28px,-36px) scale(1.03); }
-  66%      { transform: translate(-20px,24px) scale(0.97); }
+  33%      { transform: translate(30px,-40px) scale(1.04); }
+  66%      { transform: translate(-22px,26px) scale(0.96); }
 }
 
-/* ── Hero body ── */
-.hero-body {
+/* ── Main grid ── */
+.hero-wrap {
   position: relative; z-index: 1;
-  width: 100%; max-width: 880px;
-  padding: 96px 24px 96px;
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center; gap: 0;
+  width: 100%; max-width: 1200px;
+  padding: 80px 32px 60px;
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 56px;
+  align-items: center;
 }
 
-/* ── Entrance animations ── */
-.pill, .h1, .sub, .tl-cards, .sbox, .stats {
-  opacity: 0; transform: translateY(24px);
-  transition: opacity .7s cubic-bezier(.22,.83,.27,1), transform .7s cubic-bezier(.22,.83,.27,1);
+/* Entrance animations */
+.hero-left, .hero-right, .stats {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .75s cubic-bezier(.22,.83,.27,1),
+              transform .75s cubic-bezier(.22,.83,.27,1);
 }
-.pill.in      { opacity: 1; transform: none; transition-delay: .05s; }
-.h1.in        { opacity: 1; transform: none; transition-delay: .16s; }
-.sub.in       { opacity: 1; transform: none; transition-delay: .27s; }
-.tl-cards.in  { opacity: 1; transform: none; transition-delay: .36s; }
-.sbox.in      { opacity: 1; transform: none; transition-delay: .46s; }
-.stats.in     { opacity: 1; transform: none; transition-delay: .60s; }
+.hero-left.in  { opacity: 1; transform: none; transition-delay: .08s; }
+.hero-right.in { opacity: 1; transform: none; transition-delay: .22s; }
+.stats.in      { opacity: 1; transform: none; transition-delay: .40s; }
 
 /* ── Pill badge ── */
 .pill {
   display: inline-flex; align-items: center; gap: 9px;
-  background: linear-gradient(135deg, rgba(0,82,255,0.055) 0%, rgba(0,82,255,0.035) 100%);
-  border: 1px solid rgba(0,82,255,0.12);
+  background: rgba(0,82,255,0.12);
+  border: 1px solid rgba(0,82,255,0.22);
   border-radius: 999px;
-  padding: 7px 20px;
+  padding: 7px 18px;
   font-size: 12px; font-weight: 600;
-  color: #0052FF;
-  letter-spacing: 0.02em;
-  margin-bottom: 32px;
-  box-shadow: 0 2px 16px rgba(0,82,255,0.09), inset 0 1px 0 rgba(255,255,255,0.7);
-  backdrop-filter: blur(8px);
+  color: #7BA8FF;
+  letter-spacing: 0.04em;
+  margin-bottom: 28px;
 }
 .live-dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--emerald);
-  box-shadow: 0 0 10px rgba(0,181,163,0.95);
+  box-shadow: 0 0 10px rgba(0,181,163,0.90);
   animation: puls 2.6s ease-in-out infinite;
 }
-@keyframes puls { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.65)} }
+@keyframes puls { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.6)} }
 
-/* ── Headline — "The Declaration" ── */
+/* ── Headline ── */
 .h1 {
-  font-size: clamp(40px, 5.8vw, 76px);
+  font-size: clamp(38px, 4.8vw, 68px);
   font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.05em;
-  color: var(--ink);
-  margin: 0 0 22px;
+  line-height: 1.07;
+  letter-spacing: -0.045em;
+  color: var(--text-primary);
+  margin: 0 0 20px;
   text-wrap: balance;
 }
+.h1-brand {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .h1-accent {
-  background: linear-gradient(145deg, #0052FF 15%, #003ACC 90%);
+  background: linear-gradient(135deg, #7BA8FF 0%, #0052FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -445,250 +425,217 @@ const MUNICIPIOS = [
 
 /* ── Subtitle ── */
 .sub {
-  font-size: 17.5px;
-  color: var(--ink-mid);
-  line-height: 1.68;
-  letter-spacing: -0.015em;
-  max-width: 500px;
-  margin: 0 0 40px;
-}
-.sub strong { color: var(--ink); font-weight: 600; }
-
-/* ═══════════════════════════════════
-   TRAFFIC LIGHT — "Luxury Semáforo"
-═══════════════════════════════════ */
-.tl-cards {
-  display: flex; gap: 14px;
-  margin: 0 0 40px;
-  flex-wrap: wrap; justify-content: center;
-}
-.tl-card {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 22px; border-radius: 16px;
-  font-size: 13px; border: 1px solid transparent;
-  transition: all 0.42s cubic-bezier(0.4,0,0.2,1);
-  backdrop-filter: blur(12px);
-}
-.tl-dot {
-  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-}
-.tl-pct {
-  font-size: 18px; font-weight: 800;
-  letter-spacing: -0.04em;
-  font-family: 'JetBrains Mono', monospace;
-}
-.tl-label {
-  font-size: 10.5px; font-weight: 700; margin-top: 2px;
-  opacity: 0.70; text-transform: uppercase; letter-spacing: 0.07em;
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 1.72;
+  letter-spacing: -0.01em;
+  max-width: 480px;
+  margin: 0 0 32px;
 }
 
-/* Emerald — infravalorado */
-.tl-green {
-  background: rgba(0,181,163,0.065);
-  border-color: rgba(0,181,163,0.22);
+/* ── Chat input ── */
+.chat-wrap {
+  display: flex; align-items: center;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 5px 6px 5px 18px;
+  gap: 10px;
+  margin-bottom: 18px;
+  transition: background .3s, border-color .3s, box-shadow .3s;
+  backdrop-filter: blur(10px);
 }
-.tl-green .tl-dot { background: var(--emerald); box-shadow: 0 0 14px rgba(0,181,163,0.60); }
-.tl-green .tl-pct { color: var(--emerald); }
-.tl-green .tl-label { color: #007B70; }
-.tl-green:hover { background: rgba(0,181,163,0.10); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,181,163,0.12); }
-
-/* Gold — precio justo */
-.tl-yellow {
-  background: rgba(197,148,0,0.055);
-  border-color: rgba(197,148,0,0.20);
-}
-.tl-yellow .tl-dot { background: var(--gold); box-shadow: 0 0 14px rgba(197,148,0,0.60); }
-.tl-yellow .tl-pct { color: var(--gold); }
-.tl-yellow .tl-label { color: #8A6800; }
-.tl-yellow:hover { background: rgba(197,148,0,0.09); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(197,148,0,0.10); }
-
-/* Carmine — caro */
-.tl-red {
-  background: rgba(225,29,72,0.055);
-  border-color: rgba(225,29,72,0.18);
-}
-.tl-red .tl-dot { background: var(--carmine); box-shadow: 0 0 14px rgba(225,29,72,0.60); }
-.tl-red .tl-pct { color: var(--carmine); }
-.tl-red .tl-label { color: #9F0E30; }
-.tl-red:hover { background: rgba(225,29,72,0.09); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(225,29,72,0.10); }
-
-/* ═══════════════════════════════════
-   SEARCH BOX — "Crystal Instrument"
-   Glassmorphism inmobiliario
-═══════════════════════════════════ */
-.sbox {
-  width: 100%; max-width: 840px;
-  background: rgba(255,255,255,0.68);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,0.22);
+.chat-wrap.focused {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(197,148,0,0.50);
   box-shadow:
-    0 8px 56px rgba(0,52,255,0.07),
-    0 2px 16px rgba(0,0,0,0.035),
-    inset 0 1px 0 rgba(255,255,255,0.90),
-    inset 0 -1px 0 rgba(0,52,255,0.03);
-  overflow: hidden;
-  margin-bottom: 40px;
-  transition: all 0.50s cubic-bezier(0.4,0,0.2,1);
+    0 0 0 3px rgba(197,148,0,0.08),
+    0 8px 32px rgba(0,0,0,0.30);
 }
-.sbox:focus-within {
-  background: rgba(255,255,255,0.88);
-  box-shadow:
-    0 20px 64px rgba(0,52,255,0.12),
-    0 4px 24px rgba(0,0,0,0.05),
-    inset 0 1px 0 rgba(255,255,255,0.95);
-  transform: translateY(-4px);
-  border-color: rgba(0,82,255,0.14);
+.chat-icon {
+  color: var(--text-dim); flex-shrink: 0;
+  display: flex; align-items: center;
 }
+.chat-input {
+  flex: 1; border: none; outline: none;
+  background: transparent;
+  font-size: 15px; font-weight: 400;
+  color: var(--text-primary);
+  font-family: inherit;
+  padding: 14px 0;
+  letter-spacing: -0.01em;
+  min-width: 0;
+}
+.chat-input::placeholder { color: rgba(255,255,255,0.28); font-weight: 400; }
+.chat-send {
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  border-radius: 13px;
+  border: none;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color: #1A0E00;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, opacity .2s;
+  box-shadow: 0 4px 16px rgba(197,148,0,0.35);
+}
+.chat-send:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 6px 22px rgba(197,148,0,0.50);
+}
+.chat-send:active:not(:disabled) { transform: scale(0.95); }
+.chat-send:disabled { opacity: .35; cursor: not-allowed; }
 
-.srow {
-  display: flex; align-items: stretch;
-}
-.srow1 { min-height: 72px; }
-.srow2 {
-  min-height: 62px;
-  border-top: 1px solid rgba(0,52,255,0.045);
-  background: rgba(248,250,254,0.55);
-}
-
-/* Field — only a bottom-line illuminates on focus */
-.sf {
-  display: flex; flex-direction: column;
-  justify-content: center;
-  padding: 11px 22px;
-  flex: 1; min-width: 0;
-  position: relative;
-}
-.sf-checks { flex: 1.4; }
-
-/* The illuminating underline */
-.sf::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 50%; right: 50%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--brand), transparent);
-  border-radius: 2px;
-  transition: left .45s cubic-bezier(0.4,0,0.2,1), right .45s cubic-bezier(0.4,0,0.2,1), opacity .3s;
-  opacity: 0;
-}
-.sf:focus-within::after {
-  left: 0; right: 0; opacity: 1;
-}
-
-.slabel {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 9.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em;
-  color: var(--ink-pale); margin-bottom: 5px;
-  white-space: nowrap;
-}
-
-.si {
-  border: none; outline: none; background: transparent;
-  font-size: 14px; font-weight: 600; color: var(--ink);
-  font-family: inherit; width: 100%;
-  appearance: none; -webkit-appearance: none;
-  cursor: pointer; letter-spacing: -0.015em;
-}
-.si::placeholder { color: #CBD5E1; font-weight: 400; }
-
-/* Divider between fields */
-.sdiv {
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(0,52,255,0.07), transparent);
-  margin: 12px 0; flex-shrink: 0;
-}
-
-/* Custom checkboxes */
-.checks { display: flex; gap: 18px; align-items: center; }
-.ck {
+/* ── Free stripe ── */
+.free-stripe {
   display: flex; align-items: center; gap: 8px;
-  font-size: 13px; font-weight: 500; color: #374151;
-  cursor: pointer; user-select: none;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
 }
-.ck input { display: none; }
-.ck-box {
-  width: 16px; height: 16px;
-  border: 1.5px solid #D1D5DB; border-radius: 5px;
-  background: #fff; flex-shrink: 0;
-  transition: background .18s, border-color .18s;
-  position: relative;
+.fs-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 500;
+  color: rgba(0,181,163,0.85);
+  letter-spacing: 0.01em;
 }
-.ck input:checked ~ .ck-box {
-  background: var(--brand); border-color: var(--brand);
+.fs-item svg { flex-shrink: 0; }
+.fs-dot { color: var(--text-dim); font-size: 12px; }
+
+/* ── Quick actions ── */
+.quick-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
 }
-.ck input:checked ~ .ck-box::after {
-  content: '';
-  position: absolute;
-  left: 3px; top: 1px;
-  width: 6px; height: 9px;
-  border: 2px solid #fff;
-  border-top: none; border-left: none;
-  transform: rotate(45deg);
+.qa {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 999px;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-muted);
+  font-size: 13px; font-weight: 500;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  transition: background .22s, border-color .22s, color .22s, transform .22s;
+}
+.qa:hover {
+  background: rgba(197,148,0,0.10);
+  border-color: rgba(197,148,0,0.30);
+  color: var(--gold-light);
+  transform: translateY(-2px);
+}
+.qa-icon { font-size: 14px; }
+
+/* ═══════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════ */
+.hero-right { display: flex; flex-direction: column; gap: 16px; }
+
+.r-panel {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 20px;
+  backdrop-filter: blur(8px);
 }
 
-/* Search CTA — silk inertia */
-.sbtn {
-  display: flex; align-items: center; gap: 9px;
-  background: var(--brand);
-  color: #fff; border: none;
-  padding: 0 30px;
-  font-size: 14px; font-weight: 700;
-  cursor: pointer; letter-spacing: -0.015em;
-  white-space: nowrap;
+.r-panel-header { margin-bottom: 14px; }
+.r-tag {
+  font-size: 9.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--text-dim);
+}
+
+/* Ideas grid — 2x2 */
+.ideas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.idea-card {
+  display: flex; align-items: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 14px;
-  margin: 9px 9px 9px 0;
-  transition: transform 0.5s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.5s cubic-bezier(0.2,0.8,0.2,1), background 0.3s;
-  box-shadow: 0 8px 30px -6px rgba(0,82,255,0.48);
-  min-height: 50px;
+  padding: 14px 12px;
+  cursor: pointer; text-align: left;
+  transition: background .22s, border-color .22s, transform .22s;
   position: relative; overflow: hidden;
 }
-/* Micro-shimmer on the button */
-.sbtn::before {
+.idea-card::before {
   content: '';
-  position: absolute;
-  top: 0; left: -75%;
-  width: 50%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
-  transform: skewX(-15deg);
-  transition: left 0s;
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(197,148,0,0.05) 0%, transparent 60%);
+  opacity: 0; transition: opacity .22s;
+  border-radius: 14px;
 }
-.sbtn:hover:not(:disabled)::before {
-  animation: btnShimmer .55s ease forwards;
+.idea-card:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(197,148,0,0.28);
+  transform: translateY(-2px);
 }
-@keyframes btnShimmer {
-  from { left: -75%; }
-  to   { left: 130%; }
+.idea-card:hover::before { opacity: 1; }
+.idea-card:hover .idea-arrow { opacity: 1; color: var(--gold-light); }
+.idea-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+.idea-body {
+  display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0;
 }
-.sbtn:hover:not(:disabled) {
-  transform: scale(1.055);
-  box-shadow: 0 14px 40px -6px rgba(0,82,255,0.60);
-  background: var(--brand-deep);
+.idea-cat {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.10em;
+  text-transform: uppercase; color: var(--text-dim);
 }
-.sbtn:active:not(:disabled) {
-  transform: scale(0.97);
-  box-shadow: 0 4px 16px rgba(0,82,255,0.38);
+.idea-text {
+  font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.75); line-height: 1.45;
 }
-.sbtn:disabled { opacity: .50; cursor: not-allowed; }
-.spin {
-  width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,.30);
-  border-top-color: #fff; border-radius: 50%;
-  animation: sp .75s linear infinite; display: inline-block;
-}
-@keyframes sp { to { transform: rotate(360deg); } }
-
-.errmsg {
-  color: var(--carmine); font-size: 13px;
-  padding: 10px 20px 14px; text-align: center;
+.idea-arrow {
+  flex-shrink: 0; opacity: 0.25; color: var(--text-muted);
+  transition: opacity .22s, color .22s;
+  align-self: center;
 }
 
-/* ── Stats row ── */
+/* Tendencias list */
+.tend-list { display: flex; flex-direction: column; gap: 1px; }
+.tend-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 6px; border-radius: 10px;
+  cursor: pointer; text-align: left;
+  border: none; background: transparent;
+  transition: background .18s;
+  width: 100%;
+}
+.tend-row:hover { background: rgba(255,255,255,0.05); }
+.tend-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim); flex-shrink: 0; width: 22px;
+}
+.tend-text {
+  flex: 1; font-size: 12.5px; font-weight: 500;
+  color: rgba(255,255,255,0.68); line-height: 1.4;
+  text-align: left;
+}
+.tend-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; border-radius: 999px;
+  padding: 3px 8px; white-space: nowrap; flex-shrink: 0;
+}
+.tend-badge.hot     { background: rgba(225,29,72,0.14); color: #FF6688; border: 1px solid rgba(225,29,72,0.22); }
+.tend-badge.pop     { background: rgba(0,82,255,0.12); color: #7BA8FF; border: 1px solid rgba(0,82,255,0.20); }
+.tend-badge.new-b   { background: rgba(0,181,163,0.10); color: #00B5A3; border: 1px solid rgba(0,181,163,0.20); }
+.tend-badge.trend   { background: rgba(197,148,0,0.10); color: var(--gold-light); border: 1px solid rgba(197,148,0,0.20); }
+.tend-badge.exc     { background: rgba(240,208,96,0.10); color: var(--gold-light); border: 1px solid rgba(240,208,96,0.20); }
+.tend-badge.util    { background: rgba(255,255,255,0.07); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.10); }
+
+/* ── Stats strip ── */
 .stats {
+  position: relative; z-index: 1;
   display: flex; align-items: center;
   gap: 0; flex-wrap: wrap; justify-content: center;
+  width: 100%;
+  padding: 0 32px 60px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 32px;
+  margin-top: 8px;
 }
 .stat {
   display: flex; flex-direction: column; align-items: center;
@@ -696,34 +643,82 @@ const MUNICIPIOS = [
 }
 .stat strong {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 23px; font-weight: 800;
-  color: var(--ink); letter-spacing: -0.04em; line-height: 1;
+  font-size: 22px; font-weight: 800;
+  color: var(--text-primary); letter-spacing: -0.04em; line-height: 1;
 }
 .stat span {
-  font-size: 10px; color: var(--ink-pale);
-  margin-top: 5px; letter-spacing: 0.09em; text-transform: uppercase;
-  font-variant: small-caps; font-weight: 600;
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 5px; letter-spacing: 0.09em;
+  text-transform: uppercase; font-weight: 600;
 }
 .sdot {
-  width: 1px; height: 28px;
-  background: rgba(0,52,255,0.07); flex-shrink: 0;
+  width: 1px; height: 26px;
+  background: var(--border-subtle); flex-shrink: 0;
 }
 
 /* ════════════════════════════════════════════════════
-   HOW IT WORKS — dark panel, refined
+   TOOLS STRIP
+════════════════════════════════════════════════════ */
+.tools-strip {
+  background: #0A0F1E;
+  border-top: 1px solid rgba(0,82,255,.08);
+  border-bottom: 1px solid rgba(0,82,255,.08);
+  padding: 22px 24px;
+}
+.tools-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.tools-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,0.22); }
+.tools-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.tool-chip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 500;
+  text-decoration: none; transition: all .2s; cursor: pointer;
+}
+.tool-chip:hover {
+  border-color: rgba(197,148,0,0.30);
+  color: var(--gold-light);
+  background: rgba(197,148,0,0.07);
+  transform: translateY(-1px);
+}
+.tool-chip-icon { font-size: 14px; }
+.tool-chip-badge {
+  font-size: 9px; font-weight: 700; padding: 2px 7px;
+  background: rgba(197,148,0,0.14); color: var(--gold-light); border-radius: 20px;
+}
+
+/* ════════════════════════════════════════════════════
+   HOW IT WORKS
 ════════════════════════════════════════════════════ */
 .how-section {
   background: #0A0F1E;
   padding: 112px 24px;
 }
-.how-section .sec-head .tag {
-  background: rgba(0,181,163,0.12);
-  border-color: rgba(0,181,163,0.22);
-  color: var(--emerald);
-}
-.how-section .sec-head h2 { color: #F0F4FF; }
-.how-section .sec-head h2 em { color: var(--emerald); font-style: normal; }
 .container { max-width: 1100px; margin: 0 auto; }
+
+.sec-head { text-align: center; margin-bottom: 72px; }
+.tag {
+  display: inline-block;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--emerald); margin-bottom: 16px;
+  background: rgba(0,181,163,0.10);
+  padding: 5px 14px; border-radius: 999px;
+  border: 1px solid rgba(0,181,163,0.20);
+}
+.tag.tag-blue {
+  color: #7BA8FF;
+  background: rgba(0,82,255,0.10);
+  border-color: rgba(0,82,255,0.20);
+}
+.sec-head h2 {
+  font-size: clamp(30px,4.5vw,56px);
+  font-weight: 800; letter-spacing: -0.045em;
+  color: var(--text-primary); line-height: 1.06; margin: 0;
+  text-wrap: balance;
+}
+.sec-head h2 em { font-style: normal; color: var(--emerald); }
 
 .steps {
   display: flex; align-items: flex-start;
@@ -733,89 +728,65 @@ const MUNICIPIOS = [
   flex: 1; max-width: 300px;
   text-align: center;
   padding: 44px 28px 40px;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.030);
+  border: 1px solid var(--border-subtle);
   border-radius: 24px;
   position: relative;
-  transition: all 0.48s cubic-bezier(0.4,0,0.2,1);
+  transition: all 0.45s cubic-bezier(0.4,0,0.2,1);
 }
 .step::before {
   content: '';
-  position: absolute; inset: 0;
-  border-radius: 24px;
+  position: absolute; inset: 0; border-radius: 24px;
   background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,82,255,0.08) 0%, transparent 70%);
-  opacity: 0; transition: opacity .48s;
+  opacity: 0; transition: opacity .45s;
 }
-.step:hover { background: rgba(255,255,255,0.06); border-color: rgba(0,82,255,0.25); transform: translateY(-7px); box-shadow: 0 28px 64px rgba(0,0,0,0.28); }
+.step:hover { background: rgba(255,255,255,0.055); border-color: rgba(0,82,255,0.22); transform: translateY(-7px); box-shadow: 0 28px 64px rgba(0,0,0,0.26); }
 .step:hover::before { opacity: 1; }
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px; font-weight: 800;
-  color: rgba(0,181,163,0.65); letter-spacing: 0.15em;
+  color: rgba(0,181,163,0.60); letter-spacing: 0.15em;
   margin-bottom: 22px; text-transform: uppercase; position: relative; z-index: 1;
 }
 .step-icon {
-  font-size: 28px;
-  width: 66px; height: 66px;
-  background: rgba(0,82,255,0.13);
+  font-size: 28px; width: 64px; height: 64px;
+  background: rgba(0,82,255,0.12);
   border: 1px solid rgba(0,82,255,0.18);
   border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 22px; position: relative; z-index: 1;
 }
-.step h3 { font-size: 16px; font-weight: 700; color: #F0F4FF; letter-spacing: -0.03em; margin: 0 0 10px; position: relative; z-index: 1; }
-.step p  { font-size: 13.5px; color: rgba(255,255,255,0.38); line-height: 1.72; margin: 0; position: relative; z-index: 1; }
-.step-arrow { font-size: 18px; color: rgba(0,82,255,0.25); flex-shrink: 0; align-self: center; }
+.step h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.03em; margin: 0 0 10px; position: relative; z-index: 1; }
+.step p  { font-size: 13.5px; color: var(--text-muted); line-height: 1.72; margin: 0; position: relative; z-index: 1; }
+.step-arrow { font-size: 18px; color: rgba(0,82,255,0.22); flex-shrink: 0; align-self: center; }
 
 /* ════════════════════════════════════════════════════
-   FEATURES — Bento Grid "Por qué UrbIA"
+   FEATURES — Bento Grid
 ════════════════════════════════════════════════════ */
 .sec-features {
-  background: linear-gradient(180deg, #F5F8FF 0%, #FAFCFF 40%, #FFFFFF 80%);
+  background: #070C1C;
   padding: 112px 24px;
 }
 
-.sec-head { text-align: center; margin-bottom: 72px; }
-.tag {
-  display: inline-block;
-  font-size: 10.5px; font-weight: 700;
-  letter-spacing: 0.13em; text-transform: uppercase;
-  color: var(--brand); margin-bottom: 16px;
-  background: rgba(0,82,255,0.055);
-  padding: 5px 14px; border-radius: 999px;
-  border: 1px solid rgba(0,82,255,0.13);
-}
-.sec-head h2 {
-  font-size: clamp(32px,5vw,62px);
-  font-weight: 800; letter-spacing: -0.05em;
-  color: var(--ink); line-height: 1.04; margin: 0;
-  text-wrap: balance;
-}
-.sec-head h2 em { font-style: normal; color: var(--brand); }
-
-/* Bento grid */
 .feat-grid {
   display: grid;
   grid-template-columns: repeat(6,1fr);
-  gap: 18px; margin-bottom: 72px;
+  gap: 16px; margin-bottom: 72px;
 }
 .fcard {
-  padding: 34px 30px;
-  border-radius: 24px;
-  border: 1px solid rgba(0,52,255,0.055);
-  background: #FFFFFF;
-  box-shadow:
-    0 10px 48px -16px rgba(0,52,255,0.09),
-    0 2px 8px rgba(0,0,0,0.025);
-  transition: all 0.48s cubic-bezier(0.4,0,0.2,1);
-  animation: fci .55s cubic-bezier(.22,.83,.27,1) calc(var(--i)*65ms) both;
+  padding: 32px 28px;
+  border-radius: 22px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.030);
+  transition: all 0.45s cubic-bezier(0.4,0,0.2,1);
+  animation: fci .55s cubic-bezier(.22,.83,.27,1) calc(var(--i)*60ms) both;
   position: relative; overflow: hidden;
 }
 .fcard::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse 70% 50% at 0% 0%, rgba(0,82,255,0.04) 0%, transparent 70%);
-  opacity: 0; transition: opacity .48s;
+  background: radial-gradient(ellipse 70% 50% at 0% 0%, rgba(197,148,0,0.06) 0%, transparent 70%);
+  opacity: 0; transition: opacity .45s;
 }
 .fcard:hover::before { opacity: 1; }
 .fcard:nth-child(1) { grid-column: span 4; }
@@ -828,152 +799,98 @@ const MUNICIPIOS = [
 .fcard:nth-child(6) h3 { margin-bottom: 4px; }
 @keyframes fci { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
 .fcard:hover {
-  transform: translateY(-7px);
-  box-shadow:
-    0 28px 56px -12px rgba(0,52,255,0.12),
-    0 4px 14px rgba(0,0,0,0.035);
-  border-color: rgba(0,82,255,0.10);
+  transform: translateY(-6px);
+  box-shadow: 0 24px 52px -12px rgba(0,0,0,0.36);
+  border-color: rgba(197,148,0,0.18);
+  background: rgba(255,255,255,0.050);
 }
-/* Duo-tone icon container */
 .ficon {
-  font-size: 22px; width: 54px; height: 54px;
+  font-size: 22px; width: 52px; height: 52px;
   border-radius: 16px;
-  background: linear-gradient(145deg, rgba(0,82,255,0.08) 0%, rgba(0,82,255,0.14) 100%);
-  border: 1px solid rgba(0,82,255,0.10);
+  background: rgba(197,148,0,0.10);
+  border: 1px solid rgba(197,148,0,0.16);
   display: grid; place-items: center;
-  margin-bottom: 20px; position: relative; z-index: 1;
+  margin-bottom: 18px; position: relative; z-index: 1;
 }
-.fcard h3 { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.03em; margin: 0 0 9px; position: relative; z-index: 1; }
-.fcard p  { font-size: 13px; color: var(--ink-mid); line-height: 1.68; margin: 0; position: relative; z-index: 1; }
+.fcard h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.03em; margin: 0 0 9px; position: relative; z-index: 1; }
+.fcard p  { font-size: 13px; color: var(--text-muted); line-height: 1.68; margin: 0; position: relative; z-index: 1; }
 
 /* ════════════════════════════════════════════════════
-   SEMÁFORO EXPLAINER — "Masterpiece" frame
+   SEMÁFORO EXPLAINER
 ════════════════════════════════════════════════════ */
 .semaforo-card {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 56px; align-items: center;
   background: #0B1022;
-  border-radius: 28px; padding: 60px 60px;
+  border-radius: 28px; padding: 60px;
   overflow: visible; position: relative;
-  /* Metallic edge glow */
   box-shadow:
-    0 0 0 1px rgba(200,210,240,0.15),
-    0 40px 100px rgba(0,0,0,0.38),
-    inset 0 1px 0 rgba(255,255,255,0.07);
+    0 0 0 1px rgba(200,210,240,0.12),
+    0 40px 100px rgba(0,0,0,0.36);
 }
-/* Ambient blue radial inside the card */
 .semaforo-card::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse 55% 80% at 82% 50%, rgba(0,82,255,0.18) 0%, transparent 68%);
-  border-radius: 28px;
-  pointer-events: none;
+  background: radial-gradient(ellipse 55% 80% at 82% 50%, rgba(0,82,255,0.14) 0%, transparent 68%);
+  border-radius: 28px; pointer-events: none;
 }
-/* Metallic border gradient — the "Masterpiece" frame */
 .semaforo-card::after {
   content: '';
-  position: absolute; inset: -1px;
-  border-radius: 29px;
-  background: linear-gradient(
-    125deg,
-    rgba(200,210,240,0.32) 0%,
-    rgba(80,100,160,0.06) 25%,
-    rgba(197,148,0,0.22) 52%,
-    rgba(240,208,96,0.14) 65%,
-    rgba(200,210,240,0.28) 100%
-  );
-  z-index: -1;
-  pointer-events: none;
+  position: absolute; inset: -1px; border-radius: 29px;
+  background: linear-gradient(125deg, rgba(200,210,240,0.24) 0%, rgba(80,100,160,0.06) 25%, rgba(197,148,0,0.18) 52%, rgba(240,208,96,0.12) 65%, rgba(200,210,240,0.22) 100%);
+  z-index: -1; pointer-events: none;
 }
 .sem-copy { position: relative; z-index: 1; }
-.sem-copy .tag {
-  background: rgba(0,82,255,0.14);
-  border-color: rgba(0,82,255,0.24);
-  color: rgba(0,181,163,0.90);
-  margin-bottom: 16px;
-}
 .sem-copy h3 {
-  font-size: clamp(22px,2.8vw,34px); font-weight: 800;
-  color: #fff; letter-spacing: -0.038em; margin: 0 0 16px; line-height: 1.18;
+  font-size: clamp(22px,2.8vw,32px); font-weight: 800;
+  color: var(--text-primary); letter-spacing: -0.038em; margin: 12px 0 16px; line-height: 1.18;
 }
-.sem-copy > p { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.70; margin: 0 0 32px; }
+.sem-copy > p { font-size: 14px; color: var(--text-muted); line-height: 1.70; margin: 0 0 32px; }
 .sem-legend { display: flex; flex-direction: column; gap: 16px; }
 .sem-item { display: flex; align-items: center; gap: 14px; }
 .sem-item div { display: flex; flex-direction: column; gap: 2px; }
-.sem-item strong { font-size: 13px; color: #fff; font-weight: 600; }
-.sem-item span { font-size: 12px; color: rgba(255,255,255,.38); }
+.sem-item strong { font-size: 13px; color: var(--text-primary); font-weight: 600; }
+.sem-item span { font-size: 12px; color: var(--text-muted); }
 .sem-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-/* Luxury semaphore colors */
 .sem-dot.green  { background: #00B5A3; box-shadow: 0 0 14px rgba(0,181,163,0.70); }
 .sem-dot.yellow { background: #C59400; box-shadow: 0 0 14px rgba(197,148,0,0.70); }
 .sem-dot.red    { background: #E11D48; box-shadow: 0 0 14px rgba(225,29,72,0.70); }
 
-/* Mock card — the showcase */
 .sem-mock { position: relative; z-index: 1; }
 .mock-card {
-  background: #fff; border-radius: 20px;
-  padding: 26px;
+  background: #fff; border-radius: 20px; padding: 26px;
   box-shadow: 0 32px 72px rgba(0,0,0,0.44), 0 0 0 1px rgba(0,0,0,0.04);
 }
-.mock-label {
-  font-size: 9.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em;
-  color: #9CA3AF; margin-bottom: 12px;
-}
-.mock-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 8px; gap: 8px;
-}
-.mock-addr {
-  font-size: 12px; color: #6B7280; font-weight: 500;
-  font-family: 'JetBrains Mono', monospace;
-}
-.mock-badge {
-  font-size: 10.5px; font-weight: 700; border-radius: 9px;
-  padding: 4px 11px; white-space: nowrap;
-}
+.mock-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #9CA3AF; margin-bottom: 12px; }
+.mock-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+.mock-addr { font-size: 12px; color: #6B7280; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+.mock-badge { font-size: 10.5px; font-weight: 700; border-radius: 9px; padding: 4px 11px; white-space: nowrap; }
 .green-badge { background: rgba(0,181,163,0.09); color: #00B5A3; border: 1px solid rgba(0,181,163,0.22); }
-.mock-price {
-  font-size: 30px; font-weight: 800; color: #1A1A1A;
-  letter-spacing: -0.045em; margin-bottom: 4px;
-  font-family: 'JetBrains Mono', monospace;
-}
+.mock-price { font-size: 30px; font-weight: 800; color: #1A1A1A; letter-spacing: -0.045em; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
 .mock-meta { font-size: 12px; color: #9CA3AF; margin-bottom: 18px; }
-.mock-verdict {
-  background: rgba(0,181,163,0.065);
-  border: 1px solid rgba(0,181,163,0.18);
-  border-radius: 11px; padding: 11px 15px; margin-bottom: 16px;
-}
+.mock-verdict { background: rgba(0,181,163,0.065); border: 1px solid rgba(0,181,163,0.18); border-radius: 11px; padding: 11px 15px; margin-bottom: 16px; }
 .verdict-text { font-size: 13px; color: #007B70; line-height: 1.55; margin: 0; }
 .verdict-text strong { font-weight: 700; }
 .mock-prices { display: flex; flex-direction: column; gap: 7px; }
 .mp-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; }
 .mp-label { color: #9CA3AF; }
 .mp-val { font-weight: 700; }
-.asking   { color: var(--ink); font-family: 'JetBrains Mono', monospace; }
-.notarial { color: var(--emerald); font-family: 'JetBrains Mono', monospace; }
-/* Gap row — the authority number */
+.asking   { color: #1A1A1A; font-family: 'JetBrains Mono', monospace; }
+.notarial { color: #00B5A3; font-family: 'JetBrains Mono', monospace; }
 .mp-row:last-child {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 3px;
-  margin-top: 14px; padding-top: 14px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 3px; margin-top: 14px; padding-top: 14px;
   border-top: 1px solid rgba(0,181,163,0.13);
 }
-.mp-row:last-child .mp-label {
-  font-size: 9px; letter-spacing: 0.14em;
-  text-transform: uppercase; font-variant: small-caps;
-}
-/* The authority figure */
+.mp-row:last-child .mp-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; }
 .gap-val {
   font-family: 'JetBrains Mono', monospace;
   font-size: 48px; font-weight: 800;
-  letter-spacing: -0.05em;
-  color: var(--emerald);
-  line-height: 1;
+  letter-spacing: -0.05em; color: #00B5A3; line-height: 1;
   text-shadow: 0 0 32px rgba(0,181,163,0.20);
 }
 
-/* ── GDPR toast ── */
+/* ── GDPR ── */
 .gdpr {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   display: flex; align-items: center; gap: 16px;
@@ -992,122 +909,95 @@ const MUNICIPIOS = [
 .gdpr button:hover { opacity: .85; }
 
 /* ════════════════════════════════════════
-   TOOLS STRIP
-════════════════════════════════════════ */
-.tools-strip {
-  background: #F8FAFF;
-  border-top: 1px solid rgba(0,82,255,.07);
-  border-bottom: 1px solid rgba(0,82,255,.07);
-  padding: 20px 24px;
-}
-.tools-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; align-items: center; }
-.tools-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #94A3B8; }
-.tools-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.tool-chip {
-  display: flex; align-items: center; gap: 7px;
-  padding: 8px 16px; border-radius: 999px;
-  border: 1px solid rgba(0,82,255,.12); background: #fff;
-  color: #374151; font-size: 12px; font-weight: 500;
-  text-decoration: none; transition: all .2s; cursor: pointer;
-}
-.tool-chip:hover { border-color: #0052FF; color: #0052FF; background: #EEF4FF; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,82,255,.1); }
-.tool-chip-icon { font-size: 14px; }
-.tool-chip-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; background: rgba(0,82,255,.1); color: #0052FF; border-radius: 20px; }
-
-/* ════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════ */
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
+  .hero-wrap { grid-template-columns: 1fr; gap: 40px; padding: 72px 24px 48px; }
+  .hero-right { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+@media (max-width: 800px) {
   .feat-grid { grid-template-columns: repeat(2,1fr); }
-  .fcard:nth-child(1), .fcard:nth-child(2),
-  .fcard:nth-child(3), .fcard:nth-child(4),
-  .fcard:nth-child(5), .fcard:nth-child(6) { grid-column: span 1; }
+  .fcard:nth-child(1), .fcard:nth-child(2), .fcard:nth-child(3),
+  .fcard:nth-child(4), .fcard:nth-child(5), .fcard:nth-child(6) { grid-column: span 1; }
   .fcard:nth-child(6) { display: block; }
-  .fcard:nth-child(6) .ficon { margin-bottom: 20px; }
-  .semaforo-card { grid-template-columns: 1fr; padding: 44px 32px; }
+  .fcard:nth-child(6) .ficon { margin-bottom: 18px; }
+  .semaforo-card { grid-template-columns: 1fr; padding: 40px 28px; }
   .steps { flex-direction: column; align-items: center; gap: 10px; }
   .step-arrow { transform: rotate(90deg); }
 }
 @media (max-width: 640px) {
-  .srow1, .srow2 { flex-direction: column; min-height: auto; }
-  .sdiv { width: calc(100% - 32px); height: 1px; margin: 0 16px; }
-  .sbtn { border-radius: 14px; justify-content: center; margin: 8px 12px; }
-  .tl-cards { gap: 10px; }
+  .hero-right { grid-template-columns: 1fr; }
+  .ideas-grid { grid-template-columns: 1fr; }
+  .quick-actions { gap: 6px; }
   .feat-grid { grid-template-columns: 1fr; }
-  .semaforo-card { padding: 36px 24px; }
+  .semaforo-card { padding: 32px 20px; }
+  .stats { gap: 0; }
+  .stat { padding: 0 16px; }
+  .tools-strip { padding: 16px; }
 }
   `]
 })
 export class LandingHeroComponent implements OnInit, OnDestroy {
-  private fb     = inject(FormBuilder);
-  private svc    = inject(BusquedaService);
   private router = inject(Router);
 
-  readonly municipios = MUNICIPIOS;
-  cargando = false;
-  errorMsg = '';
+  chatQuery = '';
+  chatFocused = false;
+  v = false;
   gdpr = true;
-  v = false; // entrance visible
 
-  form = this.fb.group({
-    municipio:    ['madrid', Validators.required],
-    barrio:       [''],
-    precioMaximo: [null as number | null],
-    m2Min:        [null as number | null],
-    habitaciones: [null as number | null],
-    exterior:     [false],
-    ascensor:     [false],
-  });
+  private timer: ReturnType<typeof setTimeout> | null = null;
+
+  readonly ideas = [
+    { icon: '🔍', cat: 'Búsqueda', texto: 'Pisos baratos con semáforo verde en Madrid' },
+    { icon: '📊', cat: 'Análisis', texto: '¿Cuánto vale realmente un piso en Salamanca?' },
+    { icon: '🏘️', cat: 'Barrios', texto: '¿Cuál es el mejor barrio para vivir en Madrid?' },
+    { icon: '💰', cat: 'Hipoteca', texto: 'Cuánto pagaré de hipoteca por 300.000€' },
+  ];
+
+  readonly tendencias = [
+    { texto: 'Precio medio m² Chamartín 2025',      badge: '↑ caliente', clase: 'hot'   },
+    { texto: 'Mejores barrios para familias Madrid', badge: 'popular',    clase: 'pop'   },
+    { texto: 'Pisos infravalorados en Retiro',       badge: 'nuevo',      clase: 'new-b' },
+    { texto: 'Hipoteca variable vs fija 2025',       badge: 'trending',   clase: 'trend' },
+    { texto: 'Gap de negociación por zona Madrid',   badge: 'exclusivo',  clase: 'exc'   },
+    { texto: 'Coste real de comprar piso en Madrid', badge: 'útil',       clase: 'util'  },
+  ];
 
   readonly tools = [
-    { icon: '🤖', label: 'Asistente IA', path: '/asistente', badge: 'Nuevo' },
-    { icon: '🗺️', label: 'Mapa de pisos', path: '/mapa-resultados', badge: null },
-    { icon: '🏘️', label: 'Ranking barrios', path: '/barrios', badge: 'IA' },
-    { icon: '🏦', label: 'Hipotecas', path: '/hipotecas', badge: null },
-    { icon: '🛡️', label: 'Seguros hogar', path: '/seguros', badge: 'Nuevo' },
-    { icon: '🧾', label: 'Gastos compra', path: '/costes-compra', badge: 'Nuevo' },
-    { icon: '📊', label: 'Estadísticas', path: '/estadisticas', badge: null },
-    { icon: '🏛️', label: 'Catastro', path: '/catastro', badge: null },
+    { icon: '🤖', label: 'Asistente IA',   path: '/asistente',       badge: 'Nuevo' },
+    { icon: '🗺️', label: 'Mapa de pisos',  path: '/mapa-resultados', badge: null    },
+    { icon: '🏘️', label: 'Ranking barrios',path: '/barrios',         badge: 'IA'    },
+    { icon: '🏦', label: 'Hipotecas',       path: '/hipotecas',       badge: null    },
+    { icon: '🛡️', label: 'Seguros hogar',  path: '/seguros',         badge: 'Nuevo' },
+    { icon: '🧾', label: 'Gastos compra',  path: '/costes-compra',   badge: 'Nuevo' },
+    { icon: '📊', label: 'Estadísticas',   path: '/estadisticas',    badge: null    },
+    { icon: '🏛️', label: 'Catastro',       path: '/catastro',        badge: null    },
   ];
 
   readonly feats = [
-    { e:'🚦', t:'Semáforo de precios',   d:'Compara el precio pedido con la transacción notarial real de la zona. Verde, amarillo o rojo al instante.' },
-    { e:'🤖', t:'Asistente IA 24/7',     d:'Pregunta cualquier cosa sobre barrios, hipotecas o precios en lenguaje natural. Respuestas instantáneas.' },
-    { e:'🏘️', t:'Ranking de barrios',    d:'Scoring IA de calidad de vida, seguridad, colegios y transporte para cada barrio. Encuentra el tuyo.' },
-    { e:'🔔', t:'Alertas de precio',     d:'Configura alertas y recibe notificaciones cuando un inmueble infravalorado aparezca en tu zona.' },
-    { e:'🛡️', t:'Seguros de hogar',      d:'Compara las mejores pólizas del mercado. Precios, coberturas y franquicias lado a lado.' },
-    { e:'🧾', t:'Calculadora de gastos', d:'ITP, AJD, notaría, registro y gestoría calculados automáticamente por CCAA. Sin sorpresas al firmar.' },
+    { e: '🚦', t: 'Semáforo de precios',   d: 'Compara el precio pedido con la transacción notarial real de la zona. Verde, amarillo o rojo al instante.' },
+    { e: '🤖', t: 'Asistente IA 24/7',     d: 'Pregunta cualquier cosa sobre barrios, hipotecas o precios en lenguaje natural. Respuestas instantáneas.' },
+    { e: '🏘️', t: 'Ranking de barrios',    d: 'Scoring IA de calidad de vida, seguridad, colegios y transporte para cada barrio. Encuentra el tuyo.' },
+    { e: '🔔', t: 'Alertas de precio',     d: 'Configura alertas y recibe notificaciones cuando un inmueble infravalorado aparezca en tu zona.' },
+    { e: '🛡️', t: 'Seguros de hogar',      d: 'Compara las mejores pólizas del mercado. Precios, coberturas y franquicias lado a lado.' },
+    { e: '🧾', t: 'Calculadora de gastos', d: 'ITP, AJD, notaría, registro y gestoría calculados automáticamente por CCAA. Sin sorpresas al firmar.' },
   ];
-
-  private timer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.timer = setTimeout(() => this.v = true, 80);
   }
+
   ngOnDestroy(): void {
     if (this.timer) clearTimeout(this.timer);
   }
 
-  async buscar(): Promise<void> {
-    this.errorMsg = '';
-    this.cargando = true;
-    const v = this.form.value;
-    const filtros: BusquedaFiltros = {
-      municipio:    v.municipio!,
-      barrio:       v.barrio || undefined,
-      precioMaximo: v.precioMaximo ?? 0,
-      m2Min:        v.m2Min ?? undefined,
-      habitaciones: v.habitaciones ?? undefined,
-      exterior:     v.exterior ?? undefined,
-      ascensor:     v.ascensor ?? undefined,
-    };
-    try {
-      await this.svc.buscar(filtros);
-      this.router.navigate(['/mapa-resultados']);
-    } catch {
-      this.errorMsg = 'No se pudo conectar. Inténtalo de nuevo.';
-    } finally {
-      this.cargando = false;
-    }
+  enviarChat(): void {
+    if (!this.chatQuery.trim()) return;
+    this.router.navigate(['/asistente'], { queryParams: { q: this.chatQuery.trim() } });
+  }
+
+  usarSugerencia(texto: string): void {
+    this.chatQuery = texto;
+    this.enviarChat();
   }
 }

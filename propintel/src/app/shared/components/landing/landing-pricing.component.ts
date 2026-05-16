@@ -11,33 +11,98 @@ import { RouterLink } from '@angular/router';
 
     <div class="sec-head">
       <span class="tag">Precios</span>
-      <h2>Empieza gratis.<br>Escala cuando lo necesites.</h2>
+      <h2>Empieza gratis.<br>Desbloquea todo cuando lo necesites.</h2>
       <p>Sin tarjeta de crédito · Cancela cuando quieras</p>
     </div>
 
+    <!-- Toggle: mensual / anual -->
+    <div class="toggle-row">
+      <span [class.active]="!anual" (click)="anual=false">Mensual</span>
+      <button class="toggle-btn" (click)="anual=!anual" [class.on]="anual" aria-label="Cambiar periodo">
+        <span class="toggle-knob"></span>
+      </button>
+      <span [class.active]="anual" (click)="anual=true">
+        Anual
+        <span class="discount-badge">−20%</span>
+      </span>
+    </div>
+
     <div class="plans">
-      @for (p of plans; track p.name; let i = $index) {
-        <div class="plan" [class.pop]="p.pop" [style.--i]="i">
-          @if (p.pop) { <div class="pop-badge">Most Exclusive</div> }
-          <div class="plan-head">
-            <p class="plan-name">{{ p.name }}</p>
-            <div class="plan-price">
-              <span class="amount">{{ p.price }}</span>
-              <span class="period">{{ p.period }}</span>
-            </div>
-            <p class="plan-desc">{{ p.desc }}</p>
+
+      <!-- ── Plan Gratis ── -->
+      <div class="plan">
+        <div class="plan-head">
+          <div class="plan-name-row">
+            <span class="plan-name">Gratis</span>
+            <span class="plan-pill free-pill">Para siempre</span>
           </div>
-          <ul class="plan-feats">
-            @for (f of p.feats; track f) {
-              <li>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                {{ f }}
-              </li>
-            }
-          </ul>
-          <a routerLink="/registro" class="plan-cta" [class.cta-pop]="p.pop">{{ p.cta }}</a>
+          <div class="plan-price">
+            <span class="amount">0€</span>
+            <span class="period">/ siempre</span>
+          </div>
+          <p class="plan-desc">Para explorar el mercado y empezar a buscar sin compromisos.</p>
         </div>
-      }
+
+        <div class="plan-divider"></div>
+
+        <ul class="plan-feats">
+          @for (f of freePlan.feats; track f.text) {
+            <li>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>{{ f.text }}</span>
+            </li>
+          }
+        </ul>
+
+        <div class="plan-locked">
+          <div class="locked-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Solo disponible en Pro
+          </div>
+          @for (f of lockedFeats; track f) {
+            <div class="locked-item">{{ f }}</div>
+          }
+        </div>
+
+        <a routerLink="/registro" class="plan-cta">Crear cuenta gratis</a>
+      </div>
+
+      <!-- ── Plan Pro ── -->
+      <div class="plan plan-pro">
+        <div class="pop-badge">MÁS POPULAR</div>
+
+        <div class="plan-head">
+          <div class="plan-name-row">
+            <span class="plan-name">Pro</span>
+            <span class="plan-pill pro-pill">Ventaja real</span>
+          </div>
+          <div class="plan-price">
+            <span class="amount">{{ anual ? '7€' : '9€' }}</span>
+            <span class="period">/ mes</span>
+          </div>
+          <p class="plan-desc">
+            {{ anual ? 'Facturado anualmente (84€/año).' : 'Facturado mensualmente.' }}
+            Todo sin límites.
+          </p>
+        </div>
+
+        <div class="plan-divider"></div>
+
+        <ul class="plan-feats">
+          @for (f of proPlan.feats; track f.text) {
+            <li [class.highlight]="f.highlight">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>{{ f.text }}</span>
+              @if (f.badge) { <span class="feat-badge">{{ f.badge }}</span> }
+            </li>
+          }
+        </ul>
+
+        <a routerLink="/registro" class="plan-cta cta-pro">Empezar Pro ahora →</a>
+
+        <p class="cta-note">7 días de prueba gratuita · Sin permanencia</p>
+      </div>
+
     </div>
 
     <!-- Enterprise row -->
@@ -53,37 +118,35 @@ import { RouterLink } from '@angular/router';
 </section>
   `,
   styles: [`
-/* ════════════════════════════════════════════════════════
-   PRICING — "Institutional Gold" — Dubai × Stripe
-════════════════════════════════════════════════════════ */
 :host {
   --brand:      #0052FF;
-  --brand-deep: #0041CC;
   --emerald:    #00B5A3;
   --gold:       #C59400;
   --gold-light: #F0D060;
   --carmine:    #E11D48;
+  --bg-dark:    #070C1C;
+  --border:     rgba(255,255,255,0.07);
+  --text:       #F0F4FF;
+  --muted:      rgba(255,255,255,0.45);
 }
 
 .pricing {
-  background: #070C1C;
-  padding: 128px 24px;
+  background: var(--bg-dark);
+  padding: 120px 24px;
   position: relative; overflow: hidden;
 }
-/* Ambient top glow */
 .pricing::before {
   content: '';
-  position: absolute;
-  top: -160px; left: 50%; transform: translateX(-50%);
+  position: absolute; top: -160px; left: 50%; transform: translateX(-50%);
   width: 900px; height: 500px;
   background: radial-gradient(ellipse, rgba(0,82,255,0.07) 0%, transparent 65%);
   pointer-events: none;
 }
 
-.container { max-width: 1140px; margin: 0 auto; position: relative; }
+.container { max-width: 900px; margin: 0 auto; position: relative; }
 
 /* Section header */
-.sec-head { text-align: center; margin-bottom: 72px; }
+.sec-head { text-align: center; margin-bottom: 48px; }
 .tag {
   display: inline-block;
   font-size: 10.5px; font-weight: 700;
@@ -94,157 +157,188 @@ import { RouterLink } from '@angular/router';
   border: 1px solid rgba(0,181,163,0.22);
 }
 .sec-head h2 {
-  font-size: clamp(30px,4.5vw,54px);
+  font-size: clamp(28px,4vw,52px);
   font-weight: 800; letter-spacing: -0.045em;
-  color: #fff; line-height: 1.07; margin: 0 0 14px;
+  color: var(--text); line-height: 1.07; margin: 0 0 14px;
   text-wrap: balance;
 }
-.sec-head p { font-size: 14px; color: rgba(255,255,255,.30); letter-spacing: 0.02em; }
+.sec-head p { font-size: 14px; color: rgba(255,255,255,.28); letter-spacing: 0.02em; }
 
-/* Plans grid */
-.plans {
-  display: grid; grid-template-columns: repeat(3,1fr);
-  gap: 22px; margin-bottom: 52px;
-  perspective: 1400px;
+/* Annual toggle */
+.toggle-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-bottom: 48px;
+  font-size: 14px; font-weight: 500; color: var(--muted);
+  cursor: pointer; user-select: none;
+}
+.toggle-row span { transition: color .22s; }
+.toggle-row span.active { color: var(--text); }
+.toggle-btn {
+  width: 44px; height: 24px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px; position: relative; cursor: pointer;
+  transition: background .28s, border-color .28s;
+}
+.toggle-btn.on { background: var(--brand); border-color: var(--brand); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  transition: left .28s cubic-bezier(.4,0,.2,1), background .28s;
+}
+.toggle-btn.on .toggle-knob { left: 22px; background: #fff; }
+.discount-badge {
+  display: inline-block; margin-left: 6px;
+  background: rgba(0,181,163,0.15); color: var(--emerald);
+  border: 1px solid rgba(0,181,163,0.22);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 999px; letter-spacing: 0.04em;
 }
 
-/* Base plan card */
+/* Plans grid — 2 columns */
+.plans {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 22px; margin-bottom: 44px;
+}
+
+/* Base plan */
 .plan {
   position: relative;
-  background: rgba(255,255,255,.035);
-  border: 1px solid rgba(255,255,255,.075);
-  border-radius: 26px; padding: 36px 30px;
+  background: rgba(255,255,255,0.030);
+  border: 1px solid var(--border);
+  border-radius: 26px; padding: 36px 32px;
   display: flex; flex-direction: column;
-  transition: transform .48s cubic-bezier(.22,.83,.27,1), box-shadow .48s, border-color .48s;
-  animation: pi .65s cubic-bezier(.22,.83,.27,1) calc(var(--i)*95ms) both;
-  overflow: hidden;
-  /* stacking context so ::before shimmer clips correctly */
-  isolation: isolate;
+  transition: transform .40s, box-shadow .40s, border-color .40s;
 }
-@keyframes pi {
-  from { opacity:0; transform:translateY(22px) scale(.97); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
-}
-/* Inner shimmer on hover */
-.plan::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(130deg, rgba(0,82,255,0.065) 0%, transparent 55%);
-  opacity: 0; transition: opacity .48s;
-  z-index: 0; pointer-events: none;
-}
-.plan > * { position: relative; z-index: 1; }
-.plan:hover { transform: translateY(-9px); border-color: rgba(255,255,255,.14); box-shadow: 0 36px 72px rgba(0,0,0,.50); }
-.plan:hover::before { opacity: 1; }
+.plan:hover { transform: translateY(-7px); box-shadow: 0 32px 72px rgba(0,0,0,0.44); border-color: rgba(255,255,255,0.12); }
 
-/* ── POPULAR plan — "Most Exclusive" ── */
-/* Technique: box-shadow inset ring + outline = no overflow clipping issues */
-.plan.pop {
+/* Pro plan — gold gradient border */
+.plan-pro {
   background: #080D20;
-  /* 2px gold-to-silver border via outline */
-  outline: 2px solid transparent;
-  outline-offset: -2px;
-  border-color: transparent;
-  transform: translateY(-5px);
-  /* Animated gold gradient border using box-shadow is unreliable;
-     we use a CSS mask approach instead: gradient on background-clip */
   background-image:
     linear-gradient(#080D20, #080D20),
     linear-gradient(138deg, #C59400 0%, #F0D060 22%, #C8C8D4 45%, #F0D060 68%, #C59400 100%);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 2px solid transparent;
-  box-shadow: 0 28px 64px rgba(0,0,0,.50), 0 0 0 0 transparent;
+  box-shadow: 0 24px 56px rgba(0,0,0,0.42);
 }
-.plan.pop:hover {
-  transform: translateY(-14px);
-  box-shadow: 0 48px 96px rgba(0,0,0,.58);
-}
-/* Remove the ::after pseudo since we use background-clip for the border */
-.plan.pop::after { display: none; }
-/* Disable the generic hover shimmer on pop card */
-.plan.pop::before { display: none; }
+.plan-pro:hover { transform: translateY(-10px); box-shadow: 0 40px 88px rgba(0,0,0,0.52); }
 
-/* Badge "MOST EXCLUSIVE" */
-.plan .pop-badge {
-  position: absolute; top: 22px; right: 22px;
-  z-index: 10;
-  background: rgba(6,4,0,0.90);
-  color: #F0D060;
-  border: 1px solid rgba(240,208,96,0.32);
-  font-size: 9.5px; font-weight: 800;
-  letter-spacing: 0.09em; text-transform: uppercase;
-  border-radius: 999px; padding: 4px 13px;
-  box-shadow: 0 2px 12px rgba(197,148,0,0.22);
-  font-family: 'JetBrains Mono', monospace;
+/* Pop badge */
+.pop-badge {
+  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(138deg, #C59400, #F0D060);
+  color: #1A0E00;
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  border-radius: 0 0 10px 10px; padding: 4px 18px;
+  box-shadow: 0 4px 16px rgba(197,148,0,0.30);
 }
 
-/* Plan header */
-.plan-head { margin-bottom: 26px; }
+/* Plan head */
+.plan-name-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
 .plan-name {
-  font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.12em;
-  color: rgba(255,255,255,.45); margin: 0 0 16px;
+  font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.10em; color: var(--muted);
 }
-.plan.pop .plan-name { color: var(--gold); padding-right: 114px; }
+.plan-pro .plan-name { color: var(--gold); }
+.plan-pill {
+  font-size: 10px; font-weight: 700; border-radius: 999px;
+  padding: 3px 10px; letter-spacing: 0.04em;
+}
+.free-pill { background: rgba(0,181,163,0.10); color: var(--emerald); border: 1px solid rgba(0,181,163,0.20); }
+.pro-pill  { background: rgba(197,148,0,0.12); color: var(--gold-light); border: 1px solid rgba(197,148,0,0.22); }
 
 .plan-price {
-  display: flex; align-items: baseline; gap: 7px;
-  margin-bottom: 11px;
+  display: flex; align-items: baseline; gap: 7px; margin-bottom: 11px;
 }
 .amount {
-  font-size: 46px; font-weight: 800;
-  color: #fff; letter-spacing: -0.045em; line-height: 1;
+  font-size: 52px; font-weight: 800; color: var(--text);
+  letter-spacing: -0.05em; line-height: 1;
   font-family: 'JetBrains Mono', monospace;
 }
-.period { font-size: 14px; color: rgba(255,255,255,.32); font-weight: 500; }
-.plan-desc { font-size: 13px; color: rgba(255,255,255,.38); line-height: 1.55; margin: 0; }
+.period { font-size: 15px; color: var(--muted); font-weight: 500; }
+.plan-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin: 0; }
+
+.plan-divider {
+  height: 1px; background: var(--border);
+  margin: 22px 0;
+}
 
 /* Features list */
 .plan-feats {
-  list-style: none; padding: 0; margin: 0 0 30px;
+  list-style: none; padding: 0; margin: 0 0 16px;
   display: flex; flex-direction: column; gap: 11px;
-  flex: 1;
-  border-top: 1px solid rgba(255,255,255,.065);
-  padding-top: 26px;
 }
 .plan-feats li {
-  display: flex; align-items: flex-start; gap: 11px;
-  font-size: 13.5px; color: rgba(255,255,255,.62); line-height: 1.45;
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13.5px; color: rgba(255,255,255,0.58); line-height: 1.45;
 }
-.plan-feats svg { color: var(--emerald); flex-shrink: 0; margin-top: 2px; }
-.plan.pop .plan-feats li { color: rgba(255,255,255,.80); }
-.plan.pop .plan-feats svg { filter: drop-shadow(0 0 4px rgba(0,181,163,0.50)); }
-.plan.pop .plan-desc { color: rgba(255,255,255,.72); }
-.plan.pop .period { color: rgba(255,255,255,.60); }
-.plan.pop .amount { color: #fff; }
+.plan-feats li svg { color: var(--emerald); flex-shrink: 0; margin-top: 1px; }
+.plan-pro .plan-feats li { color: rgba(255,255,255,0.80); }
+.plan-feats li.highlight { color: rgba(255,255,255,0.92); }
+.plan-feats li.highlight svg { filter: drop-shadow(0 0 4px rgba(0,181,163,0.50)); }
+.feat-badge {
+  font-size: 9.5px; font-weight: 700; border-radius: 999px;
+  padding: 2px 8px; white-space: nowrap; flex-shrink: 0;
+  background: rgba(197,148,0,0.12); color: var(--gold-light);
+  border: 1px solid rgba(197,148,0,0.20);
+  letter-spacing: 0.04em; text-transform: uppercase; margin-left: auto;
+}
 
-/* CTA buttons */
+/* Locked section */
+.plan-locked {
+  margin-bottom: 22px; flex: 1;
+}
+.locked-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: rgba(255,255,255,0.20);
+  margin-bottom: 10px;
+}
+.locked-label svg { flex-shrink: 0; }
+.locked-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: rgba(255,255,255,0.20);
+  margin-bottom: 8px; padding-left: 4px;
+  position: relative;
+}
+.locked-item::before {
+  content: '—';
+  color: rgba(255,255,255,0.12);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+/* CTAs */
 .plan-cta {
   display: block; text-align: center; text-decoration: none;
   border-radius: 15px; padding: 14px;
-  font-size: 14px; font-weight: 700; letter-spacing: -0.015em;
-  background: rgba(255,255,255,.065);
-  border: 1px solid rgba(255,255,255,.11);
-  color: rgba(255,255,255,.75);
-  transition: background .32s, transform .42s cubic-bezier(0.2,0.8,0.2,1), box-shadow .32s;
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.70);
+  transition: background .28s, transform .36s cubic-bezier(0.2,0.8,0.2,1), box-shadow .28s;
+  margin-top: auto;
 }
-.plan-cta:hover { background: rgba(255,255,255,.11); transform: translateY(-3px); }
+.plan-cta:hover { background: rgba(255,255,255,0.10); transform: translateY(-2px); }
 
-/* "Empezar Pro" — 5s shimmer loop */
-.cta-pop {
+.cta-pro {
   position: relative; overflow: hidden;
   background: linear-gradient(138deg, #003ACC, #0052FF);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 10px 32px rgba(0,82,255,0.48);
+  box-shadow: 0 10px 32px rgba(0,82,255,0.44);
 }
-.cta-pop::before {
+.cta-pro::before {
   content: '';
-  position: absolute;
-  top: 0; left: -70%;
+  position: absolute; top: 0; left: -70%;
   width: 48%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.24), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
   transform: skewX(-15deg);
   animation: shimmer-run 5s ease-in-out infinite;
 }
@@ -254,72 +348,74 @@ import { RouterLink } from '@angular/router';
   88%     { left: 135%; opacity: 1; }
   90%,100%{ left: 135%; opacity: 0; }
 }
-.cta-pop:hover {
-  box-shadow: 0 16px 44px rgba(0,82,255,0.60);
-  transform: translateY(-3px);
+.cta-pro:hover { box-shadow: 0 16px 44px rgba(0,82,255,0.58); transform: translateY(-3px); }
+
+.cta-note {
+  text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.28);
+  margin: 10px 0 0; letter-spacing: 0.02em;
 }
 
-/* Enterprise row */
+/* Enterprise */
 .enterprise {
   display: flex; align-items: center; justify-content: space-between;
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 22px; padding: 28px 36px; gap: 20px;
-  flex-wrap: wrap;
-  position: relative; overflow: hidden;
-}
-.enterprise::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(197,148,0,0.04) 0%, transparent 50%);
-  pointer-events: none;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--border);
+  border-radius: 22px; padding: 26px 32px; gap: 20px; flex-wrap: wrap;
 }
 .ent-copy { display: flex; flex-direction: column; gap: 5px; }
-.ent-copy strong { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
-.ent-copy span { font-size: 13px; color: rgba(255,255,255,.38); }
+.ent-copy strong { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.ent-copy span   { font-size: 13px; color: var(--muted); }
 .ent-btn {
   text-decoration: none; font-size: 14px; font-weight: 700;
   color: var(--gold); white-space: nowrap;
-  padding: 11px 26px; border-radius: 13px;
-  border: 1px solid rgba(197,148,0,0.30);
-  transition: background .28s, border-color .28s, box-shadow .28s;
-  letter-spacing: -0.01em;
+  padding: 11px 24px; border-radius: 13px;
+  border: 1px solid rgba(197,148,0,0.28);
+  transition: background .26s, border-color .26s, box-shadow .26s;
 }
-.ent-btn:hover {
-  background: rgba(197,148,0,0.08);
-  border-color: rgba(197,148,0,0.50);
-  box-shadow: 0 4px 20px rgba(197,148,0,0.14);
-}
+.ent-btn:hover { background: rgba(197,148,0,0.08); border-color: rgba(197,148,0,0.46); box-shadow: 0 4px 18px rgba(197,148,0,0.12); }
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
   .plans { grid-template-columns: 1fr; }
-  .plan.pop { transform: none; }
-}
-@media (max-width: 600px) {
-  .pricing { padding: 88px 20px; }
   .enterprise { flex-direction: column; align-items: flex-start; }
+  .pricing { padding: 80px 20px; }
 }
   `]
 })
 export class LandingPricingComponent {
-  readonly plans = [
-    {
-      name: 'Gratuito', price: '0€', period: '/ siempre', pop: false,
-      desc: 'Para compradores que empiezan a explorar el mercado.',
-      cta: 'Crear cuenta gratis',
-      feats: ['Mapa interactivo con semáforo','Búsqueda por municipio y filtros','Ver precio y m² de cada inmueble','Hasta 20 resultados por búsqueda']
-    },
-    {
-      name: 'Comprador Pro', price: '9€', period: '/ mes', pop: true,
-      desc: 'Para quienes buscan activamente y quieren ventaja real.',
-      cta: 'Empezar Pro',
-      feats: ['Todo lo del plan Gratuito','Dirección exacta del inmueble','Datos completos de catastro','Alertas de bajada de precio','Favoritos ilimitados','Comparación de hasta 5 pisos']
-    },
-    {
-      name: 'Asesoría', price: '49€', period: '/ proceso', pop: false,
-      desc: 'Acompañamiento completo en todo el proceso de compra.',
-      cta: 'Hablar con un asesor',
-      feats: ['Todo lo del plan Pro','Análisis personalizado de zona','Negociación con el vendedor','Gestión hipoteca y notaría','Soporte hasta escritura firmada']
-    },
+  anual = false;
+
+  readonly freePlan = {
+    feats: [
+      { text: 'Mapa interactivo de inmuebles' },
+      { text: 'Búsqueda por municipio y filtros básicos' },
+      { text: 'Precio asking (Idealista / Fotocasa)' },
+      { text: 'Asistente IA: 5 preguntas al día' },
+      { text: 'Estadísticas generales de mercado' },
+    ]
+  };
+
+  readonly lockedFeats = [
+    'Precio notarial real por zona',
+    'Gap% asking vs notarial',
+    'Semáforo de oportunidad (🟢🟡🔴)',
+    'Tasación AVM personalizada',
+    'Alertas de precio y semáforo',
+    'Favoritos + alertas inteligentes',
+    'Asistente IA ilimitado',
   ];
+
+  readonly proPlan = {
+    feats: [
+      { text: 'Todo lo del plan Gratis', highlight: false, badge: '' },
+      { text: 'Precio notarial real por zona',           highlight: true,  badge: 'Clave' },
+      { text: 'Gap% asking vs notarial',                 highlight: true,  badge: ''      },
+      { text: 'Semáforo de oportunidad (🟢🟡🔴)',        highlight: true,  badge: ''      },
+      { text: 'Tasación AVM personalizada',              highlight: false, badge: ''      },
+      { text: 'Alertas de precio y semáforo',            highlight: false, badge: ''      },
+      { text: 'Favoritos con alertas inteligentes',      highlight: false, badge: ''      },
+      { text: 'Asistente IA ilimitado',                  highlight: false, badge: ''      },
+      { text: 'Datos catastro completos',                highlight: false, badge: ''      },
+      { text: 'Historial de precios por zona',           highlight: false, badge: ''      },
+    ]
+  };
 }
