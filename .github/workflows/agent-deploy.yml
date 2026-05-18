@@ -1,0 +1,30 @@
+name: Deploy PropIntel Agent → Railway
+
+on:
+  push:
+    branches: [main]
+    paths:    ['propintel-agent/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        working-directory: propintel-agent
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service propintel-agent --detach
+
+      - name: Registrar webhook Telegram
+        env:
+          AGENT_URL: ${{ secrets.AGENT_RAILWAY_URL }}
+        run: |
+          sleep 15
+          curl -sf "${AGENT_URL}/setup/telegram?url=${AGENT_URL}" || echo "⚠️ Telegram setup falló (puede que ya esté registrado)"
+          echo "✅ Deploy completado"

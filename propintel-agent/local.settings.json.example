@@ -1,0 +1,23 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage":  "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+
+    "PROPINTEL_API_URL":    "https://propintel-api.azurewebsites.net/api",
+    "PROPINTEL_API_KEY":    "tu-api-key-aqui",
+
+    "GEMINI_API_KEY":       "tu-gemini-api-key",
+    "GEMINI_MODEL":         "gemini-2.0-flash",
+
+    "WA_PHONE_NUMBER_ID":   "el-id-del-numero-en-meta",
+    "WA_ACCESS_TOKEN":      "el-token-permanente-de-meta",
+    "WA_VERIFY_TOKEN":      "propintel_webhook_2026",
+
+    "TELEGRAM_BOT_TOKEN":   "123456:AAABBBBCCCDDDEEE",
+
+    "REDIS_URL":            "redis://localhost:6379/0",
+    "CONTEXT_TTL_SECS":     "86400",
+    "MAX_HISTORY_TURNS":    "10"
+  }
+}
