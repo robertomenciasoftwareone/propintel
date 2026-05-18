@@ -2,7 +2,7 @@ import {
   Component, inject, AfterViewInit, OnDestroy, ElementRef,
   ViewChild, signal, computed
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
@@ -32,7 +32,7 @@ const PIN_LAYERS   = ['pins-glow', 'pins', 'clusters', 'cluster-count', 'cluster
 @Component({
   selector: 'app-mapa',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink],
+  imports: [DecimalPipe, TitleCasePipe, FormsModule, RouterLink],
   template: `
 <div class="shell">
 

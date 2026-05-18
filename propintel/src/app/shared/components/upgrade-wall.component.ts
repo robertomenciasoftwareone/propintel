@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor } from '@angular/common';
 
 /**
  * UpgradeWallComponent — bloquea contenido Pro con un overlay de upgrade.
@@ -18,7 +18,7 @@ import { NgFor, NgIf } from '@angular/common';
 @Component({
   selector: 'app-upgrade-wall',
   standalone: true,
-  imports: [RouterLink, NgFor, NgIf],
+  imports: [RouterLink, NgFor],
   template: `
 <div class="wall-wrap">
   <!-- Slot de contenido — aparece difuminado -->
