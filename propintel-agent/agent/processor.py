@@ -109,11 +109,11 @@ async def process_message(
     if texto_norm in ("/ayuda", "/help", "ayuda", "qué puedes hacer", "que puedes hacer"):
         return (
             "🏠 *PropIntel Assistant* — Lo que puedo hacer por ti:\n\n"
-            "🔍 *Buscar pisos*: _"3 hab en Chamberí por menos de 400k"_\n"
-            "📊 *Analizar mercado*: _"¿Cómo está el mercado en Salamanca?"_\n"
-            "🏦 *Calcular hipoteca*: _"¿Cuánto pago por 280k a 25 años?"_\n"
-            "🔔 *Crear alerta*: _"Avísame si sale algo en Tetuán < 300k"_\n"
-            "📈 *Análisis de gap*: _"¿Está bien de precio este piso?"_\n\n"
+            '🔍 *Buscar pisos*: _"3 hab en Chamberí por menos de 400k"_\n'
+            '📊 *Analizar mercado*: _"¿Cómo está el mercado en Salamanca?"_\n'
+            '🏦 *Calcular hipoteca*: _"¿Cuánto pago por 280k a 25 años?"_\n'
+            '🔔 *Crear alerta*: _"Avísame si sale algo en Tetuán < 300k"_\n'
+            '📈 *Análisis de gap*: _"¿Está bien de precio este piso?"_\n\n'
             "Escríbeme en lenguaje natural, entiendo todo 👂"
         )
 
